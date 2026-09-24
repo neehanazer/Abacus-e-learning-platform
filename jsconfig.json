@@ -19,20 +19,12 @@
       "@/*": [
         "./src/*"
       ]
-    },
-    "incremental": true,
-    "esModuleInterop": true,
-    "plugins": [
-      {
-        "name": "next"
-      }
-    ]
+    }
   },
   "include": [
     "**/*.js",
     "**/*.jsx",
-    "**/*.mjs",
-    ".next/types/**/*.ts"
+    "**/*.mjs"
   ],
   "exclude": [
     "node_modules"

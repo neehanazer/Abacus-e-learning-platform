@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
@@ -51,17 +51,18 @@ export default function ProfilePage() {
     parentPhone: user?.parentPhone || "",
   });
 
-  if (isLoading) {
+  useEffect(() => {
+    if (!isLoading && (!isAuthenticated || !user)) {
+      router.push("/login");
+    }
+  }, [isLoading, isAuthenticated, user, router]);
+
+  if (isLoading || !isAuthenticated || !user) {
     return (
       <div className="min-h-[70vh] flex items-center justify-center">
         <p className="text-sm font-bold text-purple-700 animate-pulse">Loading Profile...</p>
       </div>
     );
-  }
-
-  if (!isAuthenticated || !user) {
-    router.push("/login");
-    return null;
   }
 
   const handleSave = (e: React.FormEvent) => {

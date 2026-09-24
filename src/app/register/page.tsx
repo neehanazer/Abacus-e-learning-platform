@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
@@ -9,15 +9,12 @@ import {
   Mail,
   Lock,
   Calendar,
-  Layers,
   Users,
   Phone,
   Sparkles,
   AlertCircle,
   ArrowRight,
   Calculator,
-  ShieldCheck,
-  CheckCircle2,
 } from "lucide-react";
 import Button from "@/components/ui/Button";
 import { useAuth } from "@/context/AuthContext";
@@ -31,16 +28,7 @@ const AVATAR_OPTIONS = [
   { id: "🐯", label: "Speed Tiger" },
 ];
 
-const ABACUS_LEVELS = [
-  "Level 1 - Direct Addition & Subtraction",
-  "Level 2 - Small Friends (+4/+3/+2/+1)",
-  "Level 3 - Big Friends (+9 to +1)",
-  "Level 4 - Combination Formulas",
-  "Level 5 - Multiplication Basics",
-  "Level 6 - Division & Decimal Abacus",
-  "Level 7 - Advanced Mental Speed Drills",
-  "Level 8 - Master Anzan Championship",
-];
+const DEFAULT_LEVEL = "Level 1 - Direct Addition & Subtraction";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -52,7 +40,6 @@ export default function RegisterPage() {
     password: "",
     age: "8",
     dateOfBirth: "2018-05-14",
-    abacusLevel: ABACUS_LEVELS[0],
     avatar: "🧙‍♂️",
     parentName: "",
     parentEmail: "",
@@ -61,39 +48,58 @@ export default function RegisterPage() {
 
   const [errorMsg, setErrorMsg] = useState("");
 
-  if (isAuthenticated) {
-    router.push("/dashboard");
-  }
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.push("/dashboard");
+    }
+  }, [isAuthenticated, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg("");
 
+    // 1. Required fields check
     if (
       !formData.fullName.trim() ||
       !formData.email.trim() ||
       !formData.password.trim() ||
       !formData.parentName.trim() ||
-      !formData.parentEmail.trim()
+      !formData.parentPhone.trim()
     ) {
       setErrorMsg("Please fill out all required student and guardian fields.");
       return;
     }
 
+    // 2. Email validation: MUST be @gmail.com
+    const gmailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/i;
+    if (!gmailRegex.test(formData.email.trim())) {
+      setErrorMsg("Student email must be a valid @gmail.com address (e.g. student@gmail.com).");
+      return;
+    }
+
+    // 3. Password length check
     if (formData.password.length < 6) {
       setErrorMsg("Password must be at least 6 characters long.");
+      return;
+    }
+
+    // 4. Phone number validation
+    const phoneDigits = formData.parentPhone.replace(/\D/g, "");
+    if (phoneDigits.length < 10 || phoneDigits.length > 15) {
+      setErrorMsg("Guardian phone number must be a valid 10-15 digit phone number (e.g. 9876543210).");
       return;
     }
 
     const res = await register({
       fullName: formData.fullName,
       email: formData.email,
+      password: formData.password,
       age: parseInt(formData.age, 10) || 8,
       dateOfBirth: formData.dateOfBirth,
-      abacusLevel: formData.abacusLevel,
+      abacusLevel: DEFAULT_LEVEL,
       avatar: formData.avatar,
       parentName: formData.parentName,
-      parentEmail: formData.parentEmail,
+      parentEmail: formData.parentEmail || formData.email,
       parentPhone: formData.parentPhone,
     });
 
@@ -127,7 +133,7 @@ export default function RegisterPage() {
             Student Registration 🌟
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 max-w-lg mx-auto">
-            Create your child&apos;s learning account to unlock interactive bead practice, video lessons, and BrainGym games!
+            Create your child&apos;s learning account to unlock interactive bead practice, video lessons, and BrainGym games! All students begin at Level 1.
           </p>
         </div>
 
@@ -195,12 +201,12 @@ export default function RegisterPage() {
 
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-slate-700 block">
-                  Student Email *
+                  Student Email (@gmail.com) *
                 </label>
                 <input
                   type="email"
                   required
-                  placeholder="student@example.com"
+                  placeholder="student@gmail.com"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   className="w-full px-4 py-3 rounded-2xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/50 text-sm bg-slate-50/50 font-medium"
@@ -229,8 +235,8 @@ export default function RegisterPage() {
                 </label>
                 <input
                   type="number"
-                  min="4"
-                  max="16"
+                  min="3"
+                  max="100"
                   required
                   value={formData.age}
                   onChange={(e) => setFormData({ ...formData, age: e.target.value })}
@@ -250,30 +256,13 @@ export default function RegisterPage() {
                 />
               </div>
             </div>
-
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-700 block">
-                Starting Abacus Level *
-              </label>
-              <select
-                value={formData.abacusLevel}
-                onChange={(e) => setFormData({ ...formData, abacusLevel: e.target.value })}
-                className="w-full px-4 py-3 rounded-2xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/50 text-sm bg-slate-50/50 font-bold text-purple-800"
-              >
-                {ABACUS_LEVELS.map((lvl) => (
-                  <option key={lvl} value={lvl}>
-                    {lvl}
-                  </option>
-                ))}
-              </select>
-            </div>
           </div>
 
           {/* SECTION 3: PARENT / GUARDIAN INFORMATION */}
           <div className="space-y-4 pt-4 border-t border-slate-100">
             <div className="flex items-center gap-2 text-amber-700 font-bold text-sm font-heading">
               <Users className="w-4 h-4 text-amber-600" />
-              <span>Parent / Guardian Information (Required for Young Students)</span>
+              <span>Parent / Guardian Information (Required)</span>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -293,27 +282,27 @@ export default function RegisterPage() {
 
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-slate-700 block">
-                  Guardian Email *
+                  Guardian Phone (10-15 digits) *
                 </label>
                 <input
-                  type="email"
+                  type="tel"
                   required
-                  placeholder="parent@example.com"
-                  value={formData.parentEmail}
-                  onChange={(e) => setFormData({ ...formData, parentEmail: e.target.value })}
+                  placeholder="e.g. 9876543210"
+                  value={formData.parentPhone}
+                  onChange={(e) => setFormData({ ...formData, parentPhone: e.target.value })}
                   className="w-full px-4 py-3 rounded-2xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/50 text-sm bg-slate-50/50 font-medium"
                 />
               </div>
 
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-slate-700 block">
-                  Guardian Phone
+                  Guardian Email
                 </label>
                 <input
-                  type="tel"
-                  placeholder="+1 (555) 000-0000"
-                  value={formData.parentPhone}
-                  onChange={(e) => setFormData({ ...formData, parentPhone: e.target.value })}
+                  type="email"
+                  placeholder="parent@example.com"
+                  value={formData.parentEmail}
+                  onChange={(e) => setFormData({ ...formData, parentEmail: e.target.value })}
                   className="w-full px-4 py-3 rounded-2xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/50 text-sm bg-slate-50/50 font-medium"
                 />
               </div>
@@ -329,7 +318,7 @@ export default function RegisterPage() {
               disabled={isLoading}
               icon={<ArrowRight className="w-5 h-5" />}
             >
-              {isLoading ? "Creating Account..." : "Register & Start Dashboard"}
+              {isLoading ? "Creating Account..." : "Register & Start at Level 1"}
             </Button>
 
             <div className="text-center text-xs text-slate-500">

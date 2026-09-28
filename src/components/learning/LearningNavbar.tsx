@@ -46,7 +46,15 @@ export default function LearningNavbar() {
   const isSyllabus = pathname.startsWith("/learning/syllabus");
   const isPractice = pathname.startsWith("/learning/practice");
   const isHomework = pathname.startsWith("/learning/homework");
-  const isLearning = !isSyllabus && !isPractice && !isHomework && pathname.startsWith("/learning");
+  const isMockExam = pathname.startsWith("/learning/mock-exam");
+  const isExam = pathname.startsWith("/learning/exam");
+  const isLearning =
+    !isSyllabus &&
+    !isPractice &&
+    !isHomework &&
+    !isMockExam &&
+    !isExam &&
+    pathname.startsWith("/learning");
 
   const navItems: NavOption[] = [
     {
@@ -80,22 +88,16 @@ export default function LearningNavbar() {
     {
       id: "mock-exam",
       name: "Mock Exam",
-      href: "#mock-exam",
+      href: "/learning/mock-exam",
       icon: <FileCheck2 className="w-4 h-4" />,
-      statusText: "Phase 5",
-      phaseText: "Timed Practice Trials",
-      description:
-        "Simulate international competition standards with countdown timers, speed flash cards, and instant detailed scorecards.",
+      isActive: isMockExam,
     },
     {
       id: "exam",
       name: "Exam",
-      href: "#exam",
+      href: "/learning/exam",
       icon: <Award className="w-4 h-4" />,
-      statusText: "Phase 6",
-      phaseText: "Official Level Evaluation",
-      description:
-        "Comprehensive level proficiency tests with secure timed sessions, grading rubrics, and performance analytics.",
+      isActive: isExam,
     },
     {
       id: "certificate",
@@ -118,6 +120,10 @@ export default function LearningNavbar() {
       router.push("/learning/practice");
     } else if (item.id === "homework") {
       router.push("/learning/homework");
+    } else if (item.id === "mock-exam") {
+      router.push("/learning/mock-exam");
+    } else if (item.id === "exam") {
+      router.push("/learning/exam");
     } else {
       setPreviewModal(item);
     }

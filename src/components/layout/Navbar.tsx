@@ -91,7 +91,19 @@ export default function Navbar() {
           {/* Desktop Action Buttons */}
           <div className="hidden md:flex items-center gap-3">
             {isAuthenticated && user ? (
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
+                <Link
+                  href="/learning/mock-exam"
+                  className="px-3 py-1.5 rounded-xl text-xs font-extrabold text-orange-800 bg-orange-50 border border-orange-200 hover:bg-orange-100 transition shadow-sm"
+                >
+                  Mock Exam
+                </Link>
+                <Link
+                  href="/learning/exam"
+                  className="px-3 py-1.5 rounded-xl text-xs font-extrabold text-indigo-800 bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 transition shadow-sm"
+                >
+                  Exam
+                </Link>
                 <Link
                   href="/profile"
                   className="flex items-center gap-2 px-3 py-1.5 rounded-2xl bg-purple-100/80 border border-purple-200 hover:bg-purple-200/80 transition"
@@ -187,6 +199,22 @@ export default function Navbar() {
                           {displayLevel}
                         </span>
                       </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Link
+                        href="/learning/mock-exam"
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="py-2.5 px-3 rounded-xl text-center text-xs font-extrabold text-orange-800 bg-orange-50 border border-orange-200 hover:bg-orange-100 transition"
+                      >
+                        Mock Exam
+                      </Link>
+                      <Link
+                        href="/learning/exam"
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="py-2.5 px-3 rounded-xl text-center text-xs font-extrabold text-indigo-800 bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 transition"
+                      >
+                        Final Exam
+                      </Link>
                     </div>
                     <Button
                       onClick={() => {

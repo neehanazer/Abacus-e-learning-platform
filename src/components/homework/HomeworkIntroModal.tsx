@@ -142,21 +142,28 @@ export const HomeworkIntroModal: React.FC = () => {
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row items-center gap-3 relative z-10">
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => startHomework(activeHomework)}
-            className="w-full sm:flex-1 py-4 px-6 rounded-2xl bg-gradient-to-r from-[#F4A261] to-[#E76F51] text-white font-black text-lg shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2.5 border-b-4 border-[#C85A3D]"
-          >
-            <Play className="w-5 h-5 fill-current" />
-            Start Homework Now
-          </motion.button>
+          {activeHomework.status === "evaluated" || activeHomework.status === "submitted" ? (
+            <div className="w-full sm:flex-1 py-4 px-6 rounded-2xl bg-emerald-100 text-emerald-900 border-2 border-emerald-300 font-black text-center flex items-center justify-center gap-2">
+              <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+              <span>Homework Already Completed (Done)</span>
+            </div>
+          ) : (
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => startHomework(activeHomework)}
+              className="w-full sm:flex-1 py-4 px-6 rounded-2xl bg-gradient-to-r from-[#F4A261] to-[#E76F51] text-white font-black text-lg shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2.5 border-b-4 border-[#C85A3D]"
+            >
+              <Play className="w-5 h-5 fill-current" />
+              Start Homework Now
+            </motion.button>
+          )}
 
           <button
             onClick={backToDashboard}
             className="w-full sm:w-auto py-4 px-6 rounded-2xl bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold text-base transition-colors border-2 border-stone-200"
           >
-            Cancel
+            Back to Dashboard
           </button>
         </div>
       </motion.div>

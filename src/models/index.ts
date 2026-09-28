@@ -34,4 +34,20 @@ export { default as HomeworkAttempt } from "./HomeworkAttempt";
 export * from "./Evaluation";
 export { default as Evaluation } from "./Evaluation";
 
+export * from "./Exam";
+export { default as Exam } from "./Exam";
+
+export * from "./ExamQuestion";
+export { default as ExamQuestion } from "./ExamQuestion";
+
+export * from "./ExamAttempt";
+export { default as ExamAttempt } from "./ExamAttempt";
+
+export * from "./ExamAnswer";
+export { default as ExamAnswer } from "./ExamAnswer";
+
+export * from "./ProctoringEvent";
+export { default as ProctoringEvent } from "./ProctoringEvent";
+
+
 

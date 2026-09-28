@@ -374,20 +374,9 @@ export const HomeworkDashboard: React.FC = () => {
                 {/* Card Action CTA */}
                 <div className="pt-2">
                   {isEvaluated ? (
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => openHomeworkIntro(task)}
-                        className="flex-1 py-2.5 px-3 bg-emerald-50 hover:bg-emerald-100 text-emerald-900 rounded-xl font-bold text-xs border border-emerald-300 transition-colors flex items-center justify-center gap-1"
-                      >
-                        Review Work
-                      </button>
-                      <button
-                        onClick={() => retryHomework(task)}
-                        className="p-2.5 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-xl font-bold text-xs border border-stone-200 transition-colors"
-                        title="Retry this homework task"
-                      >
-                        <RotateCcw className="w-4 h-4" />
-                      </button>
+                    <div className="w-full py-2.5 px-3 bg-emerald-50 text-emerald-800 rounded-xl font-black text-xs border border-emerald-300 flex items-center justify-center gap-1.5 shadow-sm select-none">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                      <span>Completed</span>
                     </div>
                   ) : (
                     <motion.button

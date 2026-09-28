@@ -156,13 +156,19 @@ export class PerformanceService {
       }
 
       if (unified.length === 0) {
-        return this.getFallbackAttempts(studentId);
+        if (studentId === "std_demo_101" || !studentId) {
+          return this.getFallbackAttempts(studentId);
+        }
+        return [];
       }
 
       return unified.sort((a, b) => b.date.getTime() - a.date.getTime());
     } catch (err) {
-      console.warn("[PerformanceService]: DB offline, returning fallback attempts...", err);
-      return this.getFallbackAttempts(studentId);
+      console.warn("[PerformanceService]: DB offline, checking fallback attempts for student...", err);
+      if (studentId === "std_demo_101" || !studentId) {
+        return this.getFallbackAttempts(studentId);
+      }
+      return [];
     }
   }
 

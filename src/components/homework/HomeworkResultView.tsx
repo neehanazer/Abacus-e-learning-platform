@@ -136,18 +136,10 @@ export const HomeworkResultView: React.FC = () => {
           )}
 
           {/* Quick Actions */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-            <button
-              onClick={() => retryHomework(activeHomework)}
-              className="w-full sm:w-auto px-6 py-3 rounded-2xl bg-amber-50 hover:bg-amber-100 text-amber-900 border-2 border-amber-300 font-black text-sm transition-all flex items-center justify-center gap-2"
-            >
-              <RotateCcw className="w-4 h-4" />
-              <span>Retry This Homework</span>
-            </button>
-
+          <div className="flex items-center justify-center pt-2">
             <button
               onClick={backToDashboard}
-              className="w-full sm:w-auto px-6 py-3.5 rounded-2xl bg-gradient-to-r from-[#F4A261] to-[#E76F51] hover:from-[#E76F51] hover:to-[#F4A261] text-white font-black text-sm shadow-md transition-all flex items-center justify-center gap-2 border-b-4 border-[#C85A3D]"
+              className="w-full sm:w-auto px-8 py-3.5 rounded-2xl bg-gradient-to-r from-[#F4A261] to-[#E76F51] hover:from-[#E76F51] hover:to-[#F4A261] text-white font-black text-sm shadow-md transition-all flex items-center justify-center gap-2 border-b-4 border-[#C85A3D]"
             >
               <ArrowLeft className="w-4 h-4" />
               <span>Back to Homework Dashboard</span>

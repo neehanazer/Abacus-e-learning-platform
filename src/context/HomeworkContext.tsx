@@ -128,14 +128,20 @@ export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     };
   }, [isTimerRunning, viewMode]);
 
-  // Open Intro Screen
+  // Open Intro Screen (only for pending or in-progress homework)
   const openHomeworkIntro = (hw: HomeworkTask) => {
+    if (hw.status === "evaluated" || hw.status === "submitted") {
+      return; // Once it is done then done
+    }
     setActiveHomework(hw);
     setViewMode("intro");
   };
 
-  // Start Homework Player
+  // Start Homework Player (only for non-completed homework)
   const startHomework = (hw: HomeworkTask) => {
+    if (hw.status === "evaluated" || hw.status === "submitted") {
+      return; // Once it is done then done
+    }
     setActiveHomework(hw);
     setActiveQuestionIndex(0);
     setUserAnswers({});
@@ -279,8 +285,11 @@ export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setViewMode("result");
   };
 
-  // Retry Homework with clean slate
+  // Retry Homework with clean slate (blocked for completed homework)
   const retryHomework = (hw: HomeworkTask) => {
+    if (hw.status === "evaluated" || hw.status === "submitted") {
+      return; // Once it is done then done
+    }
     startHomework(hw);
   };
 

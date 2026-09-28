@@ -442,3 +442,122 @@ export interface IReadinessResponse {
   aiEvaluation: IAIEvaluationResult;
 }
 
+// ==============================================================
+// EXAMS & AI PROCTORING TYPES
+// ==============================================================
+
+export type ExamType = "mock" | "final";
+export type ExamStatus = "active" | "inactive" | "draft";
+export type ExamAttemptStatus = "in_progress" | "submitted" | "evaluated";
+
+export type ProctoringEventType =
+  | "face_not_detected"
+  | "multiple_faces"
+  | "phone_detected"
+  | "suspicious_object"
+  | "unusual_head_movement"
+  | "tab_change"
+  | "camera_disconnected"
+  | "microphone_disconnected";
+
+export type ProctoringSeverity = "low" | "medium" | "high" | "critical";
+
+export interface IExamDocument {
+  _id: string;
+  title: string;
+  description?: string;
+  levelId: string;
+  type: ExamType;
+  duration: number; // in minutes
+  totalQuestions: number;
+  totalMarks: number;
+  passingMarks: number;
+  status: ExamStatus;
+  questionIds?: string[];
+  createdAt: Date;
+  updatedAt?: Date;
+}
+
+export interface IExamQuestionDocument {
+  _id: string;
+  examId: string;
+  questionNumber: number;
+  questionText: string;
+  numbers?: number[];
+  operations?: string[];
+  options?: (string | number)[];
+  correctAnswer: string | number;
+  marks: number;
+  explanation?: string;
+  ruleType?: string;
+  topicId?: string;
+  createdAt: Date;
+}
+
+export interface IExamAnswerItem {
+  questionId: string;
+  userAnswer: string | number | null;
+  correctAnswer?: string | number;
+  isCorrect: boolean;
+  marksAwarded: number;
+  timeSpent: number; // seconds
+}
+
+export interface IExamAttemptDocument {
+  _id: string;
+  studentId: string;
+  examId: string;
+  attemptNumber: number;
+  score: number;
+  totalMarks: number;
+  percentage: number;
+  totalQuestions: number;
+  correctAnswers: number;
+  incorrectAnswers: number;
+  unansweredCount: number;
+  timeTaken: number; // seconds
+  isPassed: boolean;
+  status: ExamAttemptStatus;
+  startedAt: Date;
+  submittedAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface IExamAnswerDocument {
+  _id: string;
+  examAttemptId: string;
+  questionId: string;
+  studentId: string;
+  userAnswer: string | number | null;
+  correctAnswer: string | number;
+  isCorrect: boolean;
+  marksAwarded: number;
+  timeSpent: number;
+  createdAt: Date;
+}
+
+export interface IProctoringEventDocument {
+  _id: string;
+  examAttemptId: string;
+  studentId?: string;
+  eventType: ProctoringEventType;
+  timestamp: Date;
+  confidence: number;
+  severity: ProctoringSeverity;
+  description: string;
+  metadata?: Record<string, any>;
+  createdAt: Date;
+}
+
+export interface IProctoringSummary {
+  totalEvents: number;
+  highSeverityCount: number;
+  mediumSeverityCount: number;
+  lowSeverityCount: number;
+  integrityScore: number; // 0-100
+  status: "verified" | "needs_review" | "suspicious";
+  events: IProctoringEventDocument[];
+}
+
+

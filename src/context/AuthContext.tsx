@@ -75,6 +75,48 @@ const DEFAULT_DEMO_STUDENT: StudentUser = {
   createdAt: "2026-01-10",
 };
 
+export const sanitizeUser = (
+  raw: (Partial<StudentUser> & Record<string, unknown>) | null | undefined
+): StudentUser => {
+  if (!raw) return DEFAULT_DEMO_STUDENT;
+  const fullName =
+    (typeof raw.fullName === "string"
+      ? raw.fullName
+      : typeof raw.name === "string"
+      ? raw.name
+      : "") || DEFAULT_DEMO_STUDENT.fullName;
+  const name =
+    (typeof raw.name === "string"
+      ? raw.name
+      : typeof raw.fullName === "string"
+      ? raw.fullName
+      : "") || DEFAULT_DEMO_STUDENT.name;
+  const abacusLevel =
+    (typeof raw.abacusLevel === "string"
+      ? raw.abacusLevel
+      : typeof raw.selectedLevel === "string"
+      ? raw.selectedLevel
+      : "") || DEFAULT_DEMO_STUDENT.abacusLevel;
+  const selectedLevel =
+    (typeof raw.selectedLevel === "string"
+      ? raw.selectedLevel
+      : typeof raw.abacusLevel === "string"
+      ? raw.abacusLevel
+      : "") || DEFAULT_DEMO_STUDENT.selectedLevel;
+  const avatar =
+    (typeof raw.avatar === "string" ? raw.avatar : "") || DEFAULT_DEMO_STUDENT.avatar;
+
+  return {
+    ...DEFAULT_DEMO_STUDENT,
+    ...raw,
+    fullName,
+    name,
+    abacusLevel,
+    selectedLevel,
+    avatar,
+  };
+};
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -95,8 +137,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (res.ok) {
           const data = await res.json();
           if (data.success && data.user && isMounted) {
-            setUser(data.user);
-            localStorage.setItem("abacus_active_student", JSON.stringify(data.user));
+            const sanitized = sanitizeUser(data.user);
+            setUser(sanitized);
+            localStorage.setItem("abacus_active_student", JSON.stringify(sanitized));
             setIsLoading(false);
             return;
           }
@@ -109,7 +152,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         const storedUser = localStorage.getItem("abacus_active_student");
         if (storedUser && isMounted) {
-          setUser(JSON.parse(storedUser));
+          const sanitized = sanitizeUser(JSON.parse(storedUser));
+          setUser(sanitized);
         }
       } catch {
         // ignore
@@ -142,14 +186,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const data = await res.json().catch(() => null);
 
       if (res.ok && data?.success && data.user) {
-        setUser(data.user);
-        localStorage.setItem("abacus_active_student", JSON.stringify(data.user));
+        const sanitized = sanitizeUser(data.user);
+        setUser(sanitized);
+        localStorage.setItem("abacus_active_student", JSON.stringify(sanitized));
         setIsLoading(false);
         return { success: true };
       }
 
-      // If backend returns a specific error (e.g. invalid credentials or account suspended)
-      if (res.status === 401 || res.status === 403 || (data && !data.success && res.status !== 500)) {
+      // If backend returns an error response
+      if (!res.ok || (data && !data.success)) {
+        if (data?.error?.includes("whitelisted") || data?.error?.includes("MongoDB")) {
+          setIsLoading(false);
+          return {
+            success: false,
+            error: "MongoDB Atlas IP not whitelisted. Please add your IP (or 0.0.0.0/0) in MongoDB Atlas -> Network Access.",
+          };
+        }
+
         // Check if user is logging into demo account as fallback
         if (email.toLowerCase() === "student@abacus.com" && pass === "password123") {
           setUser(DEFAULT_DEMO_STUDENT);
@@ -307,8 +360,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (res.ok) {
         const data = await res.json();
         if (data.success && data.profile) {
-          setUser(data.profile);
-          localStorage.setItem("abacus_active_student", JSON.stringify(data.profile));
+          const sanitized = sanitizeUser(data.profile);
+          setUser(sanitized);
+          localStorage.setItem("abacus_active_student", JSON.stringify(sanitized));
           return true;
         }
       }

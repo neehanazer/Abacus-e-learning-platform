@@ -26,6 +26,12 @@ export default function Navbar() {
     router.push("/");
   };
 
+  const displayName = user?.fullName || user?.name || "Student";
+  const firstName = displayName.split(" ")[0] || "Student";
+  const displayLevel = user?.abacusLevel || user?.selectedLevel || "Level 1 - Direct Addition & Subtraction";
+  const shortLevel = displayLevel.split(" - ")[0] || displayLevel;
+  const userAvatar = user?.avatar || "🧙‍♂️";
+
   // Hide global marketing navbar on the dedicated dashboard and learning portal pages
   if (pathname === "/dashboard" || pathname.startsWith("/learning")) {
     return null;
@@ -90,13 +96,13 @@ export default function Navbar() {
                   href="/profile"
                   className="flex items-center gap-2 px-3 py-1.5 rounded-2xl bg-purple-100/80 border border-purple-200 hover:bg-purple-200/80 transition"
                 >
-                  <span className="text-xl">{user.avatar}</span>
+                  <span className="text-xl">{userAvatar}</span>
                   <div className="text-left">
                     <span className="text-xs font-bold text-slate-800 block leading-tight">
-                      {user.fullName.split(" ")[0]}
+                      {firstName}
                     </span>
                     <span className="text-[10px] font-bold text-purple-700 bg-white px-1.5 rounded-full inline-block">
-                      {user.abacusLevel.split(" - ")[0]}
+                      {shortLevel}
                     </span>
                   </div>
                 </Link>
@@ -172,13 +178,13 @@ export default function Navbar() {
                 {isAuthenticated && user ? (
                   <>
                     <div className="flex items-center gap-3 p-3 rounded-2xl bg-purple-50">
-                      <span className="text-2xl">{user.avatar}</span>
+                      <span className="text-2xl">{userAvatar}</span>
                       <div>
                         <span className="font-bold text-slate-800 text-sm block">
-                          {user.fullName}
+                          {displayName}
                         </span>
                         <span className="text-xs text-purple-700 font-semibold">
-                          {user.abacusLevel}
+                          {displayLevel}
                         </span>
                       </div>
                     </div>

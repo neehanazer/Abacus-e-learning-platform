@@ -22,6 +22,30 @@ declare global {
   var mongooseCache: MongooseCache | undefined;
 }
 
+import fs from "fs";
+import path from "path";
+
+// Auto-load .env.local if running in standalone scripts
+if (!process.env.MONGODB_URI) {
+  try {
+    const envPath = path.resolve(process.cwd(), ".env.local");
+    if (fs.existsSync(envPath)) {
+      const content = fs.readFileSync(envPath, "utf-8");
+      for (const line of content.split("\n")) {
+        const trimmed = line.trim();
+        if (trimmed && !trimmed.startsWith("#")) {
+          const [k, ...v] = trimmed.split("=");
+          if (k && v.length > 0) {
+            process.env[k.trim()] = v.join("=").trim();
+          }
+        }
+      }
+    }
+  } catch {
+    // ignore
+  }
+}
+
 const MONGODB_URI = process.env.MONGODB_URI;
 
 if (!MONGODB_URI) {
@@ -49,6 +73,13 @@ export async function connectToDatabase(): Promise<typeof mongoose> {
     );
   }
 
+  // Ensure DNS resolvers are set
+  try {
+    dns.setServers(["8.8.8.8", "1.1.1.1"]);
+  } catch {
+    // ignore
+  }
+
   // Return existing connection if ready
   if (cached.conn && mongoose.connection.readyState === 1) {
     return cached.conn;
@@ -58,12 +89,30 @@ export async function connectToDatabase(): Promise<typeof mongoose> {
   if (!cached.promise) {
     const opts: mongoose.ConnectOptions = {
       bufferCommands: false,
-      serverSelectionTimeoutMS: 5000, // Timeout after 5s to avoid hanging during connection failures
+      serverSelectionTimeoutMS: 5000,
       dbName: "abacus",
     };
 
-    cached.promise = mongoose
-      .connect(uri, opts)
+    // Helper to connect with fallback for SRV DNS lookup issues on Windows
+    const tryConnect = async (targetUri: string): Promise<typeof mongoose> => {
+      try {
+        return await mongoose.connect(targetUri, opts);
+      } catch (err: any) {
+        if (
+          targetUri.startsWith("mongodb+srv://") &&
+          (err?.message?.includes("querySrv") || err?.message?.includes("ECONNREFUSED"))
+        ) {
+          // Fallback to direct replica set nodes if SRV query fails on Windows
+          const directUri =
+            "mongodb://neehanaz226_db_user:M0bnysbrqibx6KMk@ac-cjammo3-shard-00-00.ivsxywu.mongodb.net:27017,ac-cjammo3-shard-00-01.ivsxywu.mongodb.net:27017,ac-cjammo3-shard-00-02.ivsxywu.mongodb.net:27017/abacus?ssl=true&replicaSet=atlas-c3ceos-shard-0&authSource=admin&retryWrites=true&w=majority";
+          console.warn("[MongoDB]: SRV lookup failed on Windows, falling back to direct replica set connection...");
+          return await mongoose.connect(directUri, opts);
+        }
+        throw err;
+      }
+    };
+
+    cached.promise = tryConnect(uri)
       .then((mongooseInstance) => {
         return mongooseInstance;
       })

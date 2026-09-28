@@ -234,7 +234,7 @@ export default function PracticeDashboard() {
                   >
                     {isUnlocked ? "✓" : "🔒"}
                   </span>
-                  <span className="text-xs">{lvl.badge.split(" ")[1]}</span>
+                  <span className="text-xs">{lvl.badge?.split(" ")?.[1] || lvl.badge || "🏅"}</span>
                 </div>
                 <div className="mt-1 text-xs font-black font-heading truncate">
                   Level {lvl.id}

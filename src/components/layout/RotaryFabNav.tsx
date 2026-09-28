@@ -96,8 +96,8 @@ export default function RotaryFabNav() {
       ? [
           {
             id: "profile",
-            title: `Student: ${user.fullName.split(" ")[0]}`,
-            icon: <span className="text-lg">{user.avatar}</span>,
+            title: `Student: ${(user.fullName || user.name || "Student").split(" ")[0]}`,
+            icon: <span className="text-lg">{user.avatar || "🧙‍♂️"}</span>,
             onClick: () => router.push("/profile"),
           },
           {

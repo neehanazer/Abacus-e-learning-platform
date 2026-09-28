@@ -43,13 +43,26 @@ export default function ProfilePage() {
   const [savedNotice, setSavedNotice] = useState(false);
 
   const [formData, setFormData] = useState({
-    fullName: user?.fullName || "",
+    fullName: user?.fullName || user?.name || "",
     avatar: user?.avatar || "🧙‍♂️",
     age: user?.age ? user.age.toString() : "8",
-    parentName: user?.parentName || "",
+    parentName: user?.parentName || user?.guardianName || "",
     parentEmail: user?.parentEmail || "",
-    parentPhone: user?.parentPhone || "",
+    parentPhone: user?.parentPhone || user?.guardianPhone || "",
   });
+
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        fullName: user.fullName || user.name || "",
+        avatar: user.avatar || "🧙‍♂️",
+        age: user.age ? user.age.toString() : "8",
+        parentName: user.parentName || user.guardianName || "",
+        parentEmail: user.parentEmail || "",
+        parentPhone: user.parentPhone || user.guardianPhone || "",
+      });
+    }
+  }, [user]);
 
   useEffect(() => {
     if (!isLoading && (!isAuthenticated || !user)) {
@@ -112,16 +125,16 @@ export default function ProfilePage() {
         <div className="flex flex-col sm:flex-row items-center sm:items-start justify-between gap-6">
           <div className="flex flex-col sm:flex-row items-center gap-6 text-center sm:text-left">
             <div className="w-24 h-24 rounded-3xl bg-purple-100 border-4 border-purple-300 flex items-center justify-center text-5xl shadow-md shrink-0">
-              {user.avatar}
+              {user.avatar || "🧙‍♂️"}
             </div>
 
             <div className="space-y-1.5">
               <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
                 <h1 className="text-3xl font-extrabold text-slate-800 font-heading">
-                  {user.fullName}
+                  {user.fullName || user.name || "Student"}
                 </h1>
                 <span className="text-xs font-extrabold bg-purple-600 text-white px-3 py-1 rounded-full shadow-sm">
-                  {user.abacusLevel}
+                  {user.abacusLevel || user.selectedLevel || "Level 1 - Direct Addition & Subtraction"}
                 </span>
               </div>
 

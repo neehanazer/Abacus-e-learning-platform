@@ -49,5 +49,8 @@ export { default as ExamAnswer } from "./ExamAnswer";
 export * from "./ProctoringEvent";
 export { default as ProctoringEvent } from "./ProctoringEvent";
 
+export * from "./Certificate";
+export { default as Certificate } from "./Certificate";
+
 
 

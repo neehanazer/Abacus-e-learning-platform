@@ -8,5 +8,5 @@ export * from "./aiEvaluation";
 export * from "./examService";
 export { default as ExamService } from "./examService";
 export * from "./exam";
-
-
+export * from "./certificateService";
+export { default as CertificateService } from "./certificateService";

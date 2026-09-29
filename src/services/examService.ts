@@ -11,6 +11,7 @@ import ProctoringEvent, {
 } from "@/models/ProctoringEvent";
 import { EXAM_CATALOG, SeedExamDef } from "@/lib/examSeedData";
 import PerformanceService from "./performanceService";
+import CertificateService from "./certificateService";
 import {
   IProctoringSummary,
   IExamAnswerItem,
@@ -83,6 +84,7 @@ export interface ExamEvaluationResult {
     explanation?: string;
     ruleType?: string;
   }[];
+  certificate?: any;
 }
 
 // In-memory fallback state for offline / disconnected environments (shared across Next.js route chunks via globalThis)
@@ -558,6 +560,8 @@ export class ExamService {
     const isPassed = score >= passingMarks;
     const submittedAt = new Date();
     const timeTaken = payload.timeTaken || 0;
+    const failedAt = !isPassed ? submittedAt : null;
+    const reExamEligibleAt = !isPassed ? new Date(submittedAt.getTime() + 24 * 60 * 60 * 1000) : null;
 
     const studentObjectId = mongoose.Types.ObjectId.isValid(studentId)
       ? new mongoose.Types.ObjectId(studentId)
@@ -588,6 +592,8 @@ export class ExamService {
           attemptDoc.isPassed = isPassed;
           attemptDoc.status = "evaluated";
           attemptDoc.submittedAt = submittedAt;
+          attemptDoc.failedAt = failedAt;
+          attemptDoc.reExamEligibleAt = reExamEligibleAt;
           attemptDoc.answers = answerSummariesForAttempt;
           await attemptDoc.save();
           attemptId = attemptDoc._id.toString();
@@ -607,6 +613,8 @@ export class ExamService {
             status: "evaluated",
             startedAt: new Date(Date.now() - timeTaken * 1000),
             submittedAt,
+            failedAt,
+            reExamEligibleAt,
             answers: answerSummariesForAttempt,
           });
           attemptId = created._id.toString();
@@ -652,11 +660,29 @@ export class ExamService {
       unansweredCount,
       timeTaken,
       isPassed,
+      failedAt,
+      reExamEligibleAt,
       status: "evaluated",
       submittedAt,
       answers: answerSummariesForAttempt,
     });
     inMemoryAnswers.set(attemptId, evaluatedAnswers);
+
+    // Certificate auto-creation: ONLY after successful final exam completion
+    let certificate = null;
+    if (isPassed && (examDoc.type === "final" || (examDoc as any).type === "final")) {
+      try {
+        certificate = await CertificateService.createCertificateForFinalExam({
+          studentId,
+          levelId: examDoc.levelId?._id?.toString() || examDoc.levelId?.toString() || "lvl_1",
+          examId: examDoc._id?.toString() || examDoc._id || examId,
+          score,
+          totalMarks,
+        });
+      } catch (certErr) {
+        console.warn("[ExamService]: Failed auto-creating certificate:", certErr);
+      }
+    }
 
     // Fetch Proctoring Summary
     const proctoringSummary = await this.getProctoringEvents(attemptId);
@@ -680,6 +706,7 @@ export class ExamService {
       status: "evaluated",
       submittedAt: submittedAt.toISOString(),
       proctoringSummary,
+      certificate: certificate || undefined,
       answers: evaluatedAnswers,
     };
   }
@@ -1035,6 +1062,270 @@ export class ExamService {
         metadata: ev.metadata,
         createdAt: ev.createdAt || ev.timestamp || new Date(),
       })),
+    };
+  }
+
+  /**
+   * GET /api/exams/re-exam-status
+   * Checks student eligibility for re-examination under the 24-hour rule.
+   * If student fails:
+   * - preserve failed attempt
+   * - record failure date
+   * - allow re-enrollment after 24 hours
+   * - preserve complete exam history
+   */
+  static async getReExamStatus(examId?: string, studentId: string = "std_demo_101") {
+    try {
+      await connectToDatabase();
+      await this.ensureCatalogSeeded();
+    } catch {
+      // offline fallback
+    }
+
+    const studentObjectId = mongoose.Types.ObjectId.isValid(studentId)
+      ? new mongoose.Types.ObjectId(studentId)
+      : null;
+    const examObjectId = examId && mongoose.Types.ObjectId.isValid(examId)
+      ? new mongoose.Types.ObjectId(examId)
+      : null;
+
+    let dbAttempts: any[] = [];
+    if (mongoose.connection?.readyState === 1 && studentObjectId) {
+      try {
+        const query: any = { studentId: studentObjectId };
+        if (examObjectId) {
+          query.examId = examObjectId;
+        }
+        dbAttempts = await ExamAttempt.find(query)
+          .populate("examId", "title type duration totalMarks passingMarks")
+          .sort({ createdAt: -1 })
+          .lean();
+      } catch (err) {
+        console.warn("[ExamService]: Error retrieving attempts for re-exam status:", err);
+      }
+    }
+
+    // Merge with in-memory attempts
+    const memAttempts = Array.from(inMemoryAttempts.values()).filter((a) => {
+      const matchStudent = a.studentId === studentId || !studentId;
+      const matchExam = !examId || a.examId === examId;
+      return matchStudent && matchExam;
+    });
+
+    const combined = [...dbAttempts];
+    for (const ma of memAttempts) {
+      const exists = combined.some(
+        (ca) => (ca._id?.toString() || ca.id) === (ma._id?.toString() || ma.id)
+      );
+      if (!exists) combined.push(ma);
+    }
+
+    // Sort newest first
+    combined.sort((a, b) => {
+      const dateA = new Date(a.submittedAt || a.createdAt || a.startedAt || 0).getTime();
+      const dateB = new Date(b.submittedAt || b.createdAt || b.startedAt || 0).getTime();
+      return dateB - dateA;
+    });
+
+    // Complete history preserved
+    const history = combined.map((a: any) => {
+      const failureDate =
+        a.failedAt || (!a.isPassed && a.status === "evaluated" ? a.submittedAt || a.createdAt : null);
+      const COOLDOWN_MS = 24 * 60 * 60 * 1000;
+      const eligibleAt = failureDate ? new Date(new Date(failureDate).getTime() + COOLDOWN_MS) : null;
+
+      return {
+        attemptId: a._id?.toString() || a.id,
+        attemptNumber: a.attemptNumber || 1,
+        examId: a.examId?._id?.toString() || a.examId?.toString() || a.examId,
+        examTitle: a.examId?.title || a.examTitle || "Abacus Exam",
+        score: a.score || 0,
+        totalMarks: a.totalMarks || 100,
+        percentage: a.percentage || 0,
+        isPassed: !!a.isPassed,
+        status: a.status,
+        failureDate: failureDate ? new Date(failureDate).toISOString() : null,
+        reExamEligibleAt: eligibleAt ? eligibleAt.toISOString() : null,
+        submittedAt: a.submittedAt ? new Date(a.submittedAt).toISOString() : null,
+        timeTaken: a.timeTaken || 0,
+      };
+    });
+
+    // If specific exam was queried:
+    if (examId) {
+      if (history.length === 0) {
+        return {
+          examId,
+          studentId,
+          hasAttempted: false,
+          canReEnroll: true,
+          isPassed: false,
+          attemptsCount: 0,
+          message: "No previous attempts found. Eligible to take exam.",
+          history: [],
+        };
+      }
+
+      // Check if student has already passed
+      const passedAttempt = history.find((h) => h.isPassed);
+      if (passedAttempt) {
+        return {
+          examId,
+          studentId,
+          hasAttempted: true,
+          canReEnroll: false,
+          isPassed: true,
+          attemptsCount: history.length,
+          latestScore: passedAttempt.score,
+          message: "Exam has already been passed successfully.",
+          history,
+        };
+      }
+
+      // Latest attempt failed
+      const latest = history[0];
+      const failureDate = latest.failureDate ? new Date(latest.failureDate) : new Date();
+      const COOLDOWN_MS = 24 * 60 * 60 * 1000;
+      const eligibleAt = new Date(failureDate.getTime() + COOLDOWN_MS);
+      const now = Date.now();
+      const isEligible = now >= eligibleAt.getTime();
+      const diffMs = Math.max(0, eligibleAt.getTime() - now);
+
+      const hoursRemaining = Math.floor(diffMs / (1000 * 60 * 60));
+      const minutesRemaining = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+      const secondsRemaining = Math.floor((diffMs % (1000 * 60)) / 1000);
+
+      return {
+        examId,
+        studentId,
+        hasAttempted: true,
+        canReEnroll: isEligible,
+        isPassed: false,
+        attemptsCount: history.length,
+        latestAttempt: {
+          attemptId: latest.attemptId,
+          attemptNumber: latest.attemptNumber,
+          score: latest.score,
+          percentage: latest.percentage,
+          failureDate: failureDate.toISOString(),
+        },
+        cooldown: {
+          cooldownHours: 24,
+          isEligible,
+          failureDate: failureDate.toISOString(),
+          eligibleAt: eligibleAt.toISOString(),
+          hoursRemaining,
+          minutesRemaining,
+          secondsRemaining,
+        },
+        message: isEligible
+          ? "24-hour cooldown period elapsed. You are eligible to re-enroll for re-examination."
+          : `Re-examination cooldown active. You can re-enroll after 24 hours (${hoursRemaining}h ${minutesRemaining}m remaining).`,
+        history,
+      };
+    }
+
+    // General overall status across all exams
+    return {
+      studentId,
+      totalAttempts: history.length,
+      history,
+    };
+  }
+
+  /**
+   * POST /api/exams/[examId]/re-enroll
+   * Re-enrolls a student for a failed exam after the 24-hour cooldown period.
+   * - Preserves failed attempt and complete exam history.
+   * - Verifies 24-hour cooldown has elapsed.
+   * - Creates a new exam attempt with incremented attemptNumber.
+   */
+  static async reEnrollExam(examId: string, studentId: string = "std_demo_101") {
+    try {
+      await connectToDatabase();
+      await this.ensureCatalogSeeded();
+    } catch {
+      // offline fallback
+    }
+
+    // Check re-exam status & 24-hour rule
+    const status: any = await this.getReExamStatus(examId, studentId);
+
+    if (status.hasAttempted && status.isPassed) {
+      throw new Error("Student has already passed this exam. Re-enrollment is not required.");
+    }
+
+    if (status.hasAttempted && !status.canReEnroll) {
+      const rem = status.cooldown || {};
+      throw new Error(
+        `Re-examination cooldown active. Re-enrollment is only allowed 24 hours after failure. Please wait ${rem.hoursRemaining || 0}h ${rem.minutesRemaining || 0}m.`
+      );
+    }
+
+    // Fetch exam details and questions
+    let examData = await this.getExamById(examId, studentId);
+    const newAttemptNumber = (status.attemptsCount || 0) + 1;
+    const attemptId = `att_re_${Date.now()}`;
+    const startedAt = new Date();
+
+    const studentObjectId = mongoose.Types.ObjectId.isValid(studentId)
+      ? new mongoose.Types.ObjectId(studentId)
+      : null;
+    const examObjectId = mongoose.Types.ObjectId.isValid(examId)
+      ? new mongoose.Types.ObjectId(examId)
+      : null;
+
+    let createdAttemptId = attemptId;
+
+    if (mongoose.connection?.readyState === 1 && studentObjectId && examObjectId) {
+      try {
+        const newAttempt = await ExamAttempt.create({
+          studentId: studentObjectId,
+          examId: examObjectId,
+          attemptNumber: newAttemptNumber,
+          status: "in_progress",
+          totalQuestions: examData.totalQuestions,
+          totalMarks: examData.totalMarks,
+          startedAt,
+          answers: [],
+        });
+        createdAttemptId = newAttempt._id.toString();
+      } catch (err) {
+        console.warn("[ExamService]: DB error creating re-enroll attempt:", err);
+      }
+    }
+
+    // In-memory fallback record
+    inMemoryAttempts.set(createdAttemptId, {
+      id: createdAttemptId,
+      studentId,
+      examId,
+      attemptNumber: newAttemptNumber,
+      totalQuestions: examData.totalQuestions,
+      totalMarks: examData.totalMarks,
+      passingMarks: examData.passingMarks,
+      status: "in_progress",
+      startedAt,
+      answers: [],
+    });
+
+    return {
+      attemptId: createdAttemptId,
+      attemptNumber: newAttemptNumber,
+      exam: {
+        id: examData.id,
+        title: examData.title,
+        description: examData.description,
+        type: examData.type,
+        duration: examData.duration,
+        totalQuestions: examData.totalQuestions,
+        totalMarks: examData.totalMarks,
+        passingMarks: examData.passingMarks,
+      },
+      startedAt: startedAt.toISOString(),
+      questions: examData.questions,
+      previousAttemptsCount: status.attemptsCount || 0,
+      isReExam: true,
     };
   }
 }

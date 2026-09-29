@@ -29,6 +29,7 @@ export interface IExamAttempt extends Document {
   startedAt: Date;
   submittedAt: Date | null;
   failedAt?: Date | null;
+  failureDate?: Date | null;
   reExamEligibleAt?: Date | null;
   createdAt: Date;
   updatedAt: Date;
@@ -141,6 +142,10 @@ const ExamAttemptSchema = new Schema<IExamAttempt>(
       default: null,
     },
     failedAt: {
+      type: Date,
+      default: null,
+    },
+    failureDate: {
       type: Date,
       default: null,
     },

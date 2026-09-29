@@ -561,6 +561,7 @@ export class ExamService {
     const submittedAt = new Date();
     const timeTaken = payload.timeTaken || 0;
     const failedAt = !isPassed ? submittedAt : null;
+    const failureDate = failedAt;
     const reExamEligibleAt = !isPassed ? new Date(submittedAt.getTime() + 24 * 60 * 60 * 1000) : null;
 
     const studentObjectId = mongoose.Types.ObjectId.isValid(studentId)
@@ -593,6 +594,7 @@ export class ExamService {
           attemptDoc.status = "evaluated";
           attemptDoc.submittedAt = submittedAt;
           attemptDoc.failedAt = failedAt;
+          attemptDoc.failureDate = failureDate;
           attemptDoc.reExamEligibleAt = reExamEligibleAt;
           attemptDoc.answers = answerSummariesForAttempt;
           await attemptDoc.save();
@@ -614,6 +616,7 @@ export class ExamService {
             startedAt: new Date(Date.now() - timeTaken * 1000),
             submittedAt,
             failedAt,
+            failureDate,
             reExamEligibleAt,
             answers: answerSummariesForAttempt,
           });
@@ -661,6 +664,7 @@ export class ExamService {
       timeTaken,
       isPassed,
       failedAt,
+      failureDate,
       reExamEligibleAt,
       status: "evaluated",
       submittedAt,
@@ -798,6 +802,16 @@ export class ExamService {
 
     const proctoringSummary = await this.getProctoringEvents(resolvedAttemptId);
 
+    let certificate = undefined;
+    if (attemptDoc.isPassed && examType === "final") {
+      try {
+        const cert = await CertificateService.getCertificateByExamAndStudent(examId, studentId);
+        if (cert) certificate = cert;
+      } catch (certErr) {
+        console.warn("[ExamService]: Error fetching certificate for result:", certErr);
+      }
+    }
+
     return {
       attemptId: resolvedAttemptId,
       examId,
@@ -819,6 +833,7 @@ export class ExamService {
         ? new Date(attemptDoc.submittedAt).toISOString()
         : new Date().toISOString(),
       proctoringSummary,
+      certificate,
       answers: formattedAnswers,
     };
   }
@@ -1130,7 +1145,7 @@ export class ExamService {
     // Complete history preserved
     const history = combined.map((a: any) => {
       const failureDate =
-        a.failedAt || (!a.isPassed && a.status === "evaluated" ? a.submittedAt || a.createdAt : null);
+        a.failureDate || a.failedAt || (!a.isPassed && a.status === "evaluated" ? a.submittedAt || a.createdAt : null);
       const COOLDOWN_MS = 24 * 60 * 60 * 1000;
       const eligibleAt = failureDate ? new Date(new Date(failureDate).getTime() + COOLDOWN_MS) : null;
 

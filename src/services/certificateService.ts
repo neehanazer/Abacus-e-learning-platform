@@ -285,6 +285,65 @@ export class CertificateService {
   }
 
   /**
+   * Retrieves certificate for a specific student and exam
+   */
+  static async getCertificateByExamAndStudent(examId: string, studentId: string) {
+    try {
+      await connectToDatabase();
+    } catch {
+      // offline fallback
+    }
+
+    if (mongoose.connection?.readyState === 1) {
+      try {
+        const studentObjectId = mongoose.Types.ObjectId.isValid(studentId)
+          ? new mongoose.Types.ObjectId(studentId)
+          : null;
+        const examObjectId = mongoose.Types.ObjectId.isValid(examId)
+          ? new mongoose.Types.ObjectId(examId)
+          : null;
+
+        if (studentObjectId && examObjectId) {
+          const cert = await Certificate.findOne({
+            studentId: studentObjectId,
+            examId: examObjectId,
+          })
+            .populate("levelId", "levelName order")
+            .populate("examId", "title type")
+            .lean();
+
+          if (cert) {
+            return {
+              id: cert._id.toString(),
+              certificateId: cert.certificateId,
+              studentId: cert.studentId?.toString() || cert.studentId,
+              studentName: cert.studentName,
+              levelId: cert.levelId?._id?.toString() || cert.levelId?.toString(),
+              levelName: (cert.levelId as any)?.levelName || "Level 1",
+              examId: cert.examId?._id?.toString() || cert.examId?.toString(),
+              examTitle: (cert.examId as any)?.title || "Final Level Certification Exam",
+              score: cert.score,
+              grade: cert.grade,
+              issueDate: cert.issueDate,
+              verificationCode: cert.verificationCode,
+              status: cert.status,
+              createdAt: cert.createdAt,
+            };
+          }
+        }
+      } catch (err) {
+        console.warn("[CertificateService]: DB error in getCertificateByExamAndStudent:", err);
+      }
+    }
+
+    // In-memory fallback
+    const found = Array.from(inMemoryCertificates.values()).find(
+      (c) => c.studentId === studentId && (c.examId === examId || c.examId?.id === examId)
+    );
+    return found || null;
+  }
+
+  /**
    * GET /api/certificates/verify/[verificationCode]
    * Public verification endpoint by verification code
    */

@@ -57,10 +57,15 @@ export const ExamProctoringMedia: React.FC<ExamProctoringMediaProps> = ({
 
   // 3-Strike Warning & Screen Shut-off System
   const [violations, setViolations] = useState<ProctoringViolation[]>([]);
+  const violationsRef = useRef<ProctoringViolation[]>([]);
   const [activeWarningModal, setActiveWarningModal] = useState<ProctoringViolation | null>(null);
   const [isScreenShutOff, setIsScreenShutOff] = useState<boolean>(false);
   const lastViolationTimeRef = useRef<number>(0);
   const highAudioConsecutiveFrames = useRef<number>(0);
+
+  useEffect(() => {
+    violationsRef.current = violations;
+  }, [violations]);
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -118,40 +123,45 @@ export const ExamProctoringMedia: React.FC<ExamProctoringMediaProps> = ({
       if (now - lastViolationTimeRef.current < 6000) return;
       lastViolationTimeRef.current = now;
 
-      setViolations((prev) => {
-        const nextStrike = prev.length + 1;
-        const newViolation: ProctoringViolation = {
-          strikeNumber: nextStrike,
-          reason,
-          type,
-          timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" }),
-        };
+      const nextStrike = violationsRef.current.length + 1;
+      const newViolation: ProctoringViolation = {
+        strikeNumber: nextStrike,
+        reason,
+        type,
+        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" }),
+      };
 
-        const updated = [...prev, newViolation];
+      const updated = [...violationsRef.current, newViolation];
+      violationsRef.current = updated;
 
-        // Notify parent / API
-        if (onIncident) {
-          onIncident(type, `Violation #${nextStrike}: ${reason}`, nextStrike === 3 ? "high" : "medium");
+      // Update state for this component
+      setViolations(updated);
+
+      if (nextStrike >= 3) {
+        // 3rd time detected -> Shut off screen!
+        setIsScreenShutOff(true);
+        playAlertChime("shutoff");
+        if (typeof document !== "undefined" && document.fullscreenElement) {
+          document.exitFullscreen().catch(() => {});
         }
-
-        if (nextStrike >= 3) {
-          // 3rd time detected -> Shut off screen!
-          setIsScreenShutOff(true);
-          playAlertChime("shutoff");
-          if (document.fullscreenElement) {
-            document.exitFullscreen().catch(() => {});
-          }
-          if (onShutOff) {
+        // Asynchronously notify parent to prevent React "Cannot update component while rendering" warning
+        if (onShutOff) {
+          setTimeout(() => {
             onShutOff(updated);
-          }
-        } else {
-          // Warning 1 or Warning 2
-          setActiveWarningModal(newViolation);
-          playAlertChime("warning");
+          }, 0);
         }
+      } else {
+        // Warning 1 or Warning 2
+        setActiveWarningModal(newViolation);
+        playAlertChime("warning");
+      }
 
-        return updated;
-      });
+      // Notify parent / API asynchronously
+      if (onIncident) {
+        setTimeout(() => {
+          onIncident(type, `Violation #${nextStrike}: ${reason}`, nextStrike === 3 ? "high" : "medium");
+        }, 0);
+      }
     },
     [isScreenShutOff, onIncident, onShutOff, playAlertChime]
   );

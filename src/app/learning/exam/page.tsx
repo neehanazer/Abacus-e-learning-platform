@@ -303,16 +303,18 @@ export default function FinalExamPage() {
   // Handle Proctoring Screen Shut-Off (3 strikes detected)
   const handleShutOff = useCallback(
     (recordedViolations: any[]) => {
-      setIsShutOff(true);
-      if (timerRef.current) clearInterval(timerRef.current);
-      if (document.fullscreenElement) {
-        document.exitFullscreen().catch(() => {});
-      }
-      logProctoringEvent(
-        "exam_terminated_shutoff",
-        `Screen shut off after 3 proctoring violations: ${recordedViolations.map((v) => v.reason).join("; ")}`,
-        "high"
-      );
+      setTimeout(() => {
+        setIsShutOff(true);
+        if (timerRef.current) clearInterval(timerRef.current);
+        if (typeof document !== "undefined" && document.fullscreenElement) {
+          document.exitFullscreen().catch(() => {});
+        }
+        logProctoringEvent(
+          "exam_terminated_shutoff",
+          `Screen shut off after 3 proctoring violations: ${recordedViolations.map((v) => v.reason).join("; ")}`,
+          "high"
+        );
+      }, 0);
     },
     [logProctoringEvent]
   );

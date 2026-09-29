@@ -158,14 +158,15 @@ export default function WorksheetPlayer() {
         <div className="flex items-center gap-3">
           <button
             onClick={backToDashboard}
-            className="w-9 h-9 rounded-2xl bg-yellow-50 hover:bg-yellow-100 border border-yellow-200 text-[#1D3557] flex items-center justify-center font-extrabold text-sm transition-transform hover:scale-105"
-            title="Back to practice dashboard"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-yellow-50 hover:bg-yellow-100 border border-yellow-200 text-[#1D3557] font-extrabold text-xs transition-transform hover:scale-105 cursor-pointer shadow-sm"
+            title="Back to practice options"
           >
             <ArrowLeft className="w-4 h-4" />
+            <span>Options</span>
           </button>
           <div>
             <span className="text-[10px] font-extrabold text-orange-600 uppercase tracking-wider block">
-              Level {currentQuestion.level} Worksheet
+              {currentQuestion.category}
             </span>
             <h2 className="text-base sm:text-lg font-extrabold text-[#1D3557] font-heading line-clamp-1">
               {worksheetTitle}
@@ -392,9 +393,17 @@ export default function WorksheetPlayer() {
             ) : (
               /* Traditional Vertical Abacus Math Column (3 to 30 rows) */
               <div className="bg-[#FFFBF0] rounded-3xl p-6 sm:p-8 border-4 border-yellow-200 shadow-inner min-w-[220px] max-w-[280px] max-h-[380px] overflow-y-auto">
-                <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest block text-center mb-3">
-                  Soroban Column ({currentQuestion.rowCount} Rows)
-                </span>
+                <div className="text-center mb-3">
+                  {currentQuestion.numbers.length === 5 ? (
+                    <span className="text-orange-600 font-extrabold inline-flex items-center gap-1 bg-orange-100/90 px-3 py-1 rounded-full text-xs border border-orange-200 shadow-sm">
+                      🔥 1-Digit 5-Row Drill Stack
+                    </span>
+                  ) : (
+                    <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest block">
+                      Soroban Column ({currentQuestion.rowCount} Rows)
+                    </span>
+                  )}
+                </div>
 
                 {/* Vertical Math Numbers */}
                 <div className="space-y-1.5 text-right font-mono font-black text-2xl sm:text-3xl text-[#1D3557] pr-4">
@@ -436,42 +445,14 @@ export default function WorksheetPlayer() {
             )}
           </div>
 
-          {/* Right: Input Keypad or Multiple Choice Options (6 cols) */}
+          {/* Right: Direct Calculated Keypad (No multiple choice options given) */}
           <div className="md:col-span-6 space-y-5">
-            {currentQuestion.questionType === "multiple-choice" ||
-            currentQuestion.questionType === "bead-representation" ? (
-              /* Multiple Choice Option Buttons */
-              <div className="space-y-3">
-                <span className="text-xs font-extrabold text-slate-500 uppercase tracking-wider block">
-                  Select the correct answer:
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-extrabold text-slate-500 uppercase tracking-wider">
+                  Direct Calculated Answer:
                 </span>
-                <div className="grid grid-cols-2 gap-3">
-                  {(currentQuestion.options || [1, 2, 3, 4]).map((opt) => {
-                    const isSelected = currentAnswer === opt;
-                    return (
-                      <button
-                        key={opt}
-                        onClick={() => handleOptionSelect(opt)}
-                        className={`p-5 rounded-3xl font-mono text-2xl font-black transition-all duration-200 flex items-center justify-center shadow-md cursor-pointer border-3 ${
-                          isSelected
-                            ? "bg-gradient-to-tr from-[#F4A261] to-[#E76F51] text-white border-white scale-105 shadow-orange-300"
-                            : "bg-[#FFFBF0] text-[#1D3557] border-yellow-200 hover:border-yellow-400 hover:bg-yellow-50"
-                        }`}
-                      >
-                        {opt}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            ) : (
-              /* Kid-Friendly Onscreen Keypad */
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-extrabold text-slate-500 uppercase tracking-wider">
-                    Enter Answer (Keypad / Keyboard):
-                  </span>
-                  {inputVal && (
+                {inputVal && (
                     <button
                       onClick={handleClear}
                       className="text-xs font-bold text-rose-500 hover:text-rose-700 underline"
@@ -516,7 +497,6 @@ export default function WorksheetPlayer() {
                   </button>
                 </div>
               </div>
-            )}
 
             {/* Instant Feedback Notice */}
             <AnimatePresence>

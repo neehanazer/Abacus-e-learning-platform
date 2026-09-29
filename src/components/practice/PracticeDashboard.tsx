@@ -4,338 +4,235 @@ import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Sparkles,
-  Trophy,
-  Star,
   Clock,
-  CheckCircle2,
-  Play,
-  RotateCcw,
-  SlidersHorizontal,
-  Flame,
-  Award,
-  Layers,
   ArrowRight,
-  Filter,
-  CheckSquare,
-  HelpCircle,
-  TrendingUp,
   History,
   Trash2,
-  Lock,
-  Unlock,
   Zap,
-  Timer,
+  CheckCircle2,
 } from "lucide-react";
 import { usePractice } from "@/context/PracticeContext";
-import {
-  PRACTICE_CATEGORIES,
-  PracticeCategoryOption,
-} from "@/data/practiceData";
 import WorksheetPlayer from "./WorksheetPlayer";
 import PracticeResultView from "./PracticeResultView";
 
 export default function PracticeDashboard() {
   const {
     viewMode,
-    selectedLevel,
-    setSelectedLevel,
-    studentMaxLevel,
-    setStudentMaxLevel,
-    isLevelUnlocked,
-    activeCategory,
-    startCategoryWorksheet,
+    startPracticeSession,
     attemptHistory,
-    getCategoryBestScore,
-    getCategoryLastScore,
-    getCategoryAttemptsCount,
     clearAttemptHistory,
-    practiceMode,
-    setPracticeMode,
     targetMinutes,
     setTargetMinutes,
   } = usePractice();
 
   const [showHistoryDrawer, setShowHistoryDrawer] = useState<boolean>(false);
-  const [lockedLevelNotice, setLockedLevelNotice] = useState<number | null>(null);
 
-  // All 8 Standardized Syllabus Levels
-  const levels = [
-    {
-      id: 1,
-      name: "Level 1 — Foundations",
-      badge: "🌱 Seedling",
-      desc: "Simple 1D/2D, Small Friends, Big Friends, 3/5/7 Rows",
-    },
-    {
-      id: 2,
-      name: "Level 2 — Explorer",
-      badge: "🧭 Explorer",
-      desc: "1D 10/12/15 Rows, 2D 3/5/8 Rows",
-    },
-    {
-      id: 3,
-      name: "Level 3 — Adventurer",
-      badge: "🚀 Adventurer",
-      desc: "1D 20/25 Rows, 2D 10/12 Rows, 3D 3/5 Rows",
-    },
-    {
-      id: 4,
-      name: "Level 4 — Magician",
-      badge: "🧙‍♂️ Magician",
-      desc: "1D 30 Rows, 2D 15/20 Rows, 3D 7/10 Rows, 4D 3/5 Rows",
-    },
-    {
-      id: 5,
-      name: "Level 5 — Ninja",
-      badge: "🥷 Ninja",
-      desc: "2D 25 Rows, 3D 12/15 Rows, 4D 7 Rows, Multiplication (2D × 1D)",
-    },
-    {
-      id: 6,
-      name: "Level 6 — Master",
-      badge: "🥋 Master",
-      desc: "5-Digit Rows, Multiplication (3D/4D/2D), Division (2D ÷ 1D)",
-    },
-    {
-      id: 7,
-      name: "Level 7 — Grandmaster",
-      badge: "🏆 Grandmaster",
-      desc: "3D 25 Rows, 4D 15 Rows, 5D 10 Rows, Mult 3D×2D/3D×3D, Div 3D÷1D/2D",
-    },
-    {
-      id: 8,
-      name: "Level 8 — Legend",
-      badge: "🌟 Legend",
-      desc: "Flash Anzan, Mental Multi-Row, Speed Championship",
-    },
-  ];
+  // If in active worksheet mode or result mode, render that screen directly
+  if (viewMode === "worksheet") {
+    return <WorksheetPlayer />;
+  }
 
-  // Get syllabus categories specifically for the selected level
-  const categoriesForLevel = PRACTICE_CATEGORIES.filter((c) => c.level === selectedLevel);
+  if (viewMode === "result") {
+    return <PracticeResultView />;
+  }
 
-  const handleLevelClick = (lvlId: number) => {
-    if (isLevelUnlocked(lvlId)) {
-      setSelectedLevel(lvlId);
-      setLockedLevelNotice(null);
-    } else {
-      setLockedLevelNotice(lvlId);
-    }
-  };
-
-  const handleSelectCategory = (cat: PracticeCategoryOption) => {
-    startCategoryWorksheet(cat);
-  };
-
-  const bestScore = activeCategory ? getCategoryBestScore(activeCategory.id) : null;
-  const lastScore = activeCategory ? getCategoryLastScore(activeCategory.id) : null;
-  const attemptsCount = activeCategory ? getCategoryAttemptsCount(activeCategory.id) : 0;
-
+  // ============================================================
+  // LANDING DASHBOARD: ONLY 2 PRACTICE OPTIONS
+  // 1. Practice Without Timer
+  // 2. Practice With Timer
+  // (Both containing: Direct calculation, Small friend rule,
+  //  Big friend rule, 1-digit 5-row calculation)
+  // ============================================================
   return (
-    <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-5 space-y-6">
-      {/* ============================================================ */}
-      {/* 1. TOP HEADER & LEVEL SELECTOR */}
-      {/* ============================================================ */}
-      <div className="bg-white rounded-[2rem] p-5 sm:p-6 border-2 border-yellow-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="space-y-1">
-          <div className="inline-flex items-center gap-2 px-3 py-0.5 rounded-full bg-orange-100 text-orange-800 text-[11px] font-black uppercase tracking-wider">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+      {/* 1. Header Banner */}
+      <div className="bg-white rounded-[2.5rem] p-6 sm:p-8 border-2 border-yellow-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="space-y-1.5">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-100 text-orange-800 text-xs font-black uppercase tracking-wider">
             <Sparkles className="w-3.5 h-3.5 text-orange-600" />
-            <span>Interactive Abacus Practice</span>
+            <span>Interactive Abacus Practice Portal</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#1D3557] font-heading">
-            Syllabus Practice Worksheets 🎯
+          <h1 className="text-2xl sm:text-4xl font-extrabold text-[#1D3557] font-heading">
+            Choose Your Practice Mode 🎯
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 font-medium">
-            Select your syllabus topic below to instantly load the 20-question practice worksheet.
+          <p className="text-xs sm:text-sm text-slate-500 font-medium max-w-2xl">
+            Select one of the 2 practice options below. Both options contain all core Abacus calculation topics!
           </p>
         </div>
 
-        {/* Student Level Indicator & Quick Belt Switcher */}
-        <div className="flex items-center gap-3 bg-[#FFFBF0] border-2 border-yellow-200 rounded-2xl p-3">
-          <div>
-            <span className="text-[10px] font-bold text-slate-500 uppercase block">
-              Student Level Access
-            </span>
-            <div className="flex items-center gap-1.5 mt-0.5">
-              <span className="text-sm font-black text-[#1D3557]">
-                Level {studentMaxLevel}
-              </span>
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-extrabold">
-                {studentMaxLevel === 1 ? "Level 1 Unlocked" : `Levels 1 to ${studentMaxLevel} Unlocked`}
-              </span>
-            </div>
-          </div>
-
-          <div className="border-l border-yellow-200 pl-3">
-            <span className="text-[9px] text-slate-400 font-bold block">Change Belt:</span>
-            <select
-              value={studentMaxLevel}
-              onChange={(e) => {
-                const newLvl = Number(e.target.value);
-                setStudentMaxLevel(newLvl);
-                setSelectedLevel(newLvl);
-                setLockedLevelNotice(null);
-              }}
-              className="text-xs font-extrabold bg-white border border-yellow-300 rounded-lg px-2 py-1 text-[#1D3557] focus:outline-none cursor-pointer mt-0.5"
-            >
-              {[1, 2, 3, 4, 5, 6, 7, 8].map((l) => (
-                <option key={l} value={l}>
-                  Level {l}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {attemptHistory.length > 0 && (
-            <button
-              onClick={() => setShowHistoryDrawer(true)}
-              className="p-2 rounded-xl bg-purple-50 hover:bg-purple-100 border border-purple-200 text-purple-700 transition"
-              title="View past attempts history"
-            >
-              <History className="w-4 h-4" />
-            </button>
-          )}
-        </div>
+        {attemptHistory.length > 0 && (
+          <button
+            onClick={() => setShowHistoryDrawer(true)}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-[#FFFBF0] hover:bg-yellow-100 border-2 border-yellow-300 text-[#1D3557] text-xs font-extrabold transition shadow-sm self-start md:self-auto cursor-pointer"
+            title="View past attempts history"
+          >
+            <History className="w-4 h-4 text-orange-600" />
+            <span>Practice History ({attemptHistory.length})</span>
+          </button>
+        )}
       </div>
 
-      {/* ============================================================ */}
-      {/* 2. PRACTICE MODE SECTIONS: 1) WITHOUT TIMER & 2) WITH TIMER */}
-      {/* ============================================================ */}
-      <div className="bg-white rounded-[2rem] p-5 sm:p-6 border-2 border-yellow-200 shadow-sm space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-          <div>
-            <div className="flex items-center gap-2 text-xs font-black text-[#1D3557] uppercase tracking-wider">
-              <Zap className="w-3.5 h-3.5 text-[#F4A261]" />
-              <span>PRACTICE SECTIONS:</span>
+      {/* 2. THE 2 PRACTICE OPTIONS */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
+        {/* ======================================================== */}
+        {/* OPTION 1: PRACTICE WITHOUT TIMER */}
+        {/* ======================================================== */}
+        <div className="bg-white rounded-[2.5rem] p-6 sm:p-8 border-3 border-emerald-300 shadow-md hover:shadow-xl transition-all duration-300 flex flex-col justify-between relative overflow-hidden group">
+          <div className="absolute top-0 right-0 w-36 h-36 bg-emerald-100/50 rounded-full blur-2xl pointer-events-none" />
+
+          <div className="space-y-5">
+            {/* Header Badge & Icon */}
+            <div className="flex items-center justify-between">
+              <span className="w-14 h-14 rounded-3xl bg-emerald-100 text-emerald-800 flex items-center justify-center text-3xl shadow-sm">
+                🌱
+              </span>
+              <span className="px-3.5 py-1.5 rounded-full bg-emerald-100 text-emerald-800 text-xs font-black uppercase tracking-wider border border-emerald-200">
+                Option 1 • Untimed
+              </span>
             </div>
-            <p className="text-xs text-slate-500 font-medium mt-0.5">
-              Select your practice section: casual untimed practice or a custom timed speed challenge.
-            </p>
+
+            <div>
+              <h2 className="text-2xl font-black text-[#1D3557] font-heading mb-1.5">
+                Practice Without Timer
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-600 font-medium leading-relaxed">
+                Master your bead movements at your own comfortable pace with zero clock pressure. Focus on precision, bead discipline, and understanding formula rules.
+              </p>
+            </div>
+
+            {/* Quick Benefits */}
+            <div className="flex flex-wrap items-center gap-2 text-xs font-bold text-emerald-800 bg-emerald-50/60 p-3 rounded-2xl border border-emerald-200/60">
+              <span className="flex items-center gap-1">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Casual pace
+              </span>
+              <span>•</span>
+              <span className="flex items-center gap-1">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> No time limit
+              </span>
+              <span>•</span>
+              <span className="flex items-center gap-1">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Accuracy focus
+              </span>
+            </div>
+
+            {/* Contents Inside as Specified */}
+            <div className="space-y-2.5 pt-2 border-t border-emerald-100">
+              <span className="text-[11px] font-black uppercase tracking-wider text-emerald-900 block">
+                Contents Inside This Practice:
+              </span>
+
+              <div className="space-y-2">
+                <div className="flex items-center gap-3 p-3 rounded-2xl bg-emerald-50/80 border border-emerald-200/80">
+                  <span className="w-7 h-7 rounded-xl bg-emerald-600 text-white flex items-center justify-center text-xs font-black flex-shrink-0">
+                    1
+                  </span>
+                  <div className="text-xs">
+                    <span className="font-extrabold text-[#1D3557] block">Direct Calculation</span>
+                    <span className="text-slate-500 font-medium text-[11px]">
+                      Pure bead manipulation on units & tens without friend formulas
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 p-3 rounded-2xl bg-emerald-50/80 border border-emerald-200/80">
+                  <span className="w-7 h-7 rounded-xl bg-emerald-600 text-white flex items-center justify-center text-xs font-black flex-shrink-0">
+                    2
+                  </span>
+                  <div className="text-xs">
+                    <span className="font-extrabold text-[#1D3557] block">Small Friend Rule</span>
+                    <span className="text-slate-500 font-medium text-[11px]">
+                      Base-5 complementary formulas (+4..+1 and -4..-1 rules)
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 p-3 rounded-2xl bg-emerald-50/80 border border-emerald-200/80">
+                  <span className="w-7 h-7 rounded-xl bg-emerald-600 text-white flex items-center justify-center text-xs font-black flex-shrink-0">
+                    3
+                  </span>
+                  <div className="text-xs">
+                    <span className="font-extrabold text-[#1D3557] block">Big Friend Rule</span>
+                    <span className="text-slate-500 font-medium text-[11px]">
+                      Base-10 carrying & borrowing formulas (+9..+1 and -9..-1 rules)
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 p-3 rounded-2xl bg-emerald-50/80 border border-emerald-200/80">
+                  <span className="w-7 h-7 rounded-xl bg-emerald-600 text-white flex items-center justify-center text-xs font-black flex-shrink-0">
+                    4
+                  </span>
+                  <div className="text-xs">
+                    <span className="font-extrabold text-[#1D3557] block">1-Digit 5-Row Calculation</span>
+                    <span className="text-slate-500 font-medium text-[11px]">
+                      Authentic 5 consecutive single-digit vertical stack drills
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
-          <span className="text-xs font-extrabold px-3 py-1 rounded-full bg-yellow-100 text-yellow-900 self-start sm:self-auto">
-            Active: {practiceMode === "untimed" ? "1. Practice Without Timer" : `2. Practice With Timer (${targetMinutes} mins)`}
-          </span>
+          {/* Start Button */}
+          <div className="pt-6 mt-6 border-t border-emerald-100">
+            <button
+              onClick={() => startPracticeSession("untimed")}
+              className="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-emerald-600 via-teal-600 to-green-600 text-white font-extrabold text-base shadow-lg shadow-emerald-200 hover:shadow-xl hover:scale-[1.02] active:scale-98 transition-all flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <span>🌱 Start Practice Without Timer</span>
+              <ArrowRight className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
-        {/* 2 Main Mode Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Section 1: Practice Without Timer */}
-          <button
-            type="button"
-            onClick={() => setPracticeMode("untimed")}
-            className={`p-5 rounded-2xl border-3 text-left transition-all cursor-pointer relative flex flex-col justify-between ${
-              practiceMode === "untimed"
-                ? "bg-gradient-to-br from-emerald-50 via-teal-50 to-white border-emerald-500 shadow-md ring-2 ring-emerald-300"
-                : "bg-white hover:bg-slate-50 border-slate-200 hover:border-slate-300 text-slate-700"
-            }`}
-          >
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <span className="w-10 h-10 rounded-2xl bg-emerald-100 text-emerald-800 flex items-center justify-center text-xl font-bold shadow-sm">
-                  🌱
-                </span>
-                {practiceMode === "untimed" ? (
-                  <span className="px-2.5 py-1 rounded-full bg-emerald-600 text-white text-[11px] font-black uppercase tracking-wider flex items-center gap-1 shadow-sm">
-                    <CheckCircle2 className="w-3 h-3" />
-                    <span>Selected Section</span>
-                  </span>
-                ) : (
-                  <span className="text-xs font-bold text-slate-400">Click to Select</span>
-                )}
-              </div>
+        {/* ======================================================== */}
+        {/* OPTION 2: PRACTICE WITH TIMER */}
+        {/* ======================================================== */}
+        <div className="bg-white rounded-[2.5rem] p-6 sm:p-8 border-3 border-orange-300 shadow-md hover:shadow-xl transition-all duration-300 flex flex-col justify-between relative overflow-hidden group">
+          <div className="absolute top-0 right-0 w-36 h-36 bg-orange-100/50 rounded-full blur-2xl pointer-events-none" />
 
-              <h3 className="text-lg font-black text-[#1D3557] font-heading mb-1">
-                1. Practice Without Timer
-              </h3>
-              <p className="text-xs text-slate-600 leading-relaxed font-medium">
-                Standard self-paced practice mode. Practice bead manipulation and abacus formulas at your own leisure with zero clock countdown pressure.
+          <div className="space-y-5">
+            {/* Header Badge & Icon */}
+            <div className="flex items-center justify-between">
+              <span className="w-14 h-14 rounded-3xl bg-orange-100 text-orange-800 flex items-center justify-center text-3xl shadow-sm">
+                ⏱️
+              </span>
+              <span className="px-3.5 py-1.5 rounded-full bg-orange-100 text-orange-800 text-xs font-black uppercase tracking-wider border border-orange-200">
+                Option 2 • Timed Drill
+              </span>
+            </div>
+
+            <div>
+              <h2 className="text-2xl font-black text-[#1D3557] font-heading mb-1.5">
+                Practice With Timer
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-600 font-medium leading-relaxed">
+                Boost your calculation velocity and mental agility against the clock. Set your target duration in minutes and challenge yourself to complete calculations before time runs out!
               </p>
             </div>
 
-            <div className="mt-4 pt-3 border-t border-emerald-100/60 flex items-center gap-2 text-[11px] font-extrabold text-emerald-800">
-              <span>✓ Casual pace</span>
-              <span>•</span>
-              <span>✓ No time limit</span>
-              <span>•</span>
-              <span>✓ Focus on accuracy</span>
-            </div>
-          </button>
-
-          {/* Section 2: Practice With Timer */}
-          <button
-            type="button"
-            onClick={() => setPracticeMode("timed")}
-            className={`p-5 rounded-2xl border-3 text-left transition-all cursor-pointer relative flex flex-col justify-between ${
-              practiceMode === "timed"
-                ? "bg-gradient-to-br from-orange-50 via-amber-50 to-white border-[#F4A261] shadow-md ring-2 ring-orange-300"
-                : "bg-white hover:bg-slate-50 border-slate-200 hover:border-slate-300 text-slate-700"
-            }`}
-          >
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <span className="w-10 h-10 rounded-2xl bg-orange-100 text-orange-800 flex items-center justify-center text-xl font-bold shadow-sm">
-                  ⏱️
-                </span>
-                {practiceMode === "timed" ? (
-                  <span className="px-2.5 py-1 rounded-full bg-[#E76F51] text-white text-[11px] font-black uppercase tracking-wider flex items-center gap-1 shadow-sm">
-                    <CheckCircle2 className="w-3 h-3" />
-                    <span>Selected Section</span>
+            {/* Feature: Set the Timer for How Many Minutes */}
+            <div className="p-4 rounded-2xl bg-[#FFFBF0] border-2 border-orange-200 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-orange-600" />
+                  <span className="text-xs font-black text-[#1D3557] uppercase tracking-wider">
+                    Set Practice Timer Duration:
                   </span>
-                ) : (
-                  <span className="text-xs font-bold text-slate-400">Click to Select</span>
-                )}
-              </div>
-
-              <h3 className="text-lg font-black text-[#1D3557] font-heading mb-1">
-                2. Practice With Timer
-              </h3>
-              <p className="text-xs text-slate-600 leading-relaxed font-medium">
-                Timed speed drill mode. Set your target duration in minutes and challenge yourself to complete as many correct calculations as possible before time runs out!
-              </p>
-            </div>
-
-            <div className="mt-4 pt-3 border-t border-orange-100/60 flex items-center gap-2 text-[11px] font-extrabold text-orange-900">
-              <span>⏱️ Countdown timer</span>
-              <span>•</span>
-              <span>⏱️ Set custom minutes</span>
-              <span>•</span>
-              <span>⚡ Speed & velocity test</span>
-            </div>
-          </button>
-        </div>
-
-        {/* Feature: Set the timer for how many minutes */}
-        {practiceMode === "timed" && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-[#FFFBF0] rounded-2xl p-4 sm:p-5 border-2 border-orange-300 space-y-4"
-          >
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <Clock className="w-4 h-4 text-orange-600" />
-                <span className="text-xs sm:text-sm font-black text-[#1D3557]">
-                  Set Practice Timer Duration:
-                </span>
+                </div>
                 <span className="text-xs font-extrabold text-orange-800 bg-orange-100 px-2.5 py-0.5 rounded-full border border-orange-200">
                   {targetMinutes} {targetMinutes === 1 ? "Minute" : "Minutes"}
                 </span>
               </div>
-              <span className="text-[11px] font-semibold text-slate-500">
-                Pick a preset or adjust minutes with the buttons
-              </span>
-            </div>
 
-            {/* Minute Presets & Stepper */}
-            <div className="flex flex-wrap items-center gap-3">
-              {/* Presets */}
+              {/* Quick Minute Preset Buttons & Stepper */}
               <div className="flex flex-wrap items-center gap-2">
-                {[1, 2, 3, 5, 10, 15, 20].map((m) => (
+                {[1, 2, 3, 5, 10, 15].map((m) => (
                   <button
                     key={m}
                     type="button"
                     onClick={() => setTargetMinutes(m)}
-                    className={`px-3.5 py-1.5 rounded-xl font-bold text-xs transition cursor-pointer ${
+                    className={`px-3 py-1.5 rounded-xl font-bold text-xs transition cursor-pointer ${
                       targetMinutes === m
                         ? "bg-[#E76F51] text-white shadow-sm font-extrabold scale-105"
                         : "bg-white hover:bg-orange-100 text-slate-700 border border-orange-200"
@@ -344,211 +241,106 @@ export default function PracticeDashboard() {
                     {m} {m === 1 ? "Min" : "Mins"}
                   </button>
                 ))}
-              </div>
 
-              {/* Stepper for custom minutes */}
-              <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-xl border border-orange-200 shadow-sm ml-auto">
-                <span className="text-[11px] font-bold text-slate-500">Adjust:</span>
-                <button
-                  type="button"
-                  onClick={() => setTargetMinutes(targetMinutes - 1)}
-                  disabled={targetMinutes <= 1}
-                  className="w-7 h-7 rounded-lg bg-orange-100 hover:bg-orange-200 disabled:opacity-30 disabled:cursor-not-allowed font-black text-orange-800 flex items-center justify-center text-sm"
-                  title="Decrease 1 minute"
-                >
-                  -
-                </button>
-                <span className="font-mono font-black text-sm text-[#1D3557] px-2 min-w-[36px] text-center">
-                  {targetMinutes}m
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setTargetMinutes(targetMinutes + 1)}
-                  disabled={targetMinutes >= 60}
-                  className="w-7 h-7 rounded-lg bg-orange-100 hover:bg-orange-200 disabled:opacity-30 disabled:cursor-not-allowed font-black text-orange-800 flex items-center justify-center text-sm"
-                  title="Increase 1 minute"
-                >
-                  +
-                </button>
-              </div>
-            </div>
-
-            <div className="text-[11px] text-orange-950 bg-orange-100/70 p-2.5 rounded-xl font-medium flex items-center gap-2 border border-orange-200">
-              <Sparkles className="w-3.5 h-3.5 text-orange-600 flex-shrink-0" />
-              <span>
-                Worksheet practice below will run with a <strong>{targetMinutes}-minute countdown clock</strong> ({targetMinutes * 60} seconds). Test your speed and beat the timer!
-              </span>
-            </div>
-          </motion.div>
-        )}
-      </div>
-
-      {/* ============================================================ */}
-      {/* 3. LEVEL TABS (Levels 1 to 8) */}
-      {/* ============================================================ */}
-      <div className="space-y-2">
-        <div className="flex items-center justify-between text-xs font-bold text-[#1D3557]">
-          <span className="flex items-center gap-1.5">
-            <span>🥋</span>
-            <span>Choose Abacus Level:</span>
-          </span>
-          <span className="text-slate-500">
-            Active: <strong>Level {selectedLevel}</strong>
-          </span>
-        </div>
-
-        <div className="grid grid-cols-4 sm:grid-cols-8 gap-2">
-          {levels.map((lvl) => {
-            const isSelected = lvl.id === selectedLevel;
-            const isUnlocked = isLevelUnlocked(lvl.id);
-
-            return (
-              <button
-                key={lvl.id}
-                onClick={() => handleLevelClick(lvl.id)}
-                className={`p-2.5 rounded-2xl text-left border-2 transition-all duration-200 cursor-pointer ${
-                  isSelected
-                    ? "bg-gradient-to-tr from-[#1D3557] to-[#2B4C7E] text-white border-yellow-300 shadow-md scale-105"
-                    : isUnlocked
-                    ? "bg-white hover:bg-yellow-50 text-[#1D3557] border-yellow-200 shadow-sm"
-                    : "bg-slate-50 text-slate-400 border-slate-200 hover:border-slate-300 opacity-60"
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <span
-                    className={`text-[9px] font-extrabold px-1 py-0.2 rounded-full ${
-                      isSelected
-                        ? "bg-white/20 text-yellow-300"
-                        : isUnlocked
-                        ? "bg-emerald-100 text-emerald-800"
-                        : "bg-slate-200 text-slate-600"
-                    }`}
+                {/* Stepper +/- */}
+                <div className="flex items-center gap-1.5 bg-white px-2 py-1 rounded-xl border border-orange-200 shadow-sm ml-auto">
+                  <button
+                    type="button"
+                    onClick={() => setTargetMinutes(targetMinutes - 1)}
+                    disabled={targetMinutes <= 1}
+                    className="w-6 h-6 rounded-lg bg-orange-100 hover:bg-orange-200 disabled:opacity-30 disabled:cursor-not-allowed font-black text-orange-800 flex items-center justify-center text-xs"
+                    title="Decrease 1 minute"
                   >
-                    {isUnlocked ? "✓" : "🔒"}
+                    -
+                  </button>
+                  <span className="font-mono font-black text-xs text-[#1D3557] px-1 min-w-[28px] text-center">
+                    {targetMinutes}m
                   </span>
-                  <span className="text-xs">{lvl.badge?.split(" ")?.[1] || lvl.badge || "🏅"}</span>
-                </div>
-                <div className="mt-1 text-xs font-black font-heading truncate">
-                  Level {lvl.id}
-                </div>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Locked Notice Banner */}
-        <AnimatePresence>
-          {lockedLevelNotice && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-              className="p-3 rounded-2xl bg-amber-50 border border-amber-300 flex items-center justify-between gap-3 text-xs"
-            >
-              <div className="flex items-center gap-2">
-                <span className="text-lg">🔒</span>
-                <div>
-                  <span className="font-extrabold text-[#1D3557]">
-                    Level {lockedLevelNotice} is locked for your current level (Level {studentMaxLevel})!
-                  </span>
-                  <span className="text-slate-600 ml-1">
-                    Advance your student level with the switcher above to unlock.
-                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setTargetMinutes(targetMinutes + 1)}
+                    disabled={targetMinutes >= 60}
+                    className="w-6 h-6 rounded-lg bg-orange-100 hover:bg-orange-200 disabled:opacity-30 disabled:cursor-not-allowed font-black text-orange-800 flex items-center justify-center text-xs"
+                    title="Increase 1 minute"
+                  >
+                    +
+                  </button>
                 </div>
               </div>
-
-              <button
-                onClick={() => {
-                  setStudentMaxLevel(lockedLevelNotice);
-                  setSelectedLevel(lockedLevelNotice);
-                  setLockedLevelNotice(null);
-                }}
-                className="px-3 py-1 rounded-full bg-[#1D3557] text-white font-bold hover:bg-slate-800 flex-shrink-0"
-              >
-                Unlock Level {lockedLevelNotice}
-              </button>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-
-      {/* ============================================================ */}
-      {/* 3. EXACT SYLLABUS TOPIC / RULE PILLS (Directly triggers worksheet below) */}
-      {/* ============================================================ */}
-      <div className="bg-[#FFFBF0] rounded-[2rem] p-4 sm:p-5 border-2 border-yellow-300 shadow-md space-y-3">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-          <div className="flex items-center gap-2 text-xs font-black text-[#1D3557] uppercase tracking-wider">
-            <Filter className="w-3.5 h-3.5 text-[#F4A261]" />
-            <span>CHOOSE PRACTICE TOPIC / RULE:</span>
-          </div>
-          <span className="text-[11px] font-bold text-slate-500">
-            Click any topic to immediately practice its 20-question worksheet below
-          </span>
-        </div>
-
-        {/* The Exact Syllabus Options (NO "All Worksheets") */}
-        <div className="flex flex-wrap items-center gap-2 pt-1">
-          {categoriesForLevel.map((cat) => {
-            const isActive = activeCategory?.id === cat.id;
-
-            return (
-              <button
-                key={cat.id}
-                onClick={() => handleSelectCategory(cat)}
-                className={`px-4 py-2 rounded-full text-xs sm:text-sm font-extrabold transition-all duration-200 flex items-center gap-2 cursor-pointer border-2 ${
-                  isActive
-                    ? "bg-[#E63946] text-white border-white shadow-md shadow-rose-200 scale-105 ring-2 ring-rose-400"
-                    : "bg-white text-slate-700 hover:text-[#1D3557] border-yellow-200 hover:border-yellow-400 hover:bg-yellow-50 shadow-sm"
-                }`}
-              >
-                <span>{cat.icon}</span>
-                <span>{cat.name}</span>
-                {isActive && <span className="text-[10px] bg-white/20 px-1.5 py-0.2 rounded-full font-mono">20 Qs</span>}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Active Category Meta Bar */}
-        {activeCategory && (
-          <div className="pt-2 border-t border-yellow-200/80 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-600">
-            <div className="flex items-center gap-2">
-              <span className="font-extrabold text-[#1D3557]">
-                Active Worksheet: {activeCategory.name}
-              </span>
-              <span className="text-slate-400">•</span>
-              <span>{activeCategory.description}</span>
             </div>
 
-            <div className="flex items-center gap-4 text-[11px]">
-              <span>
-                Attempts: <strong>{attemptsCount}</strong>
+            {/* Contents Inside as Specified */}
+            <div className="space-y-2.5 pt-2 border-t border-orange-100">
+              <span className="text-[11px] font-black uppercase tracking-wider text-orange-900 block">
+                Contents Inside This Practice:
               </span>
-              {bestScore && (
-                <span>
-                  Best: <strong className="text-emerald-700">{bestScore.score}/20</strong>
-                </span>
-              )}
-              {lastScore && (
-                <span>
-                  Last: <strong className="text-blue-700">{lastScore.score}/20</strong>
-                </span>
-              )}
+
+              <div className="space-y-2">
+                <div className="flex items-center gap-3 p-3 rounded-2xl bg-orange-50/80 border border-orange-200/80">
+                  <span className="w-7 h-7 rounded-xl bg-[#E76F51] text-white flex items-center justify-center text-xs font-black flex-shrink-0">
+                    1
+                  </span>
+                  <div className="text-xs">
+                    <span className="font-extrabold text-[#1D3557] block">Direct Calculation</span>
+                    <span className="text-slate-500 font-medium text-[11px]">
+                      Pure bead manipulation on units & tens without friend formulas
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 p-3 rounded-2xl bg-orange-50/80 border border-orange-200/80">
+                  <span className="w-7 h-7 rounded-xl bg-[#E76F51] text-white flex items-center justify-center text-xs font-black flex-shrink-0">
+                    2
+                  </span>
+                  <div className="text-xs">
+                    <span className="font-extrabold text-[#1D3557] block">Small Friend Rule</span>
+                    <span className="text-slate-500 font-medium text-[11px]">
+                      Base-5 complementary formulas (+4..+1 and -4..-1 rules)
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 p-3 rounded-2xl bg-orange-50/80 border border-orange-200/80">
+                  <span className="w-7 h-7 rounded-xl bg-[#E76F51] text-white flex items-center justify-center text-xs font-black flex-shrink-0">
+                    3
+                  </span>
+                  <div className="text-xs">
+                    <span className="font-extrabold text-[#1D3557] block">Big Friend Rule</span>
+                    <span className="text-slate-500 font-medium text-[11px]">
+                      Base-10 carrying & borrowing formulas (+9..+1 and -9..-1 rules)
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 p-3 rounded-2xl bg-orange-50/80 border border-orange-200/80">
+                  <span className="w-7 h-7 rounded-xl bg-[#E76F51] text-white flex items-center justify-center text-xs font-black flex-shrink-0">
+                    4
+                  </span>
+                  <div className="text-xs">
+                    <span className="font-extrabold text-[#1D3557] block">1-Digit 5-Row Calculation</span>
+                    <span className="text-slate-500 font-medium text-[11px]">
+                      Authentic 5 consecutive single-digit vertical stack drills
+                    </span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-        )}
+
+          {/* Start Button */}
+          <div className="pt-6 mt-6 border-t border-orange-100">
+            <button
+              onClick={() => startPracticeSession("timed", targetMinutes)}
+              className="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-[#F4A261] via-[#E76F51] to-[#E9C46A] text-white font-extrabold text-base shadow-lg shadow-orange-200 hover:shadow-xl hover:scale-[1.02] active:scale-98 transition-all flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <span>⏱️ Start Timed Practice ({targetMinutes} {targetMinutes === 1 ? "Min" : "Mins"})</span>
+              <ArrowRight className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
       </div>
 
-      {/* ============================================================ */}
-      {/* 4. THE 20-QUESTION WORKSHEET (Appears directly BELOW!) */}
-      {/* ============================================================ */}
-      <div className="pt-2">
-        {viewMode === "result" ? <PracticeResultView /> : <WorksheetPlayer />}
-      </div>
-
-      {/* ============================================================ */}
-      {/* 5. ATTEMPT HISTORY MODAL */}
-      {/* ============================================================ */}
+      {/* 3. ATTEMPT HISTORY MODAL */}
       <AnimatePresence>
         {showHistoryDrawer && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
@@ -567,7 +359,7 @@ export default function PracticeDashboard() {
                 </div>
                 <button
                   onClick={() => setShowHistoryDrawer(false)}
-                  className="w-8 h-8 rounded-full bg-yellow-100 hover:bg-yellow-200 text-slate-700 flex items-center justify-center font-bold text-sm"
+                  className="w-8 h-8 rounded-full bg-yellow-100 hover:bg-yellow-200 text-slate-700 flex items-center justify-center font-bold text-sm cursor-pointer"
                 >
                   ✕
                 </button>
@@ -589,7 +381,7 @@ export default function PracticeDashboard() {
                           {att.categoryTitle}
                         </strong>
                         <span className="text-[10px] px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-900 font-bold">
-                          Level {att.level}
+                          {att.isTimed ? `⏱️ ${att.targetMinutes || 5}m Timed` : "🌱 Untimed"}
                         </span>
                       </div>
                       <span className="text-xs text-slate-500 block mt-0.5">
@@ -610,7 +402,7 @@ export default function PracticeDashboard() {
                 ))}
               </div>
 
-              {/* Bottom Drawer Actions */}
+              {/* Bottom Actions */}
               <div className="pt-4 border-t border-yellow-200 flex items-center justify-between">
                 <button
                   onClick={clearAttemptHistory}

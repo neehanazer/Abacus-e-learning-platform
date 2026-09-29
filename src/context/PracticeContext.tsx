@@ -8,6 +8,7 @@ import {
   WorksheetFilterOptions,
   PRACTICE_CATEGORIES,
   generateWorksheet,
+  generateComprehensivePracticeQuestions,
 } from "@/data/practiceData";
 import confetti from "canvas-confetti";
 
@@ -16,6 +17,7 @@ import { useAuth } from "@/context/AuthContext";
 interface PracticeContextType {
   // Current view mode: dashboard vs active worksheet
   viewMode: "dashboard" | "worksheet" | "result";
+  setViewMode: (mode: "dashboard" | "worksheet" | "result") => void;
   selectedLevel: number;
   setSelectedLevel: (level: number) => void;
   studentMaxLevel: number;
@@ -57,6 +59,7 @@ interface PracticeContextType {
   attemptHistory: PracticeAttempt[];
 
   // Action Handlers
+  startPracticeSession: (mode: "untimed" | "timed", minutes?: number) => void;
   startCategoryWorksheet: (category: PracticeCategoryOption) => void;
   startCustomWorksheet: (filter: WorksheetFilterOptions, title?: string) => void;
   answerQuestion: (questionId: string, answer: number | null) => void;
@@ -89,7 +92,7 @@ export const PracticeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [studentMaxLevel, setStudentMaxLevel] = useState<number>(initialStudentLevel || 2);
 
   const defaultCategory = PRACTICE_CATEGORIES[0];
-  const [viewMode, setViewMode] = useState<"dashboard" | "worksheet" | "result">("worksheet");
+  const [viewMode, setViewMode] = useState<"dashboard" | "worksheet" | "result">("dashboard");
   const [selectedLevel, setSelectedLevelState] = useState<number>(1);
   const [activeFilter, setActiveFilter] = useState<WorksheetFilterOptions>({
     level: 1,
@@ -99,19 +102,10 @@ export const PracticeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     categoryId: defaultCategory.id,
   });
   const [activeCategory, setActiveCategory] = useState<PracticeCategoryOption | null>(defaultCategory);
-  const [worksheetTitle, setWorksheetTitle] = useState<string>(defaultCategory.name);
+  const [worksheetTitle, setWorksheetTitle] = useState<string>("Practice Without Timer");
 
   const [questions, setQuestions] = useState<PracticeQuestion[]>(() => {
-    return generateWorksheet(
-      {
-        level: 1,
-        digits: defaultCategory.digits,
-        ruleType: defaultCategory.ruleType,
-        rowCount: defaultCategory.rowCount,
-        categoryId: defaultCategory.id,
-      },
-      20
-    );
+    return generateComprehensivePracticeQuestions(20);
   });
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(0);
   const [userAnswers, setUserAnswers] = useState<Record<string, number | null>>({});
@@ -199,6 +193,29 @@ export const PracticeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setTimeRemaining(targetMinutes * 60);
     setIsTimeUp(false);
   };
+
+  // Start Comprehensive Practice Session (Untimed or Timed, covering all 4 core topics: Direct, Small Friend, Big Friend, 1-Digit 5-Row)
+  const startPracticeSession = useCallback((mode: "untimed" | "timed", minutes?: number) => {
+    const selectedMins = minutes ? Math.max(1, Math.min(60, Math.round(minutes))) : targetMinutes;
+    setPracticeMode(mode);
+    if (minutes) {
+      setTargetMinutesState(selectedMins);
+    }
+
+    const generated = generateComprehensivePracticeQuestions(20);
+    setQuestions(generated);
+    setCurrentQuestionIndex(0);
+    setUserAnswers({});
+    setIsSubmitted({});
+    setIsWorksheetComplete(false);
+    setTimerSeconds(0);
+    setTimeRemaining(selectedMins * 60);
+    setIsTimeUp(false);
+    setIsTimerRunning(true);
+    setCurrentAttempt(null);
+    setWorksheetTitle(mode === "timed" ? `Practice With Timer (${selectedMins} Mins)` : "Practice Without Timer");
+    setViewMode("worksheet");
+  }, [targetMinutes]);
 
   // Start category worksheet
   const startCategoryWorksheet = useCallback((category: PracticeCategoryOption) => {
@@ -372,9 +389,9 @@ export const PracticeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setViewMode("worksheet");
   };
 
-  // Generate a brand new random set of 20 questions with the same filter
+  // Generate a brand new random set of 20 questions with the 4 core topics
   const generateNewRandomWorksheet = () => {
-    const generated = generateWorksheet(activeFilter, 20);
+    const generated = generateComprehensivePracticeQuestions(20);
     setQuestions(generated);
     setUserAnswers({});
     setIsSubmitted({});
@@ -440,6 +457,7 @@ export const PracticeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     <PracticeContext.Provider
       value={{
         viewMode,
+        setViewMode,
         selectedLevel,
         setSelectedLevel,
         studentMaxLevel,
@@ -471,6 +489,7 @@ export const PracticeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         accuracy,
         currentAttempt,
         attemptHistory,
+        startPracticeSession,
         startCategoryWorksheet,
         startCustomWorksheet,
         answerQuestion,

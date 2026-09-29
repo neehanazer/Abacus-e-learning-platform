@@ -1016,3 +1016,184 @@ export function generateWorksheet(filters: WorksheetFilterOptions, count: number
 
   return questions;
 }
+
+// ============================================================
+// COMPREHENSIVE PRACTICE QUESTION GENERATOR (ALL 4 CORE TOPICS)
+// 1. Direct Calculation
+// 2. Small Friend Rule
+// 3. Big Friend Rule
+// 4. 1-Digit 5-Row Calculation
+// ============================================================
+export function generateComprehensivePracticeQuestions(count: number = 20): PracticeQuestion[] {
+  const qPerCategory = Math.max(1, Math.floor(count / 4));
+  const timestamp = Date.now();
+
+  // 1. Direct Calculation (Pure bead movements, no friend formulas)
+  const directPool: number[][] = [
+    [2, 1, 5],
+    [3, 5, -2],
+    [1, 3, 5],
+    [4, 5, -3],
+    [2, 2, 5, -4],
+    [7, -2, 4],
+    [14, 5, -3],
+    [23, 15, -12],
+    [5, 2, 1, -3],
+    [6, 3, -4, 2],
+    [11, 22, 15],
+    [35, 12, -21],
+  ];
+
+  const directQuestions: PracticeQuestion[] = [];
+  for (let i = 0; i < qPerCategory; i++) {
+    const nums = directPool[i % directPool.length];
+    const ans = calculateSum(nums);
+    directQuestions.push({
+      id: `q-direct-${i + 1}-${timestamp}`,
+      level: 1,
+      title: "Direct Calculation",
+      category: "Direct Calculation",
+      categoryId: "l1-simple-1digit",
+      ruleType: "direct",
+      digits: nums.some((n) => Math.abs(n) >= 10) ? 2 : 1,
+      rowCount: nums.length,
+      numbers: nums,
+      targetAnswer: ans,
+      questionType: "vertical-calc",
+      ruleHint: "Direct Calculation: Move upper (value 5) and lower (value 1) beads directly without friend rules.",
+      explanation: `Direct bead calculation: ${nums.map((n, idx) => (idx === 0 ? String(n) : n > 0 ? `+ ${n}` : `- ${Math.abs(n)}`)).join(" ")} = ${ans}.`,
+    });
+  }
+
+  // 2. Small Friend Rule (Base-5 complements: +4..+1, -4..-1)
+  const smallFriendPool: { nums: number[]; rule: string }[] = [
+    { nums: [4, 4, 1], rule: "+4 = +5 - 1" },
+    { nums: [3, 4, 2], rule: "+4 = +5 - 1" },
+    { nums: [4, 3, 2], rule: "+3 = +5 - 2" },
+    { nums: [2, 3, 4], rule: "+3 = +5 - 2" },
+    { nums: [4, 2, -1], rule: "+2 = +5 - 3" },
+    { nums: [3, 2, 3], rule: "+2 = +5 - 3" },
+    { nums: [4, 1, 3], rule: "+1 = +5 - 4" },
+    { nums: [6, -4, 2], rule: "-4 = -5 + 1" },
+    { nums: [7, -3, 5], rule: "-3 = -5 + 2" },
+    { nums: [5, -2, 6], rule: "-2 = -5 + 3" },
+    { nums: [8, -4, 3], rule: "-4 = -5 + 1" },
+    { nums: [5, -1, 4], rule: "-1 = -5 + 4" },
+  ];
+
+  const sfQuestions: PracticeQuestion[] = [];
+  for (let i = 0; i < qPerCategory; i++) {
+    const item = smallFriendPool[i % smallFriendPool.length];
+    const ans = calculateSum(item.nums);
+    sfQuestions.push({
+      id: `q-sf-${i + 1}-${timestamp}`,
+      level: 1,
+      title: "Small Friend Rule",
+      category: "Small Friend Rule",
+      categoryId: "l1-small-friends",
+      ruleType: "small-friend",
+      digits: 1,
+      rowCount: item.nums.length,
+      numbers: item.nums,
+      targetAnswer: ans,
+      questionType: "vertical-calc",
+      ruleHint: `Small Friend Rule (Base 5): ${item.rule}`,
+      explanation: `Applied Small Friend formula (${item.rule}): ${item.nums.map((n, idx) => (idx === 0 ? String(n) : n > 0 ? `+ ${n}` : `- ${Math.abs(n)}`)).join(" ")} = ${ans}.`,
+    });
+  }
+
+  // 3. Big Friend Rule (Base-10 complements: +9..+1, -9..-1)
+  const bigFriendPool: { nums: number[]; rule: string }[] = [
+    { nums: [9, 9, -3], rule: "+9 = -1 + 10" },
+    { nums: [8, 8, -4], rule: "+8 = -2 + 10" },
+    { nums: [7, 7, 5], rule: "+7 = -3 + 10" },
+    { nums: [6, 6, -2], rule: "+6 = -4 + 10" },
+    { nums: [5, 8, -3], rule: "+8 = -2 + 10" },
+    { nums: [4, 9, 5], rule: "+9 = -1 + 10" },
+    { nums: [3, 8, -1], rule: "+8 = -2 + 10" },
+    { nums: [15, -9, 4], rule: "-9 = -10 + 1" },
+    { nums: [14, -8, 3], rule: "-8 = -10 + 2" },
+    { nums: [13, -7, 5], rule: "-7 = -10 + 3" },
+    { nums: [12, -6, 2], rule: "-6 = -10 + 4" },
+    { nums: [16, -9, 5], rule: "-9 = -10 + 1" },
+  ];
+
+  const bfQuestions: PracticeQuestion[] = [];
+  for (let i = 0; i < qPerCategory; i++) {
+    const item = bigFriendPool[i % bigFriendPool.length];
+    const ans = calculateSum(item.nums);
+    bfQuestions.push({
+      id: `q-bf-${i + 1}-${timestamp}`,
+      level: 1,
+      title: "Big Friend Rule",
+      category: "Big Friend Rule",
+      categoryId: "l1-big-friends",
+      ruleType: "big-friend",
+      digits: 1,
+      rowCount: item.nums.length,
+      numbers: item.nums,
+      targetAnswer: ans,
+      questionType: "vertical-calc",
+      ruleHint: `Big Friend Rule (Base 10): ${item.rule}`,
+      explanation: `Applied Big Friend formula (${item.rule}): ${item.nums.map((n, idx) => (idx === 0 ? String(n) : n > 0 ? `+ ${n}` : `- ${Math.abs(n)}`)).join(" ")} = ${ans}.`,
+    });
+  }
+
+  // 4. 1-Digit 5-Row Calculation (5 consecutive single-digit operations)
+  const fiveRowPool: number[][] = [
+    [4, 2, 1, -5, 3],
+    [2, 3, 4, -6, 5],
+    [7, -4, 3, -2, 5],
+    [9, -5, 4, -3, 2],
+    [3, 5, -2, 3, -4],
+    [6, 3, -5, 4, -3],
+    [1, 7, -5, 6, -4],
+    [8, -6, 5, 2, -4],
+    [5, 4, -3, 2, -6],
+    [2, 6, 1, -5, 4],
+    [3, 1, 5, -7, 6],
+    [4, 5, -2, -5, 6],
+  ];
+
+  const fiveRowQuestions: PracticeQuestion[] = [];
+  for (let i = 0; i < qPerCategory; i++) {
+    const nums = fiveRowPool[i % fiveRowPool.length];
+    const ans = calculateSum(nums);
+    fiveRowQuestions.push({
+      id: `q-5row-${i + 1}-${timestamp}`,
+      level: 1,
+      title: "1-Digit 5-Row Calculation",
+      category: "1-Digit 5-Row Calculation",
+      categoryId: "l1-1digit-5row",
+      ruleType: "all",
+      digits: 1,
+      rowCount: 5,
+      numbers: nums,
+      targetAnswer: ans,
+      questionType: "vertical-calc",
+      ruleHint: "1-Digit 5-Row Drill: Calculate 5 consecutive single-digit rows vertically on your soroban.",
+      explanation: `5-Row sequential calculation: ${nums.map((n, idx) => (idx === 0 ? String(n) : n > 0 ? `+ ${n}` : `- ${Math.abs(n)}`)).join(" ")} = ${ans}.`,
+    });
+  }
+
+  // Interleave round-robin so the student experiences all 4 topics evenly
+  const interleaved: PracticeQuestion[] = [];
+  for (let i = 0; i < qPerCategory; i++) {
+    if (directQuestions[i]) interleaved.push(directQuestions[i]);
+    if (sfQuestions[i]) interleaved.push(sfQuestions[i]);
+    if (bfQuestions[i]) interleaved.push(bfQuestions[i]);
+    if (fiveRowQuestions[i]) interleaved.push(fiveRowQuestions[i]);
+  }
+
+  // If any remainder questions to reach count
+  while (interleaved.length < count) {
+    const extra = directQuestions[interleaved.length % directQuestions.length];
+    interleaved.push({
+      ...extra,
+      id: `${extra.id}-extra-${interleaved.length}`,
+    });
+  }
+
+  return interleaved.slice(0, count);
+}
+

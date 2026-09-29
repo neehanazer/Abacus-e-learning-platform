@@ -899,6 +899,26 @@ export default function FinalExamPage() {
 
           {/* Action Buttons */}
           <div className="flex flex-wrap items-center justify-center gap-4">
+            {evalResult.isPassed ? (
+              <Link
+                href="/learning/certificate"
+                className="py-4 px-8 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-teal-600 hover:to-emerald-500 text-white font-black text-base shadow-xl hover:scale-105 transition flex items-center gap-2 border-b-4 border-emerald-700"
+              >
+                <Sparkles className="w-5 h-5 text-yellow-300" />
+                <span>View Official Certificate 🎓</span>
+                <ArrowRight className="w-5 h-5" />
+              </Link>
+            ) : (
+              <Link
+                href="/learning/certificate"
+                className="py-4 px-8 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-600 hover:from-orange-600 hover:to-amber-500 text-white font-black text-base shadow-xl hover:scale-105 transition flex items-center gap-2 border-b-4 border-amber-700"
+              >
+                <Timer className="w-5 h-5 text-white" />
+                <span>Re-Exam Cooldown & Eligibility ⏱️</span>
+                <ArrowRight className="w-5 h-5" />
+              </Link>
+            )}
+
             <Link
               href="/learning/mock-exam"
               className="py-4 px-8 rounded-2xl bg-gradient-to-r from-[#F4A261] to-[#E76F51] hover:from-[#E76F51] hover:to-[#F4A261] text-white font-black text-base shadow-xl hover:scale-105 transition flex items-center gap-2 border-b-4 border-[#C85A3D]"

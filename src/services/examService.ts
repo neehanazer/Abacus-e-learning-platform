@@ -45,6 +45,7 @@ export interface StartExamResult {
 
 export interface SubmitExamPayload {
   attemptId?: string;
+  studentName?: string;
   timeTaken: number; // in seconds
   answers: {
     questionId: string;
@@ -678,6 +679,7 @@ export class ExamService {
       try {
         certificate = await CertificateService.createCertificateForFinalExam({
           studentId,
+          studentName: payload.studentName,
           levelId: examDoc.levelId?._id?.toString() || examDoc.levelId?.toString() || "lvl_1",
           examId: examDoc._id?.toString() || examDoc._id || examId,
           score,

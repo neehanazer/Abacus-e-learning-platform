@@ -27,9 +27,11 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
 
     const body = await req.json().catch(() => ({}));
     const { attemptId, timeTaken = 0, answers = [] } = body;
+    const studentName = student?.name || (student as any)?.fullName || body.studentName || undefined;
 
     const result = await ExamService.submitExam(examId, targetStudentId, {
       attemptId,
+      studentName,
       timeTaken,
       answers,
     });

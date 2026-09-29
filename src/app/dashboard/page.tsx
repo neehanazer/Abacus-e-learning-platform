@@ -147,6 +147,13 @@ export default function AbacusWorldDashboard() {
                   <span>👤 My Profile</span>
                 </Link>
                 <Link
+                  href="/dashboard/certificate"
+                  className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-yellow-50 hover:text-amber-700 transition"
+                  onClick={() => setProfileDropdownOpen(false)}
+                >
+                  <span>🎓 My Certificate</span>
+                </Link>
+                <Link
                   href="/"
                   className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-yellow-50 hover:text-amber-700 transition"
                   onClick={() => setProfileDropdownOpen(false)}

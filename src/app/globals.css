@@ -130,3 +130,32 @@ h1, h2, h3, h4, h5, h6, .font-heading {
 ::-webkit-scrollbar-thumb:hover {
   background: #94A3B8;
 }
+
+/* Print optimization for official certificates */
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  header, nav, footer, button, .print\:hidden {
+    display: none !important;
+  }
+
+  #certificate-print-area {
+    box-shadow: none !important;
+    border-width: 4px !important;
+    margin: 0 auto !important;
+    page-break-inside: avoid;
+    break-inside: avoid;
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+
+  @page {
+    size: landscape;
+    margin: 8mm;
+  }
+}

@@ -48,12 +48,14 @@ export default function LearningNavbar() {
   const isHomework = pathname.startsWith("/learning/homework");
   const isMockExam = pathname.startsWith("/learning/mock-exam");
   const isExam = pathname.startsWith("/learning/exam");
+  const isCertificate = pathname.startsWith("/learning/certificate");
   const isLearning =
     !isSyllabus &&
     !isPractice &&
     !isHomework &&
     !isMockExam &&
     !isExam &&
+    !isCertificate &&
     pathname.startsWith("/learning");
 
   const navItems: NavOption[] = [
@@ -102,12 +104,9 @@ export default function LearningNavbar() {
     {
       id: "certificate",
       name: "Certificate",
-      href: "#certificate",
+      href: "/learning/certificate",
       icon: <Sparkles className="w-4 h-4" />,
-      statusText: "Phase 7",
-      phaseText: "Mastery Certification",
-      description:
-        "Verified digital AbacusMaster certificate with QR authenticity, shareable badges, and honors for your portfolio!",
+      isActive: isCertificate,
     },
   ];
 
@@ -124,6 +123,8 @@ export default function LearningNavbar() {
       router.push("/learning/mock-exam");
     } else if (item.id === "exam") {
       router.push("/learning/exam");
+    } else if (item.id === "certificate") {
+      router.push("/learning/certificate");
     } else {
       setPreviewModal(item);
     }

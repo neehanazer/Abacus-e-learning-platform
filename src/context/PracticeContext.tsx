@@ -35,7 +35,15 @@ interface PracticeContextType {
   isSubmitted: Record<string, boolean>;
   isWorksheetComplete: boolean;
 
-  // Live Timer
+  // Live Timer & Practice Mode (1: Without Timer, 2: With Timer)
+  practiceMode: "untimed" | "timed";
+  setPracticeMode: (mode: "untimed" | "timed") => void;
+  targetMinutes: number;
+  setTargetMinutes: (mins: number) => void;
+  timeRemaining: number;
+  setTimeRemaining: (secs: number) => void;
+  isTimeUp: boolean;
+  setIsTimeUp: (val: boolean) => void;
   timerSeconds: number;
   isTimerRunning: boolean;
   toggleTimer: () => void;
@@ -114,6 +122,20 @@ export const PracticeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [isTimerRunning, setIsTimerRunning] = useState<boolean>(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Practice Modes: Section 1 (Without Timer) vs Section 2 (With Timer)
+  const [practiceMode, setPracticeMode] = useState<"untimed" | "timed">("untimed");
+  const [targetMinutes, setTargetMinutesState] = useState<number>(5);
+  const [timeRemaining, setTimeRemaining] = useState<number>(5 * 60);
+  const [isTimeUp, setIsTimeUp] = useState<boolean>(false);
+
+  const setTargetMinutes = (mins: number) => {
+    const clamped = Math.max(1, Math.min(60, Math.round(mins)));
+    setTargetMinutesState(clamped);
+    setTimeRemaining(clamped * 60);
+  };
+
+  const submitWorksheetRef = useRef<() => void>(() => {});
+
   const [currentAttempt, setCurrentAttempt] = useState<PracticeAttempt | null>(null);
   const [attemptHistory, setAttemptHistory] = useState<PracticeAttempt[]>([]);
 
@@ -142,11 +164,25 @@ export const PracticeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   };
 
-  // Timer interval
+  // Timer interval (incremental for stats + countdown if timed mode)
   useEffect(() => {
     if (isTimerRunning && viewMode === "worksheet") {
       timerRef.current = setInterval(() => {
         setTimerSeconds((prev) => prev + 1);
+
+        if (practiceMode === "timed") {
+          setTimeRemaining((prev) => {
+            if (prev <= 1) {
+              if (timerRef.current) clearInterval(timerRef.current);
+              setIsTimeUp(true);
+              if (submitWorksheetRef.current) {
+                submitWorksheetRef.current();
+              }
+              return 0;
+            }
+            return prev - 1;
+          });
+        }
       }, 1000);
     } else {
       if (timerRef.current) clearInterval(timerRef.current);
@@ -155,10 +191,14 @@ export const PracticeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [isTimerRunning, viewMode]);
+  }, [isTimerRunning, viewMode, practiceMode]);
 
   const toggleTimer = () => setIsTimerRunning((prev) => !prev);
-  const resetTimer = () => setTimerSeconds(0);
+  const resetTimer = () => {
+    setTimerSeconds(0);
+    setTimeRemaining(targetMinutes * 60);
+    setIsTimeUp(false);
+  };
 
   // Start category worksheet
   const startCategoryWorksheet = useCallback((category: PracticeCategoryOption) => {
@@ -181,10 +221,12 @@ export const PracticeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setIsSubmitted({});
     setIsWorksheetComplete(false);
     setTimerSeconds(0);
+    setTimeRemaining(targetMinutes * 60);
+    setIsTimeUp(false);
     setIsTimerRunning(true);
     setCurrentAttempt(null);
     setViewMode("worksheet");
-  }, []);
+  }, [targetMinutes]);
 
   const setSelectedLevel = useCallback((lvl: number) => {
     setSelectedLevelState(lvl);
@@ -205,10 +247,12 @@ export const PracticeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setIsSubmitted({});
     setIsWorksheetComplete(false);
     setTimerSeconds(0);
+    setTimeRemaining(targetMinutes * 60);
+    setIsTimeUp(false);
     setIsTimerRunning(true);
     setCurrentAttempt(null);
     setViewMode("worksheet");
-  }, []);
+  }, [targetMinutes]);
 
   // Answer a question
   const answerQuestion = (questionId: string, answer: number | null) => {
@@ -245,7 +289,7 @@ export const PracticeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   };
 
   // Submit complete worksheet
-  const submitWorksheet = () => {
+  const submitWorksheet = useCallback(() => {
     setIsTimerRunning(false);
     setIsWorksheetComplete(true);
 
@@ -266,6 +310,7 @@ export const PracticeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
     const total = questions.length;
     const accuracy = total > 0 ? Math.round((correctCount / total) * 100) : 0;
+    const elapsedSeconds = practiceMode === "timed" ? Math.max(1, (targetMinutes * 60) - timeRemaining) : timerSeconds;
 
     const newAttempt: PracticeAttempt = {
       id: `attempt-${Date.now()}`,
@@ -284,7 +329,9 @@ export const PracticeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       score: correctCount,
       totalQuestions: total,
       accuracy,
-      timeTakenSeconds: timerSeconds,
+      timeTakenSeconds: elapsedSeconds,
+      isTimed: practiceMode === "timed",
+      targetMinutes: practiceMode === "timed" ? targetMinutes : undefined,
       answers: answersRecord,
     };
 
@@ -307,7 +354,9 @@ export const PracticeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
 
     setViewMode("result");
-  };
+  }, [questions, userAnswers, activeFilter, activeCategory, worksheetTitle, timerSeconds, practiceMode, targetMinutes, timeRemaining, attemptHistory]);
+
+  submitWorksheetRef.current = submitWorksheet;
 
   // Retry the exact same worksheet
   const restartSameWorksheet = () => {
@@ -316,6 +365,8 @@ export const PracticeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setIsWorksheetComplete(false);
     setCurrentQuestionIndex(0);
     setTimerSeconds(0);
+    setTimeRemaining(targetMinutes * 60);
+    setIsTimeUp(false);
     setIsTimerRunning(true);
     setCurrentAttempt(null);
     setViewMode("worksheet");
@@ -330,6 +381,8 @@ export const PracticeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setIsWorksheetComplete(false);
     setCurrentQuestionIndex(0);
     setTimerSeconds(0);
+    setTimeRemaining(targetMinutes * 60);
+    setIsTimeUp(false);
     setIsTimerRunning(true);
     setCurrentAttempt(null);
     setViewMode("worksheet");
@@ -401,6 +454,14 @@ export const PracticeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         userAnswers,
         isSubmitted,
         isWorksheetComplete,
+        practiceMode,
+        setPracticeMode,
+        targetMinutes,
+        setTargetMinutes,
+        timeRemaining,
+        setTimeRemaining,
+        isTimeUp,
+        setIsTimeUp,
         timerSeconds,
         isTimerRunning,
         toggleTimer,

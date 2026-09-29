@@ -46,6 +46,8 @@ export interface PracticeAttempt {
   totalQuestions: number;
   accuracy: number;
   timeTakenSeconds: number;
+  isTimed?: boolean;
+  targetMinutes?: number;
   answers: {
     questionId: string;
     questionNumbers: number[];

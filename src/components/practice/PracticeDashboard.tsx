@@ -23,6 +23,8 @@ import {
   Trash2,
   Lock,
   Unlock,
+  Zap,
+  Timer,
 } from "lucide-react";
 import { usePractice } from "@/context/PracticeContext";
 import {
@@ -47,6 +49,10 @@ export default function PracticeDashboard() {
     getCategoryLastScore,
     getCategoryAttemptsCount,
     clearAttemptHistory,
+    practiceMode,
+    setPracticeMode,
+    targetMinutes,
+    setTargetMinutes,
   } = usePractice();
 
   const [showHistoryDrawer, setShowHistoryDrawer] = useState<boolean>(false);
@@ -192,7 +198,193 @@ export default function PracticeDashboard() {
       </div>
 
       {/* ============================================================ */}
-      {/* 2. LEVEL TABS (Levels 1 to 8) */}
+      {/* 2. PRACTICE MODE SECTIONS: 1) WITHOUT TIMER & 2) WITH TIMER */}
+      {/* ============================================================ */}
+      <div className="bg-white rounded-[2rem] p-5 sm:p-6 border-2 border-yellow-200 shadow-sm space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div>
+            <div className="flex items-center gap-2 text-xs font-black text-[#1D3557] uppercase tracking-wider">
+              <Zap className="w-3.5 h-3.5 text-[#F4A261]" />
+              <span>PRACTICE SECTIONS:</span>
+            </div>
+            <p className="text-xs text-slate-500 font-medium mt-0.5">
+              Select your practice section: casual untimed practice or a custom timed speed challenge.
+            </p>
+          </div>
+
+          <span className="text-xs font-extrabold px-3 py-1 rounded-full bg-yellow-100 text-yellow-900 self-start sm:self-auto">
+            Active: {practiceMode === "untimed" ? "1. Practice Without Timer" : `2. Practice With Timer (${targetMinutes} mins)`}
+          </span>
+        </div>
+
+        {/* 2 Main Mode Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Section 1: Practice Without Timer */}
+          <button
+            type="button"
+            onClick={() => setPracticeMode("untimed")}
+            className={`p-5 rounded-2xl border-3 text-left transition-all cursor-pointer relative flex flex-col justify-between ${
+              practiceMode === "untimed"
+                ? "bg-gradient-to-br from-emerald-50 via-teal-50 to-white border-emerald-500 shadow-md ring-2 ring-emerald-300"
+                : "bg-white hover:bg-slate-50 border-slate-200 hover:border-slate-300 text-slate-700"
+            }`}
+          >
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <span className="w-10 h-10 rounded-2xl bg-emerald-100 text-emerald-800 flex items-center justify-center text-xl font-bold shadow-sm">
+                  🌱
+                </span>
+                {practiceMode === "untimed" ? (
+                  <span className="px-2.5 py-1 rounded-full bg-emerald-600 text-white text-[11px] font-black uppercase tracking-wider flex items-center gap-1 shadow-sm">
+                    <CheckCircle2 className="w-3 h-3" />
+                    <span>Selected Section</span>
+                  </span>
+                ) : (
+                  <span className="text-xs font-bold text-slate-400">Click to Select</span>
+                )}
+              </div>
+
+              <h3 className="text-lg font-black text-[#1D3557] font-heading mb-1">
+                1. Practice Without Timer
+              </h3>
+              <p className="text-xs text-slate-600 leading-relaxed font-medium">
+                Standard self-paced practice mode. Practice bead manipulation and abacus formulas at your own leisure with zero clock countdown pressure.
+              </p>
+            </div>
+
+            <div className="mt-4 pt-3 border-t border-emerald-100/60 flex items-center gap-2 text-[11px] font-extrabold text-emerald-800">
+              <span>✓ Casual pace</span>
+              <span>•</span>
+              <span>✓ No time limit</span>
+              <span>•</span>
+              <span>✓ Focus on accuracy</span>
+            </div>
+          </button>
+
+          {/* Section 2: Practice With Timer */}
+          <button
+            type="button"
+            onClick={() => setPracticeMode("timed")}
+            className={`p-5 rounded-2xl border-3 text-left transition-all cursor-pointer relative flex flex-col justify-between ${
+              practiceMode === "timed"
+                ? "bg-gradient-to-br from-orange-50 via-amber-50 to-white border-[#F4A261] shadow-md ring-2 ring-orange-300"
+                : "bg-white hover:bg-slate-50 border-slate-200 hover:border-slate-300 text-slate-700"
+            }`}
+          >
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <span className="w-10 h-10 rounded-2xl bg-orange-100 text-orange-800 flex items-center justify-center text-xl font-bold shadow-sm">
+                  ⏱️
+                </span>
+                {practiceMode === "timed" ? (
+                  <span className="px-2.5 py-1 rounded-full bg-[#E76F51] text-white text-[11px] font-black uppercase tracking-wider flex items-center gap-1 shadow-sm">
+                    <CheckCircle2 className="w-3 h-3" />
+                    <span>Selected Section</span>
+                  </span>
+                ) : (
+                  <span className="text-xs font-bold text-slate-400">Click to Select</span>
+                )}
+              </div>
+
+              <h3 className="text-lg font-black text-[#1D3557] font-heading mb-1">
+                2. Practice With Timer
+              </h3>
+              <p className="text-xs text-slate-600 leading-relaxed font-medium">
+                Timed speed drill mode. Set your target duration in minutes and challenge yourself to complete as many correct calculations as possible before time runs out!
+              </p>
+            </div>
+
+            <div className="mt-4 pt-3 border-t border-orange-100/60 flex items-center gap-2 text-[11px] font-extrabold text-orange-900">
+              <span>⏱️ Countdown timer</span>
+              <span>•</span>
+              <span>⏱️ Set custom minutes</span>
+              <span>•</span>
+              <span>⚡ Speed & velocity test</span>
+            </div>
+          </button>
+        </div>
+
+        {/* Feature: Set the timer for how many minutes */}
+        {practiceMode === "timed" && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-[#FFFBF0] rounded-2xl p-4 sm:p-5 border-2 border-orange-300 space-y-4"
+          >
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <Clock className="w-4 h-4 text-orange-600" />
+                <span className="text-xs sm:text-sm font-black text-[#1D3557]">
+                  Set Practice Timer Duration:
+                </span>
+                <span className="text-xs font-extrabold text-orange-800 bg-orange-100 px-2.5 py-0.5 rounded-full border border-orange-200">
+                  {targetMinutes} {targetMinutes === 1 ? "Minute" : "Minutes"}
+                </span>
+              </div>
+              <span className="text-[11px] font-semibold text-slate-500">
+                Pick a preset or adjust minutes with the buttons
+              </span>
+            </div>
+
+            {/* Minute Presets & Stepper */}
+            <div className="flex flex-wrap items-center gap-3">
+              {/* Presets */}
+              <div className="flex flex-wrap items-center gap-2">
+                {[1, 2, 3, 5, 10, 15, 20].map((m) => (
+                  <button
+                    key={m}
+                    type="button"
+                    onClick={() => setTargetMinutes(m)}
+                    className={`px-3.5 py-1.5 rounded-xl font-bold text-xs transition cursor-pointer ${
+                      targetMinutes === m
+                        ? "bg-[#E76F51] text-white shadow-sm font-extrabold scale-105"
+                        : "bg-white hover:bg-orange-100 text-slate-700 border border-orange-200"
+                    }`}
+                  >
+                    {m} {m === 1 ? "Min" : "Mins"}
+                  </button>
+                ))}
+              </div>
+
+              {/* Stepper for custom minutes */}
+              <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-xl border border-orange-200 shadow-sm ml-auto">
+                <span className="text-[11px] font-bold text-slate-500">Adjust:</span>
+                <button
+                  type="button"
+                  onClick={() => setTargetMinutes(targetMinutes - 1)}
+                  disabled={targetMinutes <= 1}
+                  className="w-7 h-7 rounded-lg bg-orange-100 hover:bg-orange-200 disabled:opacity-30 disabled:cursor-not-allowed font-black text-orange-800 flex items-center justify-center text-sm"
+                  title="Decrease 1 minute"
+                >
+                  -
+                </button>
+                <span className="font-mono font-black text-sm text-[#1D3557] px-2 min-w-[36px] text-center">
+                  {targetMinutes}m
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setTargetMinutes(targetMinutes + 1)}
+                  disabled={targetMinutes >= 60}
+                  className="w-7 h-7 rounded-lg bg-orange-100 hover:bg-orange-200 disabled:opacity-30 disabled:cursor-not-allowed font-black text-orange-800 flex items-center justify-center text-sm"
+                  title="Increase 1 minute"
+                >
+                  +
+                </button>
+              </div>
+            </div>
+
+            <div className="text-[11px] text-orange-950 bg-orange-100/70 p-2.5 rounded-xl font-medium flex items-center gap-2 border border-orange-200">
+              <Sparkles className="w-3.5 h-3.5 text-orange-600 flex-shrink-0" />
+              <span>
+                Worksheet practice below will run with a <strong>{targetMinutes}-minute countdown clock</strong> ({targetMinutes * 60} seconds). Test your speed and beat the timer!
+              </span>
+            </div>
+          </motion.div>
+        )}
+      </div>
+
+      {/* ============================================================ */}
+      {/* 3. LEVEL TABS (Levels 1 to 8) */}
       {/* ============================================================ */}
       <div className="space-y-2">
         <div className="flex items-center justify-between text-xs font-bold text-[#1D3557]">

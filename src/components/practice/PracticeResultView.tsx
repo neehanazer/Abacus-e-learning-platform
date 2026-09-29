@@ -82,7 +82,11 @@ export default function PracticeResultView() {
         <div className="space-y-2 max-w-xl mx-auto">
           <div className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-orange-100 text-orange-800 text-xs font-black uppercase tracking-wider">
             <Sparkles className="w-3.5 h-3.5 text-orange-600" />
-            <span>Practice Session Completed</span>
+            <span>
+              {currentAttempt.isTimed
+                ? `⏱️ Timed Drill (${currentAttempt.targetMinutes || 5} Min Limit)`
+                : "🌱 Practice Without Timer (Untimed)"}
+            </span>
           </div>
 
           <h1 className="text-3xl sm:text-4xl font-extrabold text-[#1D3557] font-heading">
@@ -90,7 +94,8 @@ export default function PracticeResultView() {
           </h1>
 
           <p className="text-sm sm:text-base text-slate-600 font-medium">
-            You completed the <strong>{worksheetTitle}</strong> (Level {level})!
+            You completed the <strong>{worksheetTitle}</strong> (Level {level}) in{" "}
+            <strong>{currentAttempt.isTimed ? `${currentAttempt.targetMinutes || 5}-Minute Timed Mode` : "Untimed Practice Mode"}</strong>!
           </p>
         </div>
 
@@ -124,8 +129,8 @@ export default function PracticeResultView() {
 
           {/* Time Taken */}
           <div className="bg-blue-50 rounded-2xl p-4 border-2 border-blue-200 text-center">
-            <span className="text-[11px] font-black text-blue-800 uppercase block">
-              Total Time
+            <span className="text-[11px] font-black text-blue-800 uppercase block truncate">
+              {currentAttempt.isTimed ? `⏱️ Time (${currentAttempt.targetMinutes || 5}m Drill)` : "🌱 Untimed Time"}
             </span>
             <span className="text-2xl sm:text-3xl font-black font-mono text-blue-900 block mt-1">
               {formatTime(timeTakenSeconds)}

@@ -93,16 +93,10 @@ export default function Navbar() {
             {isAuthenticated && user ? (
               <div className="flex items-center gap-2">
                 <Link
-                  href="/learning/mock-exam"
-                  className="px-3 py-1.5 rounded-xl text-xs font-extrabold text-orange-800 bg-orange-50 border border-orange-200 hover:bg-orange-100 transition shadow-sm"
+                  href="/learning"
+                  className="px-3.5 py-1.5 rounded-xl text-xs font-extrabold text-purple-800 bg-purple-100 hover:bg-purple-200 transition shadow-sm"
                 >
-                  Mock Exam
-                </Link>
-                <Link
-                  href="/learning/exam"
-                  className="px-3 py-1.5 rounded-xl text-xs font-extrabold text-indigo-800 bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 transition shadow-sm"
-                >
-                  Exam
+                  Go to Classroom
                 </Link>
                 <Link
                   href="/profile"
@@ -200,22 +194,13 @@ export default function Navbar() {
                         </span>
                       </div>
                     </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      <Link
-                        href="/learning/mock-exam"
-                        onClick={() => setMobileMenuOpen(false)}
-                        className="py-2.5 px-3 rounded-xl text-center text-xs font-extrabold text-orange-800 bg-orange-50 border border-orange-200 hover:bg-orange-100 transition"
-                      >
-                        Mock Exam
-                      </Link>
-                      <Link
-                        href="/learning/exam"
-                        onClick={() => setMobileMenuOpen(false)}
-                        className="py-2.5 px-3 rounded-xl text-center text-xs font-extrabold text-indigo-800 bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 transition"
-                      >
-                        Final Exam
-                      </Link>
-                    </div>
+                    <Link
+                      href="/learning"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="py-2.5 px-3 rounded-xl text-center text-xs font-extrabold text-purple-800 bg-purple-100 hover:bg-purple-200 transition"
+                    >
+                      Go to Classroom
+                    </Link>
                     <Button
                       onClick={() => {
                         handleLogout();

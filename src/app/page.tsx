@@ -58,11 +58,11 @@ export default function HomePage() {
       badge: "Smart AI",
     },
     {
-      title: "Mock Exams",
-      description: "Timed, non-intimidating practice exams to build test confidence and speed before final assessments.",
+      title: "Daily Worksheets",
+      description: "Engaging structured worksheets with instant grading and teacher feedback to build calculation speed and accuracy.",
       icon: <FileCheck className="w-7 h-7 text-rose-600" />,
       bgColor: "bg-rose-100/80 text-rose-600",
-      badge: "Exam Ready",
+      badge: "Curriculum",
     },
     {
       title: "Digital Certification",
@@ -78,8 +78,8 @@ export default function HomePage() {
     { step: "01", name: "Learn", desc: "Watch animated lessons & master bead rules", color: "from-purple-500 to-indigo-500" },
     { step: "02", name: "Practice", desc: "Use virtual abacus & solve daily sheets", color: "from-amber-400 to-orange-500" },
     { step: "03", name: "Evaluate", desc: "AI checks your speed & accuracy instantly", color: "from-teal-400 to-emerald-500" },
-    { step: "04", name: "Mock Exam", desc: "Test skills in fun timed challenge mode", color: "from-sky-400 to-blue-500" },
-    { step: "05", name: "Final Exam", desc: "Take official level certification assessment", color: "from-rose-400 to-pink-500" },
+    { step: "04", name: "Homework", desc: "Reinforce daily lessons with home tasks", color: "from-sky-400 to-blue-500" },
+    { step: "05", name: "Mastery", desc: "Build calculation velocity and accuracy streaks", color: "from-rose-400 to-pink-500" },
     { step: "06", name: "Certificate", desc: "Unlock shareable digital certificate & badge", color: "from-yellow-400 to-amber-500" },
   ];
 

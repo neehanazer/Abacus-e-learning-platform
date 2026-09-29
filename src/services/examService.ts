@@ -111,8 +111,9 @@ export class ExamService {
   private static async ensureCatalogSeeded(): Promise<void> {
     try {
       if (mongoose.connection?.readyState === 1) {
-        const count = await Exam.countDocuments();
-        if (count === 0) {
+        const mockCount = await Exam.countDocuments({ type: "mock", status: "active" });
+        const totalCount = await Exam.countDocuments();
+        if (totalCount === 0 || mockCount !== 1) {
           const { seedExams } = await import("@/lib/examSeedData");
           await seedExams();
         }

@@ -186,6 +186,30 @@ export default function MockExamPage() {
     };
   }, [viewState, attemptId, logProctoringEvent]);
 
+  // Trap back navigation and tab closing during active session (matching final exam screen isolation)
+  useEffect(() => {
+    if (viewState !== "session") return;
+
+    window.history.pushState(null, "", window.location.href);
+    const handlePopState = () => {
+      window.history.pushState(null, "", window.location.href);
+      alert("Exam in progress: You cannot navigate away until you submit your mock exam.");
+    };
+    window.addEventListener("popstate", handlePopState);
+
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "Mock Exam in progress! Leaving will forfeit your attempt.";
+      return e.returnValue;
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [viewState]);
+
   // Start exam session
   const handleStartExam = async (exam: MockExamCard) => {
     try {
@@ -373,29 +397,43 @@ export default function MockExamPage() {
             </div>
           )}
 
-          {/* Exam Cards Grid */}
-          {!loading && !error && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {exams.map((exam) => (
-                <div
-                  key={exam.id}
-                  className="bg-white rounded-3xl p-6 sm:p-8 border-2 border-yellow-200/80 shadow-md hover:shadow-xl transition-all duration-300 flex flex-col justify-between group hover:border-[#F4A261]"
-                >
+          {/* Single Mock Exam Hub Card (Unified Button & Scope) */}
+          {!loading && !error && (() => {
+            const singleExam: MockExamCard = exams[0] || {
+              id: "67b100000000000000000001",
+              title: "Level 1: Official Practice Mock Exam",
+              description:
+                "Comprehensive timed mock exam testing Direct Calculations, Small Friend Rules, Big Friend Rules, and 1-Digit 5-Row Calculations under realistic competition conditions.",
+              levelName: "Level 1",
+              duration: 10,
+              totalQuestions: 10,
+              totalMarks: 100,
+              passingMarks: 60,
+              attemptsCount: 0,
+              bestScore: 0,
+              latestScore: null,
+              latestPercentage: null,
+              isPassed: false,
+            };
+
+            return (
+              <div className="max-w-4xl mx-auto">
+                <div className="bg-white rounded-3xl p-6 sm:p-10 border-2 border-yellow-200/90 shadow-xl flex flex-col justify-between">
                   <div>
-                    {/* Top Badges */}
+                    {/* Top Status Badges */}
                     <div className="flex items-center justify-between gap-2 mb-4">
                       <span className="text-xs font-extrabold px-3 py-1 rounded-full bg-orange-100 text-orange-800">
-                        {exam.levelName}
+                        {singleExam.levelName || "Level 1"} • Official Practice Simulation
                       </span>
-                      {exam.attemptsCount > 0 ? (
+                      {singleExam.attemptsCount > 0 ? (
                         <span
                           className={`text-xs font-extrabold px-3 py-1 rounded-full flex items-center gap-1 ${
-                            exam.isPassed
+                            singleExam.isPassed
                               ? "bg-emerald-100 text-emerald-800 border border-emerald-300"
                               : "bg-amber-100 text-amber-800 border border-amber-300"
                           }`}
                         >
-                          {exam.isPassed ? "✓ Passed" : "Needs Practice"}
+                          {singleExam.isPassed ? "✓ Passed" : "Needs Practice"}
                         </span>
                       ) : (
                         <span className="text-xs font-bold px-3 py-1 rounded-full bg-slate-100 text-slate-600">
@@ -404,330 +442,381 @@ export default function MockExamPage() {
                       )}
                     </div>
 
-                    <h3 className="text-xl sm:text-2xl font-extrabold font-heading text-[#1D3557] mb-2 group-hover:text-[#E76F51] transition-colors">
-                      {exam.title}
-                    </h3>
-                    <p className="text-sm text-slate-600 leading-relaxed mb-6 font-medium">
-                      {exam.description}
+                    <h2 className="text-2xl sm:text-4xl font-black font-heading text-[#1D3557] mb-3">
+                      {singleExam.title}
+                    </h2>
+                    <p className="text-sm sm:text-base text-slate-600 leading-relaxed mb-6 font-medium">
+                      {singleExam.description}
                     </p>
 
+                    {/* 4 Tested Categories Callout */}
+                    <div className="mb-8">
+                      <div className="text-xs font-extrabold text-slate-500 uppercase tracking-wider mb-3">
+                        Included Exam Topics (All In One Mock Challenge):
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div className="bg-[#FFFDF7] p-3.5 rounded-2xl border-2 border-amber-200/70 flex items-start gap-3">
+                          <span className="w-7 h-7 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-black text-xs flex-shrink-0">
+                            1
+                          </span>
+                          <div>
+                            <div className="text-sm font-extrabold text-[#1D3557]">Direct Calculation</div>
+                            <div className="text-xs text-slate-500">Pure bead manipulation on units & tens without friend formulas</div>
+                          </div>
+                        </div>
+
+                        <div className="bg-[#FFFDF7] p-3.5 rounded-2xl border-2 border-amber-200/70 flex items-start gap-3">
+                          <span className="w-7 h-7 rounded-xl bg-sky-100 text-sky-700 flex items-center justify-center font-black text-xs flex-shrink-0">
+                            2
+                          </span>
+                          <div>
+                            <div className="text-sm font-extrabold text-[#1D3557]">Small Friend Rule</div>
+                            <div className="text-xs text-slate-500">Base-5 addition & subtraction rules (+4..+1 and -4..-1)</div>
+                          </div>
+                        </div>
+
+                        <div className="bg-[#FFFDF7] p-3.5 rounded-2xl border-2 border-amber-200/70 flex items-start gap-3">
+                          <span className="w-7 h-7 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center font-black text-xs flex-shrink-0">
+                            3
+                          </span>
+                          <div>
+                            <div className="text-sm font-extrabold text-[#1D3557]">Big Friend Rule</div>
+                            <div className="text-xs text-slate-500">Base-10 complementary rules (+10 - friend and -10 + friend)</div>
+                          </div>
+                        </div>
+
+                        <div className="bg-[#FFFDF7] p-3.5 rounded-2xl border-2 border-amber-200/70 flex items-start gap-3">
+                          <span className="w-7 h-7 rounded-xl bg-orange-100 text-orange-700 flex items-center justify-center font-black text-xs flex-shrink-0">
+                            4
+                          </span>
+                          <div>
+                            <div className="text-sm font-extrabold text-[#1D3557]">1-Digit 5-Row Calculation</div>
+                            <div className="text-xs text-slate-500">5 consecutive single-digit rapid speed calculation drills</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
                     {/* Metadata Grid */}
-                    <div className="grid grid-cols-3 gap-3 bg-[#FFFBF0] rounded-2xl p-3.5 border border-yellow-200/70 mb-6 text-center">
+                    <div className="grid grid-cols-3 gap-3 bg-[#FFFBF0] rounded-2xl p-4 border border-yellow-200/80 mb-6 text-center">
                       <div>
                         <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
                           Duration
                         </div>
-                        <div className="text-base font-extrabold text-[#1D3557]">{Math.min(exam.duration, 10)} Mins</div>
+                        <div className="text-base sm:text-lg font-extrabold text-[#1D3557]">
+                          {Math.min(singleExam.duration || 10, 10)} Mins
+                        </div>
                       </div>
-                      <div className="border-x border-yellow-200/70">
+                      <div className="border-x border-yellow-200/80">
                         <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
                           Questions
                         </div>
-                        <div className="text-base font-extrabold text-[#1D3557]">
-                          {exam.totalQuestions} Items
+                        <div className="text-base sm:text-lg font-extrabold text-[#1D3557]">
+                          {singleExam.totalQuestions} Items
                         </div>
                       </div>
                       <div>
                         <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
                           Pass Marks
                         </div>
-                        <div className="text-base font-extrabold text-[#1D3557]">
-                          {exam.passingMarks}% ({exam.passingMarks} pts)
+                        <div className="text-base sm:text-lg font-extrabold text-[#1D3557]">
+                          {singleExam.passingMarks}% ({singleExam.passingMarks} pts)
                         </div>
                       </div>
                     </div>
 
                     {/* Attempt History Snapshot if available */}
-                    {exam.attemptsCount > 0 && (
-                      <div className="bg-emerald-50/70 border border-emerald-200 rounded-2xl p-3 mb-6 flex items-center justify-between text-xs">
+                    {singleExam.attemptsCount > 0 && (
+                      <div className="bg-emerald-50/70 border border-emerald-200 rounded-2xl p-4 mb-6 flex flex-wrap items-center justify-between text-xs gap-2">
                         <span className="font-semibold text-emerald-900">
-                          Attempts: <strong>{exam.attemptsCount}</strong>
+                          Total Attempts Completed: <strong>{singleExam.attemptsCount}</strong>
                         </span>
                         <span className="font-semibold text-emerald-900">
-                          Best Score:{" "}
+                          Personal Best Score:{" "}
                           <strong className="text-emerald-700 text-sm">
-                            {exam.bestScore}/{exam.totalMarks}
+                            {singleExam.bestScore}/{singleExam.totalMarks}
                           </strong>
                         </span>
                       </div>
                     )}
                   </div>
 
-                  <button
-                    onClick={() => handleStartExam(exam)}
-                    className="w-full py-3.5 px-6 rounded-2xl bg-gradient-to-r from-[#F4A261] to-[#E76F51] text-white font-extrabold text-sm shadow-md shadow-orange-200 hover:shadow-lg hover:scale-[1.01] active:scale-98 transition-all flex items-center justify-center gap-2 cursor-pointer"
-                  >
-                    <span>{exam.attemptsCount > 0 ? "Retake Mock Exam" : "Start Mock Exam"}</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </button>
+                  {/* Single Mock Exam Start Button */}
+                  <div className="pt-2">
+                    <button
+                      onClick={() => handleStartExam(singleExam)}
+                      className="w-full py-4 px-8 rounded-2xl bg-gradient-to-r from-[#F4A261] via-[#E76F51] to-[#E9C46A] text-white font-black text-base sm:text-lg shadow-xl shadow-orange-300/40 hover:shadow-2xl hover:scale-[1.01] active:scale-98 transition-all flex items-center justify-center gap-3 cursor-pointer"
+                    >
+                      <Award className="w-5 h-5 text-yellow-200" />
+                      <span>{singleExam.attemptsCount > 0 ? "Retake Mock Exam" : "Start Mock Exam"}</span>
+                      <ArrowRight className="w-5 h-5" />
+                    </button>
+                  </div>
                 </div>
-              ))}
-            </div>
-          )}
+              </div>
+            );
+          })()}
         </div>
       )}
 
       {/* ============================================================== */}
-      {/* 2. ACTIVE EXAM SESSION VIEW */}
+      {/* 2. ACTIVE EXAM SESSION VIEW (ISOLATED FULLSCREEN SCREEN) */}
       {/* ============================================================== */}
       {viewState === "session" && currentQ && (
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-6">
-          {/* Top Session Bar */}
-          <div className="bg-white rounded-3xl p-4 sm:p-6 border-2 border-yellow-200 shadow-md mb-6 flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">
-                {activeExam?.title}
+        <div className="fixed inset-0 z-50 bg-[#FFFDF7] overflow-y-auto pb-24 text-[#1D3557]">
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-6">
+            {/* Top Session Bar (Same as Final Exam) */}
+            <div className="bg-white rounded-3xl p-4 sm:p-6 border-2 border-orange-200 shadow-md mb-6 flex flex-wrap items-center justify-between gap-4">
+              <div>
+                <div className="text-xs font-bold text-orange-600 uppercase tracking-wider mb-1">
+                  Official Level 1 Practice Mock Exam
+                </div>
+                <h2 className="text-xl sm:text-2xl font-extrabold text-[#1D3557] font-heading">
+                  Question {currentQuestionIndex + 1} of {questions.length}
+                </h2>
               </div>
-              <h2 className="text-xl sm:text-2xl font-extrabold text-[#1D3557] font-heading">
-                Question {currentQuestionIndex + 1} of {questions.length}
-              </h2>
-            </div>
 
-            {/* Countdown Clock */}
-            <div
-              className={`flex items-center gap-2 px-4 py-2 rounded-2xl border-2 font-mono text-lg font-black transition-colors ${
-                timeRemaining <= 120
-                  ? "bg-rose-50 border-rose-300 text-rose-600 animate-pulse"
-                  : "bg-yellow-50 border-yellow-300 text-[#1D3557]"
-              }`}
-            >
-              <Timer className="w-5 h-5" />
-              <span>{formatTime(timeRemaining)}</span>
-            </div>
-
-            {/* Finish & Submit Button */}
-            <button
-              onClick={() => {
-                if (
-                  confirm(
-                    `Are you sure you want to finish the exam? You have answered ${answeredCount} of ${questions.length} questions.`
-                  )
-                ) {
-                  handleSubmitExam();
-                }
-              }}
-              disabled={isSubmitting}
-              className="py-2.5 px-5 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-extrabold text-sm shadow-md hover:shadow-lg transition-all hover:scale-105 active:scale-95 disabled:opacity-50 cursor-pointer"
-            >
-              {isSubmitting ? "Evaluating..." : "Submit Exam"}
-            </button>
-          </div>
-
-          {/* Mock Exam Practice Mode Bar (No Camera Required) */}
-          <div className="bg-slate-900 text-white rounded-2xl p-3 sm:p-4 mb-6 shadow-md border border-slate-700 flex flex-wrap items-center justify-between gap-3 text-xs">
-            <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse" />
-              <span className="font-extrabold tracking-wide text-white">
-                MOCK EXAM PRACTICE • NO CAMERA REQUIRED
-              </span>
-            </div>
-            <div className="flex items-center gap-3 text-slate-300">
-              <span>Standard Competition Timer</span>
-              <span
-                className={`px-2 py-0.5 rounded-full font-bold text-[11px] ${
-                  tabSwitchCount === 0 ? "bg-slate-800 text-slate-300" : "bg-amber-950 text-amber-300"
+              {/* Countdown Clock */}
+              <div
+                className={`flex items-center gap-2 px-4 py-2 rounded-2xl border-2 font-mono text-lg font-black transition-colors ${
+                  timeRemaining <= 180
+                    ? "bg-rose-50 border-rose-300 text-rose-600 animate-pulse"
+                    : "bg-orange-50 border-orange-300 text-orange-900"
                 }`}
               >
-                Tab Changes: {tabSwitchCount}
-              </span>
-            </div>
-          </div>
-
-          {/* Warnings Banner if any */}
-          {proctoringWarnings.length > 0 && (
-            <div className="bg-amber-50 border-2 border-amber-300 text-amber-900 p-3 rounded-2xl mb-6 text-xs flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <ShieldAlert className="w-4 h-4 text-amber-600 flex-shrink-0" />
-                <span>{proctoringWarnings[proctoringWarnings.length - 1]}</span>
+                <Timer className="w-5 h-5" />
+                <span>{formatTime(timeRemaining)}</span>
               </div>
-              <span className="font-bold text-[10px] uppercase bg-amber-200 px-2 py-0.5 rounded-full">
-                Recorded
-              </span>
-            </div>
-          )}
 
-          {/* Question Card & Answer Interface */}
-          <div className="bg-white rounded-3xl p-6 sm:p-10 border-2 border-yellow-200 shadow-xl mb-6 relative">
-            {/* Top Question Row */}
-            <div className="flex items-center justify-between gap-2 mb-6">
-              <span className="text-xs font-extrabold px-3 py-1 rounded-full bg-yellow-100 text-yellow-800">
-                {currentQ.ruleType || "Direct Abacus Calculation"}
-              </span>
-
+              {/* Finish & Submit Button */}
               <button
-                onClick={() => toggleFlag(currentQ.id)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${
-                  flaggedQuestions[currentQ.id]
-                    ? "bg-amber-100 text-amber-800 border border-amber-300"
-                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                }`}
+                onClick={() => {
+                  if (
+                    confirm(
+                      `Are you ready to submit your Mock Exam? You have answered ${answeredCount} of ${questions.length} questions.`
+                    )
+                  ) {
+                    handleSubmitExam();
+                  }
+                }}
+                disabled={isSubmitting}
+                className="py-2.5 px-5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-700 text-white font-extrabold text-sm shadow-md hover:shadow-lg transition-all hover:scale-105 active:scale-95 disabled:opacity-50 cursor-pointer"
               >
-                <Flag className="w-3.5 h-3.5 fill-current" />
-                <span>{flaggedQuestions[currentQ.id] ? "Flagged" : "Flag"}</span>
+                {isSubmitting ? "Evaluating..." : "Submit Mock Exam"}
               </button>
             </div>
 
-            {/* Question Text */}
-            <div className="text-center py-6 sm:py-10">
+            {/* Warnings Banner if any */}
+            {proctoringWarnings.length > 0 && (
+              <div className="bg-amber-50 border-2 border-amber-300 text-amber-900 p-3 rounded-2xl mb-6 text-xs flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <ShieldAlert className="w-4 h-4 text-amber-600 flex-shrink-0" />
+                  <span>{proctoringWarnings[proctoringWarnings.length - 1]}</span>
+                </div>
+                <span className="font-bold text-[10px] uppercase bg-amber-200 px-2 py-0.5 rounded-full">
+                  Recorded
+                </span>
+              </div>
+            )}
+
+            {/* Question Card */}
+            <div className="bg-white rounded-3xl p-6 sm:p-10 border-2 border-orange-200 shadow-xl mb-6 text-center relative">
+              <div className="flex items-center justify-between gap-2 mb-6">
+                <span className="text-xs font-extrabold px-3 py-1 rounded-full bg-orange-100 text-orange-800">
+                  {currentQ.ruleType || "Abacus Calculation"}
+                </span>
+
+                <button
+                  onClick={() => toggleFlag(currentQ.id)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${
+                    flaggedQuestions[currentQ.id]
+                      ? "bg-amber-100 text-amber-800 border border-amber-300"
+                      : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                  }`}
+                >
+                  <Flag className="w-3.5 h-3.5 fill-current" />
+                  <span>{flaggedQuestions[currentQ.id] ? "Flagged" : "Flag"}</span>
+                </button>
+              </div>
+
+              {/* Main Question Display */}
               <h3 className="text-3xl sm:text-5xl font-black font-heading text-[#1D3557] tracking-wider mb-4">
                 {currentQ.questionText}
               </h3>
-              <p className="text-xs font-bold text-slate-400">
-                Move your virtual or physical abacus beads, then select or type your final answer.
-              </p>
-            </div>
 
-            {/* Direct Answer Entry - No Options Given */}
-            <div className="max-w-sm mx-auto mb-8 space-y-4">
-              <div className="text-center">
-                <span className="text-xs font-black uppercase tracking-wider text-slate-400 block mb-2">
-                  Direct Calculated Answer (No Options Given):
-                </span>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  placeholder="?"
-                  autoFocus
-                  value={answers[currentQ.id] !== undefined ? answers[currentQ.id] : ""}
-                  onChange={(e) => {
-                    const clean = e.target.value.replace(/[^0-9-]/g, "");
-                    handleSelectAnswer(currentQ.id, clean);
-                  }}
-                  className="w-48 h-16 text-center text-4xl font-mono font-black py-2 px-4 rounded-2xl border-3 border-yellow-300 focus:border-[#F4A261] focus:ring-4 focus:ring-amber-100 outline-none shadow-inner bg-[#FFFDF7] text-[#1D3557] mx-auto block"
-                />
-              </div>
-
-              {/* Kid-Friendly Abacus Keypad */}
-              <div className="bg-stone-50 p-3 sm:p-4 rounded-3xl border-2 border-stone-200 shadow-sm">
-                <div className="flex items-center justify-between text-[11px] font-bold text-slate-400 px-1 mb-2">
-                  <span>Numeric Keypad:</span>
-                  <span>or use physical keyboard</span>
+              {/* For 1-Digit 5-Row Drill: Display authentic Abacus vertical stack */}
+              {currentQ.numbers && currentQ.numbers.length >= 4 && (
+                <div className="inline-block bg-[#FFFDF7] border-2 border-orange-200 rounded-2xl p-4 my-2 font-mono text-2xl font-black shadow-sm">
+                  <div className="text-[10px] font-bold uppercase text-orange-600 tracking-wider mb-2 font-sans">
+                    5-Row Drill Stack
+                  </div>
+                  {currentQ.numbers.map((num, i) => (
+                    <div key={i} className="text-right px-6 leading-relaxed">
+                      {i === 0 ? num : num > 0 ? `+ ${num}` : `- ${Math.abs(num)}`}
+                    </div>
+                  ))}
+                  <div className="border-t-2 border-orange-300 mt-2 pt-1 text-center text-xs text-orange-700 font-sans font-bold">
+                    = ?
+                  </div>
                 </div>
-                <div className="grid grid-cols-3 gap-2">
-                  {["1", "2", "3", "4", "5", "6", "7", "8", "9"].map((digit) => (
+              )}
+
+              <p className="text-xs font-bold text-slate-400 mt-2 mb-6">
+                Calculate with your abacus beads or mental visualization, then enter your final answer below.
+              </p>
+
+              {/* Direct Answer Entry - No Options Given */}
+              <div className="max-w-sm mx-auto mb-8 space-y-4">
+                <div className="text-center">
+                  <span className="text-xs font-black uppercase tracking-wider text-slate-400 block mb-2">
+                    Direct Calculated Answer (No Options Given):
+                  </span>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    placeholder="?"
+                    autoFocus
+                    value={answers[currentQ.id] !== undefined ? answers[currentQ.id] : ""}
+                    onChange={(e) => {
+                      const clean = e.target.value.replace(/[^0-9-]/g, "");
+                      handleSelectAnswer(currentQ.id, clean);
+                    }}
+                    className="w-48 h-16 text-center text-4xl font-mono font-black py-2 px-4 rounded-2xl border-3 border-orange-300 focus:border-[#F4A261] focus:ring-4 focus:ring-orange-100 outline-none shadow-inner bg-[#FFFDF7] text-[#1D3557] mx-auto block"
+                  />
+                </div>
+
+                {/* Kid-Friendly Abacus Keypad */}
+                <div className="bg-stone-50 p-3 sm:p-4 rounded-3xl border-2 border-stone-200 shadow-sm">
+                  <div className="flex items-center justify-between text-[11px] font-bold text-slate-400 px-1 mb-2">
+                    <span>Numeric Keypad:</span>
+                    <span>or use physical keyboard</span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    {["1", "2", "3", "4", "5", "6", "7", "8", "9"].map((digit) => (
+                      <button
+                        key={digit}
+                        type="button"
+                        onClick={() => {
+                          const cur = String(answers[currentQ.id] !== undefined ? answers[currentQ.id] : "");
+                          if (cur.length < 7) {
+                            handleSelectAnswer(currentQ.id, cur + digit);
+                          }
+                        }}
+                        className="h-12 rounded-xl bg-white hover:bg-orange-50 active:scale-95 text-[#1D3557] border border-stone-200 hover:border-orange-300 font-mono text-xl font-black shadow-sm flex items-center justify-center transition cursor-pointer"
+                      >
+                        {digit}
+                      </button>
+                    ))}
                     <button
-                      key={digit}
+                      type="button"
+                      onClick={() => {
+                        setAnswers((prev) => {
+                          const next = { ...prev };
+                          delete next[currentQ.id];
+                          return next;
+                        });
+                      }}
+                      className="h-12 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold text-xs flex items-center justify-center transition cursor-pointer"
+                    >
+                      Clear
+                    </button>
+                    <button
                       type="button"
                       onClick={() => {
                         const cur = String(answers[currentQ.id] !== undefined ? answers[currentQ.id] : "");
                         if (cur.length < 7) {
-                          handleSelectAnswer(currentQ.id, cur + digit);
+                          handleSelectAnswer(currentQ.id, cur + "0");
                         }
                       }}
-                      className="h-12 rounded-xl bg-white hover:bg-amber-50 active:scale-95 text-[#1D3557] border border-stone-200 hover:border-amber-300 font-mono text-xl font-black shadow-sm flex items-center justify-center transition cursor-pointer"
+                      className="h-12 rounded-xl bg-white hover:bg-orange-50 active:scale-95 text-[#1D3557] border border-stone-200 hover:border-orange-300 font-mono text-xl font-black shadow-sm flex items-center justify-center transition cursor-pointer"
                     >
-                      {digit}
+                      0
                     </button>
-                  ))}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setAnswers((prev) => {
-                        const next = { ...prev };
-                        delete next[currentQ.id];
-                        return next;
-                      });
-                    }}
-                    className="h-12 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold text-xs flex items-center justify-center transition cursor-pointer"
-                  >
-                    Clear
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const cur = String(answers[currentQ.id] !== undefined ? answers[currentQ.id] : "");
-                      if (cur.length < 7) {
-                        handleSelectAnswer(currentQ.id, cur + "0");
-                      }
-                    }}
-                    className="h-12 rounded-xl bg-white hover:bg-amber-50 active:scale-95 text-[#1D3557] border border-stone-200 hover:border-amber-300 font-mono text-xl font-black shadow-sm flex items-center justify-center transition cursor-pointer"
-                  >
-                    0
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const cur = String(answers[currentQ.id] !== undefined ? answers[currentQ.id] : "");
-                      handleSelectAnswer(currentQ.id, cur.slice(0, -1));
-                    }}
-                    className="h-12 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 font-bold text-xs flex items-center justify-center transition cursor-pointer"
-                  >
-                    ⌫
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const cur = String(answers[currentQ.id] !== undefined ? answers[currentQ.id] : "");
+                        handleSelectAnswer(currentQ.id, cur.slice(0, -1));
+                      }}
+                      className="h-12 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 font-bold text-xs flex items-center justify-center transition cursor-pointer"
+                    >
+                      ⌫
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* Question Navigation Controls */}
-            <div className="flex items-center justify-between gap-4 pt-6 border-t border-yellow-100">
-              <button
-                onClick={() => setCurrentQuestionIndex((prev) => Math.max(0, prev - 1))}
-                disabled={currentQuestionIndex === 0}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-yellow-50 border border-yellow-200 text-xs font-extrabold hover:bg-yellow-100 disabled:opacity-30 disabled:cursor-not-allowed transition"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                <span>Previous</span>
-              </button>
+              {/* Prev / Next controls */}
+              <div className="flex items-center justify-between gap-4 pt-6 border-t border-orange-100">
+                <button
+                  onClick={() => setCurrentQuestionIndex((prev) => Math.max(0, prev - 1))}
+                  disabled={currentQuestionIndex === 0}
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-orange-50 border border-orange-200 text-xs font-extrabold hover:bg-orange-100 disabled:opacity-30 disabled:cursor-not-allowed transition"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  <span>Previous</span>
+                </button>
 
-              <span className="text-xs font-bold text-slate-500">
-                {currentQuestionIndex + 1} / {questions.length}
-              </span>
-
-              <button
-                onClick={() =>
-                  setCurrentQuestionIndex((prev) => Math.min(questions.length - 1, prev + 1))
-                }
-                disabled={currentQuestionIndex === questions.length - 1}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-[#F4A261] text-white text-xs font-extrabold hover:bg-[#E76F51] disabled:opacity-30 disabled:cursor-not-allowed transition shadow-sm"
-              >
-                <span>Next</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-
-          {/* Question Palette Drawer Grid */}
-          <div className="bg-white rounded-3xl p-5 border-2 border-yellow-200 shadow-md">
-            <div className="flex items-center justify-between mb-3 text-xs font-bold text-slate-600">
-              <span>Question Quick Navigation:</span>
-              <div className="flex items-center gap-3">
-                <span className="flex items-center gap-1">
-                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block" /> Answered
+                <span className="text-xs font-bold text-slate-500">
+                  {currentQuestionIndex + 1} / {questions.length}
                 </span>
-                <span className="flex items-center gap-1">
-                  <span className="w-2.5 h-2.5 rounded-full bg-amber-400 inline-block" /> Flagged
-                </span>
-                <span className="flex items-center gap-1">
-                  <span className="w-2.5 h-2.5 rounded-full bg-slate-200 inline-block" /> Unanswered
-                </span>
+
+                <button
+                  onClick={() =>
+                    setCurrentQuestionIndex((prev) => Math.min(questions.length - 1, prev + 1))
+                  }
+                  disabled={currentQuestionIndex === questions.length - 1}
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-[#F4A261] text-white text-xs font-extrabold hover:bg-[#E76F51] disabled:opacity-30 disabled:cursor-not-allowed transition shadow-sm"
+                >
+                  <span>Next</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
               </div>
             </div>
 
-            <div className="grid grid-cols-5 sm:grid-cols-10 gap-2">
-              {questions.map((q, idx) => {
-                const isAnswered = answers[q.id] !== undefined && answers[q.id] !== "";
-                const isFlagged = flaggedQuestions[q.id];
-                const isCurrent = idx === currentQuestionIndex;
+            {/* Question Palette Drawer Grid */}
+            <div className="bg-white rounded-3xl p-5 border-2 border-orange-200 shadow-md">
+              <div className="flex items-center justify-between mb-3 text-xs font-bold text-slate-600">
+                <span>Question Quick Navigation:</span>
+                <div className="flex items-center gap-3">
+                  <span className="flex items-center gap-1">
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block" /> Answered
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <span className="w-2.5 h-2.5 rounded-full bg-amber-400 inline-block" /> Flagged
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <span className="w-2.5 h-2.5 rounded-full bg-slate-200 inline-block" /> Unanswered
+                  </span>
+                </div>
+              </div>
 
-                let btnBg = "bg-slate-100 text-slate-700 border-slate-200";
-                if (isCurrent) {
-                  btnBg = "ring-2 ring-orange-500 bg-orange-100 text-orange-900 border-orange-400 font-black";
-                } else if (isFlagged) {
-                  btnBg = "bg-amber-100 text-amber-900 border-amber-300 font-bold";
-                } else if (isAnswered) {
-                  btnBg = "bg-emerald-100 text-emerald-900 border-emerald-300 font-bold";
-                }
+              <div className="grid grid-cols-5 sm:grid-cols-10 gap-2">
+                {questions.map((q, idx) => {
+                  const isAnswered = answers[q.id] !== undefined && answers[q.id] !== "";
+                  const isFlagged = flaggedQuestions[q.id];
+                  const isCurrent = idx === currentQuestionIndex;
 
-                return (
-                  <button
-                    key={q.id}
-                    onClick={() => setCurrentQuestionIndex(idx)}
-                    className={`py-2 rounded-xl text-xs border transition-all ${btnBg} cursor-pointer hover:scale-105`}
-                  >
-                    {idx + 1}
-                  </button>
-                );
-              })}
+                  let btnBg = "bg-slate-100 text-slate-700 border-slate-200";
+                  if (isCurrent) {
+                    btnBg = "ring-2 ring-orange-500 bg-orange-100 text-orange-900 border-orange-400 font-black";
+                  } else if (isFlagged) {
+                    btnBg = "bg-amber-100 text-amber-900 border-amber-300 font-bold";
+                  } else if (isAnswered) {
+                    btnBg = "bg-emerald-100 text-emerald-900 border-emerald-300 font-bold";
+                  }
+
+                  return (
+                    <button
+                      key={q.id}
+                      onClick={() => setCurrentQuestionIndex(idx)}
+                      className={`py-2 rounded-xl text-xs border transition-all ${btnBg} cursor-pointer hover:scale-105`}
+                    >
+                      {idx + 1}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
         </div>

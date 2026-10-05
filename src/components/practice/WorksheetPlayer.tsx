@@ -81,7 +81,7 @@ export default function WorksheetPlayer() {
   }, [currentQuestionIndex, currentQuestion, userAnswers]);
 
   const handleKeypadPress = React.useCallback((numStr: string) => {
-    if (!currentQuestion || inputVal.length >= 4) return;
+    if (!currentQuestion || inputVal.length >= 8) return;
     const nextVal = inputVal + numStr;
     setInputVal(nextVal);
     const parsed = parseInt(nextVal, 10);

@@ -1028,39 +1028,38 @@ export function generateComprehensivePracticeQuestions(
   count: number = 20,
   targetLevel: number = 1
 ): PracticeQuestion[] {
+  // For Levels 2-8, pull comprehensively from all official syllabus categories for that level!
+  if (targetLevel >= 2) {
+    const levelCategories = PRACTICE_CATEGORIES.filter((c) => c.level === targetLevel);
+    if (levelCategories.length > 0) {
+      const questions: PracticeQuestion[] = [];
+      for (let i = 0; i < count; i++) {
+        const cat = levelCategories[i % levelCategories.length];
+        const q = generateQuestionForCategory(cat, i + 1);
+        questions.push(q);
+      }
+      return questions;
+    }
+  }
+
   const qPerCategory = Math.max(1, Math.floor(count / 4));
   const timestamp = Date.now();
 
-  // 1. Direct / 2-Digit Calculation
-  const directPool: number[][] = targetLevel >= 2
-    ? [
-        [23, 15, -12],
-        [35, 12, -21],
-        [42, 25, -16],
-        [18, 31, -24],
-        [54, 23, -15],
-        [67, 12, -34],
-        [29, 40, -18],
-        [33, 22, -11],
-        [45, 14, -23],
-        [51, 36, -42],
-        [62, 17, -25],
-        [78, 11, -36],
-      ]
-    : [
-        [2, 1, 5],
-        [3, 5, -2],
-        [1, 3, 5],
-        [4, 5, -3],
-        [2, 2, 5, -4],
-        [7, -2, 4],
-        [14, 5, -3],
-        [23, 15, -12],
-        [5, 2, 1, -3],
-        [6, 3, -4, 2],
-        [11, 22, 15],
-        [35, 12, -21],
-      ];
+  // 1. Direct / 2-Digit Calculation (Level 1)
+  const directPool: number[][] = [
+    [2, 1, 5],
+    [3, 5, -2],
+    [1, 3, 5],
+    [4, 5, -3],
+    [2, 2, 5, -4],
+    [7, -2, 4],
+    [14, 5, -3],
+    [23, 15, -12],
+    [5, 2, 1, -3],
+    [6, 3, -4, 2],
+    [11, 22, 15],
+    [35, 12, -21],
+  ];
 
   const directQuestions: PracticeQuestion[] = [];
   for (let i = 0; i < qPerCategory; i++) {

@@ -22,6 +22,106 @@ import { UNTIMED_WORKSHEET_OPTIONS, UntimedWorksheetOption } from "@/data/untime
 import WorksheetPlayer from "./WorksheetPlayer";
 import PracticeResultView from "./PracticeResultView";
 
+export const LEVELS_LIST = [
+  { level: 1, name: "Level 1", desc: "Foundations & Friends", count: 31, icon: "🌱" },
+  { level: 2, name: "Level 2", desc: "10-15 Rows & 2-Digit", count: 6, icon: "🚀" },
+  { level: 3, name: "Level 3", desc: "20-25 Rows & 3-Digit", count: 6, icon: "⚡" },
+  { level: 4, name: "Level 4", desc: "30 Rows & 4-Digit", count: 7, icon: "🔥" },
+  { level: 5, name: "Level 5", desc: "Multiplication (2D×1D)", count: 5, icon: "✖️" },
+  { level: 6, name: "Level 6", desc: "Advanced Mult & Div", count: 10, icon: "💎" },
+  { level: 7, name: "Level 7", desc: "Grandmaster Operations", count: 7, icon: "👑" },
+  { level: 8, name: "Level 8", desc: "Mental Calculations", count: 3, icon: "🧠" },
+];
+
+export const SYLLABUS_LEVEL_INFO: Record<
+  number,
+  {
+    title: string;
+    subtitle: string;
+    topics: { title: string; desc: string; icon: string }[];
+  }
+> = {
+  1: {
+    title: "Level 1: Foundations & Friend Formulas",
+    subtitle: "Simple 1 & 2 digits, Small Friend rules, Big Friend rules, and 3/5/7-row vertical stacks.",
+    topics: [
+      { title: "Simple Calculations", desc: "1 & 2 digits direct without rules", icon: "1️⃣" },
+      { title: "Small Friend Rules", desc: "+4, +3, +2, +1 & -4, -3, -2, -1 (Base 5)", icon: "🤝" },
+      { title: "Big Friend Rules", desc: "+9..+1 and -9..-1 (Base 10)", icon: "🚀" },
+      { title: "Multi-Row Stacks", desc: "1 digit across 3, 5, and 7 rows", icon: "⚡" },
+    ],
+  },
+  2: {
+    title: "Level 2: Intermediate Multi-Row Speed",
+    subtitle: "High-row single-digit concentration and multi-row 2-digit calculations.",
+    topics: [
+      { title: "1 Digit 10, 12, 15 Rows", desc: "Sustained single-digit vertical endurance", icon: "🔟" },
+      { title: "2 Digit 3 Row Calculation", desc: "Tens & units coordination across 3 rows", icon: "🔢" },
+      { title: "2 Digit 5 Row Calculation", desc: "5 consecutive 2-digit rows with mixed rules", icon: "🔥" },
+      { title: "2 Digit 8 Row Calculation", desc: "Championship 8-row speed arithmetic", icon: "👑" },
+    ],
+  },
+  3: {
+    title: "Level 3: Extended Rows & 3-Digit Stacks",
+    subtitle: "20-25 row marathons, 10-12 row 2-digit arithmetic, and 3-digit foundations.",
+    topics: [
+      { title: "1 Digit 20 & 25 Rows", desc: "Ultra-endurance single digit speed runs", icon: "⚡" },
+      { title: "2 Digit 10 & 12 Rows", desc: "Extended 2-digit multi-row calculations", icon: "🔢" },
+      { title: "3 Digit 3 Row Calculation", desc: "Hundreds rod manipulation across 3 rows", icon: "💎" },
+      { title: "3 Digit 5 Row Calculation", desc: "5 consecutive 3-digit rows with full formulas", icon: "🌟" },
+    ],
+  },
+  4: {
+    title: "Level 4: Advanced Arithmetic & 4-Digit Stacks",
+    subtitle: "30-row marathons, 15-20 row 2-digit, 7-10 row 3-digit, and 4-digit stacks.",
+    topics: [
+      { title: "1 Digit 30 Row Calculation", desc: "Ultimate 30-row single-digit marathon", icon: "⚡" },
+      { title: "2 Digit 15 & 20 Rows", desc: "15 to 20 rows of rapid two-digit calculations", icon: "🔥" },
+      { title: "3 Digit 7 & 10 Rows", desc: "7 to 10 rows of triple-digit addition/subtraction", icon: "🔟" },
+      { title: "4 Digit 3 & 5 Rows", desc: "Thousands rod manipulation across 3 & 5 rows", icon: "💎" },
+    ],
+  },
+  5: {
+    title: "Level 5: 2D 25R, 3D 15R & Abacus Multiplication",
+    subtitle: "Multi-digit endurance stacks and introduction to abacus multiplication.",
+    topics: [
+      { title: "2 Digit 25 Row Calculation", desc: "Quarter-century rows of 2-digit numbers", icon: "🔥" },
+      { title: "3 Digit 12 & 15 Rows", desc: "Extended triple-digit vertical stacks", icon: "🔢" },
+      { title: "4 Digit 7 Row Calculation", desc: "7 rows of thousands-column arithmetic", icon: "💎" },
+      { title: "Multiplication (2D × 1D)", desc: "Soroban rod unit multiplication technique", icon: "✖️" },
+    ],
+  },
+  6: {
+    title: "Level 6: Advanced Multiplication & Abacus Division",
+    subtitle: "5-digit stacks, 2D×2D & 4D×1D multiplication, and introduction to division.",
+    topics: [
+      { title: "2D 30R & 3D 20R Calculations", desc: "Peak multi-digit vertical additions", icon: "⚡" },
+      { title: "4D 8R/10R & 5D 3R/5R", desc: "Ten-thousands column high-density stacks", icon: "💎" },
+      { title: "Multiplication (3D×1D, 4D×1D, 2D×2D)", desc: "Multi-digit cross-product placement", icon: "✖️" },
+      { title: "Division (2 Digit ÷ 1 Digit)", desc: "Abacus quotient placement & remainder subtraction", icon: "➗" },
+    ],
+  },
+  7: {
+    title: "Level 7: Grandmaster Operations",
+    subtitle: "3D 25R, 4D 15R, 5D 10R, 3D×3D multiplication, and multi-digit division.",
+    topics: [
+      { title: "3D 25R, 4D 15R, 5D 10R", desc: "Master-tier multi-digit continuous calculation", icon: "👑" },
+      { title: "Multiplication (3D × 2D)", desc: "Triple-digit by double-digit calculation", icon: "✖️" },
+      { title: "Multiplication (3D × 3D)", desc: "Championship 3-digit by 3-digit mastery", icon: "🌟" },
+      { title: "Division (3D ÷ 1D & 3D ÷ 2D)", desc: "Advanced dividend-divisor rod manipulation", icon: "➗" },
+    ],
+  },
+  8: {
+    title: "Level 8: Mental Calculations (Anzan)",
+    subtitle: "Flash Anzan, multi-row mental math, and international competition speed trials.",
+    topics: [
+      { title: "Flash Anzan Mental Math", desc: "Rapid flashing numbers calculated mentally in seconds", icon: "⚡" },
+      { title: "Mental Multi-Row Addition & Subtraction", desc: "10 to 20 rows calculated with zero physical abacus", icon: "🧠" },
+      { title: "International Competition Speed", desc: "Championship-standard speed mental arithmetic", icon: "👑" },
+    ],
+  },
+};
+
 export default function PracticeDashboard() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -44,9 +144,17 @@ export default function PracticeDashboard() {
     selectedLevel,
   } = usePractice();
 
+  const [activeLevelTab, setActiveLevelTab] = useState<number>(selectedLevel || 1);
   const [showHistoryDrawer, setShowHistoryDrawer] = useState<boolean>(false);
   const [categoryFilter, setCategoryFilter] = useState<string>(activeUntimedCategory || "all");
   const [searchQuery, setSearchQuery] = useState<string>("");
+
+  // Sync activeLevelTab when student's enrolled level changes
+  useEffect(() => {
+    if (selectedLevel) {
+      setActiveLevelTab(selectedLevel);
+    }
+  }, [selectedLevel]);
 
   // Sync categoryFilter with activeUntimedCategory
   useEffect(() => {
@@ -60,6 +168,14 @@ export default function PracticeDashboard() {
     const mode = searchParams.get("mode");
     const category = searchParams.get("category");
     const sheet = searchParams.get("sheet");
+    const levelParam = searchParams.get("level");
+
+    if (levelParam) {
+      const parsed = parseInt(levelParam, 10);
+      if (!isNaN(parsed) && parsed >= 1 && parsed <= 8) {
+        setActiveLevelTab(parsed);
+      }
+    }
 
     if (sheet) {
       if (viewMode !== "worksheet" || activeUntimedOptionId !== sheet) {
@@ -85,14 +201,16 @@ export default function PracticeDashboard() {
     }
   }, [searchParams]);
 
-  const handleOpenUntimedDirectory = (cat: string = "all") => {
+  const handleOpenUntimedDirectory = (cat: string = "all", level?: number) => {
+    const targetLvl = level !== undefined ? level : activeLevelTab;
+    setActiveLevelTab(targetLvl);
     setShowUntimedDirectory(true);
     setCategoryFilter(cat);
     setActiveUntimedCategory(cat);
     if (cat !== "all") {
-      router.push(`/learning/practice?mode=untimed&category=${cat}`);
+      router.push(`/learning/practice?mode=untimed&level=${targetLvl}&category=${cat}`);
     } else {
-      router.push("/learning/practice?mode=untimed");
+      router.push(`/learning/practice?mode=untimed&level=${targetLvl}`);
     }
   };
 
@@ -100,7 +218,7 @@ export default function PracticeDashboard() {
     if (categoryFilter !== "all") {
       setCategoryFilter("all");
       setActiveUntimedCategory("all");
-      router.push("/learning/practice?mode=untimed");
+      router.push(`/learning/practice?mode=untimed&level=${activeLevelTab}`);
     } else {
       setShowUntimedDirectory(false);
       backToDashboard();
@@ -112,14 +230,14 @@ export default function PracticeDashboard() {
     setCategoryFilter(catId);
     setActiveUntimedCategory(catId);
     if (catId !== "all") {
-      router.push(`/learning/practice?mode=untimed&category=${catId}`);
+      router.push(`/learning/practice?mode=untimed&level=${activeLevelTab}&category=${catId}`);
     } else {
-      router.push("/learning/practice?mode=untimed");
+      router.push(`/learning/practice?mode=untimed&level=${activeLevelTab}`);
     }
   };
 
   const handleStartUntimedWorksheet = (opt: UntimedWorksheetOption) => {
-    router.push(`/learning/practice?mode=untimed&category=${opt.category}&sheet=${opt.id}`);
+    router.push(`/learning/practice?mode=untimed&level=${opt.level || 1}&category=${opt.category}&sheet=${opt.id}`);
     startUntimedWorksheet(opt.id, opt.questionCount || 30);
   };
 
@@ -132,8 +250,13 @@ export default function PracticeDashboard() {
     return <PracticeResultView />;
   }
 
+  // Worksheets for the currently selected level tab
+  const levelWorksheets = UNTIMED_WORKSHEET_OPTIONS.filter(
+    (opt) => (opt.level || 1) === activeLevelTab
+  );
+
   // Filtered untimed worksheets based on category and search query
-  const filteredWorksheets = UNTIMED_WORKSHEET_OPTIONS.filter((opt) => {
+  const filteredWorksheets = levelWorksheets.filter((opt) => {
     const matchesCategory = categoryFilter === "all" || opt.category === categoryFilter;
     const matchesSearch =
       searchQuery.trim() === "" ||
@@ -144,6 +267,81 @@ export default function PracticeDashboard() {
     return matchesCategory && matchesSearch;
   });
 
+  // Dynamic categories available for the active level
+  const availableCategoryTabs = Array.from(
+    levelWorksheets.reduce((acc, opt) => {
+      const key = opt.category;
+      const groupName = opt.categoryGroup || opt.category;
+      if (!acc.has(key)) {
+        acc.set(key, { id: key, label: groupName, count: 0 });
+      }
+      acc.get(key)!.count += 1;
+      return acc;
+    }, new Map<string, { id: string; label: string; count: number }>([
+      ["all", { id: "all", label: `All (${levelWorksheets.length})`, count: levelWorksheets.length }]
+    ])).values()
+  ).map((tab) => ({
+    ...tab,
+    displayLabel: tab.id === "all" ? tab.label : `${tab.label} (${tab.count})`,
+  }));
+
+  const currentLevelInfo = SYLLABUS_LEVEL_INFO[activeLevelTab] || SYLLABUS_LEVEL_INFO[1];
+
+  // Reusable Level Ribbon
+  const renderLevelRibbon = () => (
+    <div className="bg-white rounded-3xl p-3 sm:p-4 border-2 border-emerald-200/80 shadow-sm space-y-2">
+      <div className="flex items-center justify-between gap-2 px-1">
+        <span className="text-xs font-black uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+          <span>📚</span> Syllabus Level Navigator:
+        </span>
+        <span className="text-[11px] font-bold text-emerald-800 bg-emerald-100/80 px-2.5 py-0.5 rounded-full border border-emerald-300/60">
+          Your Enrolled Level: <strong className="font-black">Level {selectedLevel}</strong>
+        </span>
+      </div>
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2">
+        {LEVELS_LIST.map((lvl) => {
+          const isActive = activeLevelTab === lvl.level;
+          const isUserLevel = selectedLevel === lvl.level;
+          return (
+            <button
+              key={lvl.level}
+              type="button"
+              onClick={() => {
+                setActiveLevelTab(lvl.level);
+                setCategoryFilter("all");
+                setActiveUntimedCategory("all");
+              }}
+              className={`p-2.5 rounded-2xl text-left transition-all duration-200 relative cursor-pointer border ${
+                isActive
+                  ? "bg-gradient-to-br from-emerald-600 to-teal-700 text-white border-emerald-500 shadow-md scale-[1.02]"
+                  : "bg-[#FFFBF0] hover:bg-emerald-50 text-slate-700 border-emerald-200/70"
+              }`}
+            >
+              {isUserLevel && (
+                <span
+                  className={`absolute -top-1.5 -right-1.5 text-[9px] font-black px-1.5 py-0.5 rounded-full uppercase tracking-tighter ${
+                    isActive ? "bg-amber-400 text-slate-900" : "bg-emerald-600 text-white"
+                  }`}
+                >
+                  Current
+                </span>
+              )}
+              <div className="flex items-center gap-1.5">
+                <span className="text-base">{lvl.icon}</span>
+                <span className={`text-xs font-black ${isActive ? "text-white" : "text-[#1D3557]"}`}>
+                  Level {lvl.level}
+                </span>
+              </div>
+              <div className={`text-[10px] font-bold truncate mt-0.5 ${isActive ? "text-emerald-100" : "text-slate-500"}`}>
+                {lvl.count} Worksheets
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+
   // ============================================================
   // UNTIMED 31-WORKSHEET DIRECTORY VIEW
   // Triggered when user clicks "Practice Without Timer"
@@ -151,6 +349,9 @@ export default function PracticeDashboard() {
   if (showUntimedDirectory) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+        {/* Level Ribbon */}
+        {renderLevelRibbon()}
+
         {/* Top Header */}
         <div className="bg-white rounded-[2.5rem] p-6 sm:p-8 border-2 border-emerald-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="space-y-1.5">
@@ -161,31 +362,29 @@ export default function PracticeDashboard() {
             >
               <ArrowLeft className="w-4 h-4" />
               <span>
-                {categoryFilter !== "all" ? "Back to All Worksheets" : "Back to Practice Modes"}
+                {categoryFilter !== "all" ? "Back to All Level Worksheets" : "Back to Practice Modes"}
               </span>
             </button>
             <div className="flex items-center gap-3">
               <span className="text-3xl">🌱</span>
               <h1 className="text-2xl sm:text-3xl font-extrabold text-[#1D3557] font-heading">
                 {categoryFilter !== "all"
-                  ? `${categoryFilter === "simple" ? "Simple Calculation" : "Practice"} Worksheets (${filteredWorksheets.length})`
-                  : "Practice Without Timer (31 Worksheets)"}
+                  ? `Level ${activeLevelTab} Worksheets (${filteredWorksheets.length})`
+                  : `Level ${activeLevelTab} Practice Without Timer (${levelWorksheets.length} Worksheets)`}
               </h1>
             </div>
             <p className="text-xs sm:text-sm text-slate-500 font-medium max-w-3xl">
-              {categoryFilter === "simple"
-                ? "Direct 1-digit and 2-digit calculation worksheets with zero formula pressure. Perfect for pure bead discipline!"
-                : "Select any of the 31 specialized worksheets below. Zero timer pressure—practice each exact rule, formula, or row count with proper bead discipline!"}
+              {currentLevelInfo.subtitle} Zero timer pressure—practice with complete abacus accuracy!
             </p>
           </div>
 
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
             <button
-              onClick={() => startPracticeSession("untimed")}
+              onClick={() => startPracticeSession("untimed", undefined, activeLevelTab)}
               className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-extrabold text-xs shadow-md hover:shadow-lg transition cursor-pointer"
             >
               <Sparkles className="w-4 h-4 text-emerald-200" />
-              <span>Mixed Practice (20 Qs)</span>
+              <span>Mixed Level {activeLevelTab} Practice (20 Qs)</span>
             </button>
           </div>
         </div>
@@ -200,7 +399,7 @@ export default function PracticeDashboard() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search rule or worksheet (e.g. +4, -3, 5 row, big friend, simple)..."
+                placeholder={`Search Level ${activeLevelTab} worksheets...`}
                 className="w-full pl-10 pr-10 py-2.5 rounded-2xl bg-[#FFFBF0] border border-emerald-200 focus:outline-none focus:border-emerald-500 text-xs sm:text-sm font-medium text-slate-800"
               />
               {searchQuery && (
@@ -215,21 +414,13 @@ export default function PracticeDashboard() {
 
             {/* Results count */}
             <div className="text-xs font-bold text-slate-500 self-end md:self-auto">
-              Showing <span className="text-emerald-700 font-black">{filteredWorksheets.length}</span> of {UNTIMED_WORKSHEET_OPTIONS.length} worksheets
+              Showing <span className="text-emerald-700 font-black">{filteredWorksheets.length}</span> of {levelWorksheets.length} Level {activeLevelTab} worksheets
             </div>
           </div>
 
-          {/* Category Filter Tabs */}
+          {/* Dynamic Category Filter Tabs for active level */}
           <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100">
-            {[
-              { id: "all", label: "All (31)", count: 31 },
-              { id: "small-friend-add", label: "🔥 Small Friend (+) (4)", count: 4 },
-              { id: "small-friend-sub", label: "🔥 Small Friend (-) (4)", count: 4 },
-              { id: "big-friend-add", label: "🔥 Big Friend (+) (9)", count: 9 },
-              { id: "big-friend-sub", label: "🔥 Big Friend (-) (9)", count: 9 },
-              { id: "multi-row", label: "🔥 Multi-Row (3)", count: 3 },
-              { id: "simple", label: selectedLevel >= 2 ? "Level 1 Review (2)" : "Simple Calculation (2)", count: 2 },
-            ].map((tab) => {
+            {availableCategoryTabs.map((tab) => {
               const active = categoryFilter === tab.id;
               return (
                 <button
@@ -241,7 +432,7 @@ export default function PracticeDashboard() {
                       : "bg-[#FFFBF0] text-slate-600 hover:bg-emerald-50 border border-emerald-200/60"
                   }`}
                 >
-                  <span>{tab.label}</span>
+                  <span>{tab.displayLabel}</span>
                 </button>
               );
             })}
@@ -372,13 +563,16 @@ export default function PracticeDashboard() {
         )}
       </div>
 
+      {/* Level Ribbon on Landing */}
+      {renderLevelRibbon()}
+
       {/* 2. THE 2 PRACTICE OPTIONS */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
         {/* ======================================================== */}
         {/* OPTION 1: PRACTICE WITHOUT TIMER */}
         {/* ======================================================== */}
         <div
-          onClick={() => setShowUntimedDirectory(true)}
+          onClick={() => handleOpenUntimedDirectory("all", activeLevelTab)}
           className="bg-white rounded-[2.5rem] p-6 sm:p-8 border-3 border-emerald-300 shadow-md hover:shadow-xl transition-all duration-300 flex flex-col justify-between relative overflow-hidden group cursor-pointer"
         >
           <div className="absolute top-0 right-0 w-36 h-36 bg-emerald-100/50 rounded-full blur-2xl pointer-events-none" />
@@ -390,23 +584,23 @@ export default function PracticeDashboard() {
                 🌱
               </span>
               <span className="px-3.5 py-1.5 rounded-full bg-emerald-100 text-emerald-800 text-xs font-black uppercase tracking-wider border border-emerald-200">
-                {selectedLevel >= 2 ? "Option 1 • 31 Worksheets (Level 2 Active)" : "Option 1 • 31 Worksheets"}
+                Option 1 • Level {activeLevelTab} ({levelWorksheets.length} Worksheets)
               </span>
             </div>
 
             <div>
               <h2 className="text-2xl font-black text-[#1D3557] font-heading mb-1.5 group-hover:text-emerald-700 transition-colors">
-                Practice Without Timer
+                Level {activeLevelTab} Worksheets (Untimed)
               </h2>
               <p className="text-xs sm:text-sm text-slate-600 font-medium leading-relaxed">
-                Click here to choose from 31 dedicated worksheets across Simple calculations, Small friend rules (+/-), Big friend rules (+/-), and Multi-row drills without clock pressure.
+                {currentLevelInfo.subtitle} Zero timer pressure—master each formula and row count with proper bead discipline.
               </p>
             </div>
 
             {/* Quick Benefits */}
             <div className="flex flex-wrap items-center gap-2 text-xs font-bold text-emerald-800 bg-emerald-50/60 p-3 rounded-2xl border border-emerald-200/60">
               <span className="flex items-center gap-1">
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> 31 Target Worksheets
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> {levelWorksheets.length} Syllabus Worksheets
               </span>
               <span>•</span>
               <span className="flex items-center gap-1">
@@ -414,68 +608,35 @@ export default function PracticeDashboard() {
               </span>
               <span>•</span>
               <span className="flex items-center gap-1">
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Focus on rules
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> 100% Bead Accuracy
               </span>
             </div>
 
-            {/* 31 Worksheet Categories Overview */}
+            {/* Level Syllabus Topics Overview */}
             <div className="space-y-2.5 pt-2 border-t border-emerald-100">
               <span className="text-[11px] font-black uppercase tracking-wider text-emerald-900 block">
-                Worksheet Categories Available (31 Options):
+                Level {activeLevelTab} Syllabus Worksheets ({levelWorksheets.length} Available):
               </span>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                <div
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleOpenUntimedDirectory("simple");
-                  }}
-                  className="p-2.5 rounded-2xl bg-emerald-50/80 hover:bg-emerald-100/90 border border-emerald-200/80 cursor-pointer transition-all"
-                >
-                  <span className="font-extrabold text-[#1D3557] block">1️⃣ Simple Calculation</span>
-                  <span className="text-slate-500 font-medium text-[11px] block mt-0.5">
-                    1 Digit & 2 Digits direct
-                  </span>
-                </div>
-
-                <div
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleOpenUntimedDirectory("small-friend-add");
-                  }}
-                  className="p-2.5 rounded-2xl bg-emerald-50/80 hover:bg-emerald-100/90 border border-emerald-200/80 cursor-pointer transition-all"
-                >
-                  <span className="font-extrabold text-[#1D3557] block">🤝 Small Friend Rules</span>
-                  <span className="text-slate-500 font-medium text-[11px] block mt-0.5">
-                    +4, +3, +2, +1 & -4, -3, -2, -1
-                  </span>
-                </div>
-
-                <div
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleOpenUntimedDirectory("big-friend-add");
-                  }}
-                  className="p-2.5 rounded-2xl bg-emerald-50/80 hover:bg-emerald-100/90 border border-emerald-200/80 cursor-pointer transition-all"
-                >
-                  <span className="font-extrabold text-[#1D3557] block">🚀 Big Friend Rules</span>
-                  <span className="text-slate-500 font-medium text-[11px] block mt-0.5">
-                    +9 to +1 and -9 to -1
-                  </span>
-                </div>
-
-                <div
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleOpenUntimedDirectory("multi-row");
-                  }}
-                  className="p-2.5 rounded-2xl bg-emerald-50/80 hover:bg-emerald-100/90 border border-emerald-200/80 cursor-pointer transition-all"
-                >
-                  <span className="font-extrabold text-[#1D3557] block">⚡ Multi-Row Drills</span>
-                  <span className="text-slate-500 font-medium text-[11px] block mt-0.5">
-                    1 Digit 3, 5, and 7 rows
-                  </span>
-                </div>
+                {currentLevelInfo.topics.map((t, idx) => (
+                  <div
+                    key={idx}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleOpenUntimedDirectory("all", activeLevelTab);
+                    }}
+                    className="p-2.5 rounded-2xl bg-emerald-50/80 hover:bg-emerald-100/90 border border-emerald-200/80 cursor-pointer transition-all"
+                  >
+                    <span className="font-extrabold text-[#1D3557] block flex items-center gap-1.5">
+                      <span>{t.icon}</span>
+                      <span>{t.title}</span>
+                    </span>
+                    <span className="text-slate-500 font-medium text-[11px] block mt-0.5">
+                      {t.desc}
+                    </span>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
@@ -485,11 +646,11 @@ export default function PracticeDashboard() {
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                handleOpenUntimedDirectory("all");
+                handleOpenUntimedDirectory("all", activeLevelTab);
               }}
               className="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-emerald-600 via-teal-600 to-green-600 text-white font-extrabold text-base shadow-lg shadow-emerald-200 hover:shadow-xl hover:scale-[1.02] active:scale-98 transition-all flex items-center justify-center gap-2 cursor-pointer"
             >
-              <span>🌱 Choose from 31 Worksheets</span>
+              <span>🌱 Choose from {levelWorksheets.length} Level {activeLevelTab} Worksheets</span>
               <ArrowRight className="w-5 h-5" />
             </button>
           </div>
@@ -508,18 +669,16 @@ export default function PracticeDashboard() {
                 ⏱️
               </span>
               <span className="px-3.5 py-1.5 rounded-full bg-orange-100 text-orange-800 text-xs font-black uppercase tracking-wider border border-orange-200">
-                {selectedLevel >= 2 ? "Option 2 • Level 2 Timed Drill" : "Option 2 • Timed Drill"}
+                Option 2 • Level {activeLevelTab} Timed Drill
               </span>
             </div>
 
             <div>
               <h2 className="text-2xl font-black text-[#1D3557] font-heading mb-1.5">
-                {selectedLevel >= 2 ? "Level 2 Practice With Timer" : "Practice With Timer"}
+                Level {activeLevelTab} Practice With Timer
               </h2>
               <p className="text-xs sm:text-sm text-slate-600 font-medium leading-relaxed">
-                {selectedLevel >= 2
-                  ? "Boost your 2-digit calculation velocity and Small/Big Friend rules under timed pressure. Challenge yourself to complete calculations before time runs out!"
-                  : "Boost your calculation velocity and mental agility against the clock. Set your target duration in minutes and challenge yourself to complete calculations before time runs out!"}
+                Boost your Level {activeLevelTab} calculation velocity and endurance against the clock. Set your target duration in minutes and challenge yourself to complete calculations before time runs out!
               </p>
             </div>
 
@@ -584,57 +743,21 @@ export default function PracticeDashboard() {
             {/* Contents Inside as Specified */}
             <div className="space-y-2.5 pt-2 border-t border-orange-100">
               <span className="text-[11px] font-black uppercase tracking-wider text-orange-900 block">
-                Contents Inside This Practice:
+                Contents Inside Level {activeLevelTab} Practice:
               </span>
 
               <div className="space-y-2">
-                <div className="flex items-center gap-3 p-3 rounded-2xl bg-orange-50/80 border border-orange-200/80">
-                  <span className="w-7 h-7 rounded-xl bg-[#E76F51] text-white flex items-center justify-center text-xs font-black flex-shrink-0">
-                    1
-                  </span>
-                  <div className="text-xs">
-                    <span className="font-extrabold text-[#1D3557] block">Direct Calculation</span>
-                    <span className="text-slate-500 font-medium text-[11px]">
-                      Pure bead manipulation on units & tens without friend formulas
+                {currentLevelInfo.topics.map((t, idx) => (
+                  <div key={idx} className="flex items-center gap-3 p-3 rounded-2xl bg-orange-50/80 border border-orange-200/80">
+                    <span className="w-7 h-7 rounded-xl bg-[#E76F51] text-white flex items-center justify-center text-xs font-black flex-shrink-0">
+                      {idx + 1}
                     </span>
+                    <div className="text-xs">
+                      <span className="font-extrabold text-[#1D3557] block">{t.title}</span>
+                      <span className="text-slate-500 font-medium text-[11px]">{t.desc}</span>
+                    </div>
                   </div>
-                </div>
-
-                <div className="flex items-center gap-3 p-3 rounded-2xl bg-orange-50/80 border border-orange-200/80">
-                  <span className="w-7 h-7 rounded-xl bg-[#E76F51] text-white flex items-center justify-center text-xs font-black flex-shrink-0">
-                    2
-                  </span>
-                  <div className="text-xs">
-                    <span className="font-extrabold text-[#1D3557] block">Small Friend Rule</span>
-                    <span className="text-slate-500 font-medium text-[11px]">
-                      Base-5 complementary formulas (+4..+1 and -4..-1 rules)
-                    </span>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3 p-3 rounded-2xl bg-orange-50/80 border border-orange-200/80">
-                  <span className="w-7 h-7 rounded-xl bg-[#E76F51] text-white flex items-center justify-center text-xs font-black flex-shrink-0">
-                    3
-                  </span>
-                  <div className="text-xs">
-                    <span className="font-extrabold text-[#1D3557] block">Big Friend Rule</span>
-                    <span className="text-slate-500 font-medium text-[11px]">
-                      Base-10 carrying & borrowing formulas (+9..+1 and -9..-1 rules)
-                    </span>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3 p-3 rounded-2xl bg-orange-50/80 border border-orange-200/80">
-                  <span className="w-7 h-7 rounded-xl bg-[#E76F51] text-white flex items-center justify-center text-xs font-black flex-shrink-0">
-                    4
-                  </span>
-                  <div className="text-xs">
-                    <span className="font-extrabold text-[#1D3557] block">1-Digit 5-Row Calculation</span>
-                    <span className="text-slate-500 font-medium text-[11px]">
-                      Authentic 5 consecutive single-digit vertical stack drills
-                    </span>
-                  </div>
-                </div>
+                ))}
               </div>
             </div>
           </div>
@@ -642,10 +765,10 @@ export default function PracticeDashboard() {
           {/* Start Button */}
           <div className="pt-6 mt-6 border-t border-orange-100">
             <button
-              onClick={() => startPracticeSession("timed", targetMinutes)}
+              onClick={() => startPracticeSession("timed", targetMinutes, activeLevelTab)}
               className="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-[#F4A261] via-[#E76F51] to-[#E9C46A] text-white font-extrabold text-base shadow-lg shadow-orange-200 hover:shadow-xl hover:scale-[1.02] active:scale-98 transition-all flex items-center justify-center gap-2 cursor-pointer"
             >
-              <span>⏱️ Start Timed Practice ({targetMinutes} {targetMinutes === 1 ? "Min" : "Mins"})</span>
+              <span>⏱️ Start Level {activeLevelTab} Timed Practice ({targetMinutes} {targetMinutes === 1 ? "Min" : "Mins"})</span>
               <ArrowRight className="w-5 h-5" />
             </button>
           </div>

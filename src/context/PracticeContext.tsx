@@ -72,8 +72,7 @@ interface PracticeContextType {
   backToUntimedDirectory: (category?: string) => void;
   backToSimpleCalculation: () => void;
 
-  // Action Handlers
-  startPracticeSession: (mode: "untimed" | "timed", minutes?: number) => void;
+  startPracticeSession: (mode: "untimed" | "timed", minutes?: number, levelOverride?: number) => void;
   startUntimedWorksheet: (optionId: string, count?: number) => void;
   startCategoryWorksheet: (category: PracticeCategoryOption) => void;
   startCustomWorksheet: (filter: WorksheetFilterOptions, title?: string) => void;
@@ -248,15 +247,16 @@ export const PracticeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setIsTimeUp(false);
   };
 
-  // Start Comprehensive Practice Session (Untimed or Timed, covering all 4 core topics: Direct, Small Friend, Big Friend, 1-Digit 5-Row)
-  const startPracticeSession = useCallback((mode: "untimed" | "timed", minutes?: number) => {
+  // Start Comprehensive Practice Session (Untimed or Timed, covering official syllabus topics for the targeted level)
+  const startPracticeSession = useCallback((mode: "untimed" | "timed", minutes?: number, levelOverride?: number) => {
     const selectedMins = minutes ? Math.max(1, Math.min(60, Math.round(minutes))) : targetMinutes;
     setPracticeMode(mode);
     if (minutes) {
       setTargetMinutesState(selectedMins);
     }
 
-    const generated = generateComprehensivePracticeQuestions(20, selectedLevel);
+    const lvl = levelOverride || selectedLevel || 1;
+    const generated = generateComprehensivePracticeQuestions(20, lvl);
     setQuestions(generated);
     setCurrentQuestionIndex(0);
     setUserAnswers({});
@@ -267,9 +267,9 @@ export const PracticeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setIsTimeUp(false);
     setIsTimerRunning(true);
     setCurrentAttempt(null);
-    setWorksheetTitle(mode === "timed" ? `Practice With Timer (${selectedMins} Mins)` : "Practice Without Timer");
+    setWorksheetTitle(mode === "timed" ? `Level ${lvl} Practice With Timer (${selectedMins} Mins)` : `Level ${lvl} Practice Without Timer`);
     setViewMode("worksheet");
-  }, [targetMinutes]);
+  }, [targetMinutes, selectedLevel]);
 
   // Start specific untimed worksheet from the 31 options (loads all 30 questions from official PDF where available)
   const startUntimedWorksheet = useCallback((optionId: string, count: number = 30) => {

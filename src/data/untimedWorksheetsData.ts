@@ -1,15 +1,28 @@
-import { PracticeQuestion } from "./practiceData";
+import { PracticeQuestion, QuestionType, RuleType } from "./practiceData";
 
 export interface UntimedWorksheetOption {
   id: string;
   name: string;
-  category: "simple" | "small-friend-add" | "small-friend-sub" | "big-friend-add" | "big-friend-sub" | "multi-row";
+  level?: number;
+  category:
+    | "simple"
+    | "small-friend-add"
+    | "small-friend-sub"
+    | "big-friend-add"
+    | "big-friend-sub"
+    | "multi-row"
+    | "multiplication"
+    | "division"
+    | "mental";
   categoryGroup: string;
   ruleFormula?: string;
   icon: string;
   badge: string;
   description: string;
   color: string;
+  digits?: 1 | 2 | 3 | 4 | 5;
+  rowCount?: number;
+  operation?: "+" | "-" | "*" | "/";
   isPdfWorksheet?: boolean;
   questionCount?: number;
 }
@@ -363,18 +376,650 @@ export const UNTIMED_WORKSHEET_OPTIONS: UntimedWorksheetOption[] = [
   {
     id: "1digit-7row",
     name: "1 Digit 7 Row Worksheet",
+    level: 1,
     category: "multi-row",
     categoryGroup: "Multi-Row Worksheets",
     icon: "🏆",
     badge: "1D 7 Rows",
     description: "7-row endurance calculation worksheet.",
     color: "from-indigo-500 to-violet-600",
+    digits: 1,
+    rowCount: 7,
+  },
+
+  // ============================================================
+  // LEVEL 2 WORKSHEETS (Exact Syllabus)
+  // ============================================================
+  {
+    id: "l2-1digit-10row",
+    name: "1 Digit 10 Row Calculation",
+    level: 2,
+    category: "multi-row",
+    categoryGroup: "1 Digit Multi-Row Calculations",
+    icon: "🔟",
+    badge: "Level 2 • 10 Rows",
+    description: "10-row continuous single-digit calculation drills.",
+    color: "from-sky-400 to-blue-500",
+    digits: 1,
+    rowCount: 10,
+  },
+  {
+    id: "l2-1digit-12row",
+    name: "1 Digit 12 Row Calculation",
+    level: 2,
+    category: "multi-row",
+    categoryGroup: "1 Digit Multi-Row Calculations",
+    icon: "⚡",
+    badge: "Level 2 • 12 Rows",
+    description: "12-row continuous calculation with mixed positive and negative numbers.",
+    color: "from-blue-500 to-indigo-600",
+    digits: 1,
+    rowCount: 12,
+  },
+  {
+    id: "l2-1digit-15row",
+    name: "1 Digit 15 Row Calculation",
+    level: 2,
+    category: "multi-row",
+    categoryGroup: "1 Digit Multi-Row Calculations",
+    icon: "🎯",
+    badge: "Level 2 • 15 Rows",
+    description: "Advanced 15-row single-digit concentration challenge.",
+    color: "from-indigo-500 to-violet-600",
+    digits: 1,
+    rowCount: 15,
+  },
+  {
+    id: "l2-2digit-3row",
+    name: "2 Digit 3 Row Calculation",
+    level: 2,
+    category: "multi-row",
+    categoryGroup: "2 Digit Multi-Row Calculations",
+    icon: "🔢",
+    badge: "Level 2 • 2D 3 Rows",
+    description: "Two-digit column additions and subtractions across 3 rows.",
+    color: "from-teal-400 to-emerald-500",
+    digits: 2,
+    rowCount: 3,
+  },
+  {
+    id: "l2-2digit-5row",
+    name: "2 Digit 5 Row Calculation",
+    level: 2,
+    category: "multi-row",
+    categoryGroup: "2 Digit Multi-Row Calculations",
+    icon: "🔥",
+    badge: "Level 2 • 2D 5 Rows",
+    description: "Two-digit 5-row sequential arithmetic.",
+    color: "from-amber-400 to-orange-600",
+    digits: 2,
+    rowCount: 5,
+  },
+  {
+    id: "l2-2digit-8row",
+    name: "2 Digit 8 Row Calculation",
+    level: 2,
+    category: "multi-row",
+    categoryGroup: "2 Digit Multi-Row Calculations",
+    icon: "👑",
+    badge: "Level 2 • 2D 8 Rows",
+    description: "Two-digit 8-row championship speed test.",
+    color: "from-rose-500 to-pink-600",
+    digits: 2,
+    rowCount: 8,
+  },
+
+  // ============================================================
+  // LEVEL 3 WORKSHEETS (Exact Syllabus)
+  // ============================================================
+  {
+    id: "l3-1digit-20row",
+    name: "1 Digit 20 Row Calculation",
+    level: 3,
+    category: "multi-row",
+    categoryGroup: "1 Digit Long Rows",
+    icon: "⚡",
+    badge: "Level 3 • 20 Rows",
+    description: "20-row continuous rapid single-digit calculation.",
+    color: "from-purple-400 to-indigo-500",
+    digits: 1,
+    rowCount: 20,
+  },
+  {
+    id: "l3-1digit-25row",
+    name: "1 Digit 25 Row Calculation",
+    level: 3,
+    category: "multi-row",
+    categoryGroup: "1 Digit Long Rows",
+    icon: "🔥",
+    badge: "Level 3 • 25 Rows",
+    description: "25-row grand endurance challenge.",
+    color: "from-indigo-500 to-violet-600",
+    digits: 1,
+    rowCount: 25,
+  },
+  {
+    id: "l3-2digit-10row",
+    name: "2 Digit 10 Row Calculation",
+    level: 3,
+    category: "multi-row",
+    categoryGroup: "2 Digit Multi-Row Calculations",
+    icon: "🔟",
+    badge: "Level 3 • 2D 10 Rows",
+    description: "10 rows of 2-digit numbers.",
+    color: "from-violet-500 to-purple-600",
+    digits: 2,
+    rowCount: 10,
+  },
+  {
+    id: "l3-2digit-12row",
+    name: "2 Digit 12 Row Calculation",
+    level: 3,
+    category: "multi-row",
+    categoryGroup: "2 Digit Multi-Row Calculations",
+    icon: "💫",
+    badge: "Level 3 • 2D 12 Rows",
+    description: "12 rows of 2-digit numbers.",
+    color: "from-fuchsia-500 to-pink-600",
+    digits: 2,
+    rowCount: 12,
+  },
+  {
+    id: "l3-3digit-3row",
+    name: "3 Digit 3 Row Calculation",
+    level: 3,
+    category: "multi-row",
+    categoryGroup: "3 Digit Calculations",
+    icon: "🔢",
+    badge: "Level 3 • 3D 3 Rows",
+    description: "Hundreds column coordination across 3 rows.",
+    color: "from-cyan-500 to-blue-600",
+    digits: 3,
+    rowCount: 3,
+  },
+  {
+    id: "l3-3digit-5row",
+    name: "3 Digit 5 Row Calculation",
+    level: 3,
+    category: "multi-row",
+    categoryGroup: "3 Digit Calculations",
+    icon: "🏆",
+    badge: "Level 3 • 3D 5 Rows",
+    description: "5 rows of 3-digit numbers.",
+    color: "from-emerald-500 to-teal-600",
+    digits: 3,
+    rowCount: 5,
+  },
+
+  // ============================================================
+  // LEVEL 4 WORKSHEETS (Exact Syllabus)
+  // ============================================================
+  {
+    id: "l4-1digit-30row",
+    name: "1 Digit 30 Row Calculation",
+    level: 4,
+    category: "multi-row",
+    categoryGroup: "1 Digit Marathon",
+    icon: "⚡",
+    badge: "Level 4 • 30 Rows",
+    description: "30-row extreme speed marathon.",
+    color: "from-emerald-400 to-teal-600",
+    digits: 1,
+    rowCount: 30,
+  },
+  {
+    id: "l4-2digit-15row",
+    name: "2 Digit 15 Row Calculation",
+    level: 4,
+    category: "multi-row",
+    categoryGroup: "2 Digit Long Rows",
+    icon: "🔥",
+    badge: "Level 4 • 2D 15 Rows",
+    description: "15 rows of 2-digit calculations.",
+    color: "from-teal-500 to-cyan-600",
+    digits: 2,
+    rowCount: 15,
+  },
+  {
+    id: "l4-2digit-20row",
+    name: "2 Digit 20 Row Calculation",
+    level: 4,
+    category: "multi-row",
+    categoryGroup: "2 Digit Long Rows",
+    icon: "🎯",
+    badge: "Level 4 • 2D 20 Rows",
+    description: "20 rows of 2-digit calculations.",
+    color: "from-cyan-500 to-blue-600",
+    digits: 2,
+    rowCount: 20,
+  },
+  {
+    id: "l4-3digit-7row",
+    name: "3 Digit 7 Row Calculation",
+    level: 4,
+    category: "multi-row",
+    categoryGroup: "3 Digit Calculations",
+    icon: "🔢",
+    badge: "Level 4 • 3D 7 Rows",
+    description: "7 rows of 3-digit calculations.",
+    color: "from-indigo-500 to-purple-600",
+    digits: 3,
+    rowCount: 7,
+  },
+  {
+    id: "l4-3digit-10row",
+    name: "3 Digit 10 Row Calculation",
+    level: 4,
+    category: "multi-row",
+    categoryGroup: "3 Digit Calculations",
+    icon: "🔟",
+    badge: "Level 4 • 3D 10 Rows",
+    description: "10 rows of 3-digit calculations.",
+    color: "from-purple-500 to-pink-600",
+    digits: 3,
+    rowCount: 10,
+  },
+  {
+    id: "l4-4digit-3row",
+    name: "4 Digit 3 Row Calculation",
+    level: 4,
+    category: "multi-row",
+    categoryGroup: "4 Digit Calculations",
+    icon: "💎",
+    badge: "Level 4 • 4D 3 Rows",
+    description: "Thousands column abacus manipulation.",
+    color: "from-pink-500 to-rose-600",
+    digits: 4,
+    rowCount: 3,
+  },
+  {
+    id: "l4-4digit-5row",
+    name: "4 Digit 5 Row Calculation",
+    level: 4,
+    category: "multi-row",
+    categoryGroup: "4 Digit Calculations",
+    icon: "👑",
+    badge: "Level 4 • 4D 5 Rows",
+    description: "5 rows of 4-digit numbers.",
+    color: "from-amber-400 to-orange-600",
+    digits: 4,
+    rowCount: 5,
+  },
+
+  // ============================================================
+  // LEVEL 5 WORKSHEETS (Exact Syllabus)
+  // ============================================================
+  {
+    id: "l5-2digit-25row",
+    name: "2 Digit 25 Row Calculation",
+    level: 5,
+    category: "multi-row",
+    categoryGroup: "2 Digit High Rows",
+    icon: "⚡",
+    badge: "Level 5 • 2D 25 Rows",
+    description: "25 rows of 2-digit numbers.",
+    color: "from-rose-400 to-red-500",
+    digits: 2,
+    rowCount: 25,
+  },
+  {
+    id: "l5-3digit-12row",
+    name: "3 Digit 12 Row Calculation",
+    level: 5,
+    category: "multi-row",
+    categoryGroup: "3 Digit Calculations",
+    icon: "🔢",
+    badge: "Level 5 • 3D 12 Rows",
+    description: "12 rows of 3-digit numbers.",
+    color: "from-orange-400 to-amber-500",
+    digits: 3,
+    rowCount: 12,
+  },
+  {
+    id: "l5-3digit-15row",
+    name: "3 Digit 15 Row Calculation",
+    level: 5,
+    category: "multi-row",
+    categoryGroup: "3 Digit Calculations",
+    icon: "🔥",
+    badge: "Level 5 • 3D 15 Rows",
+    description: "15 rows of 3-digit numbers.",
+    color: "from-amber-500 to-yellow-600",
+    digits: 3,
+    rowCount: 15,
+  },
+  {
+    id: "l5-4digit-7row",
+    name: "4 Digit 7 Row Calculation",
+    level: 5,
+    category: "multi-row",
+    categoryGroup: "4 Digit Calculations",
+    icon: "💎",
+    badge: "Level 5 • 4D 7 Rows",
+    description: "7 rows of 4-digit numbers.",
+    color: "from-emerald-500 to-teal-600",
+    digits: 4,
+    rowCount: 7,
+  },
+  {
+    id: "l5-mult-2dx1d",
+    name: "Multiplication (2 Digit × 1 Digit)",
+    level: 5,
+    category: "multiplication",
+    categoryGroup: "Multiplication",
+    icon: "✖️",
+    badge: "Level 5 • 2D × 1D",
+    description: "Abacus rod setting for 2-digit by 1-digit multiplication.",
+    color: "from-indigo-500 to-blue-600",
+    digits: 2,
+    operation: "*",
+  },
+
+  // ============================================================
+  // LEVEL 6 WORKSHEETS (Exact Syllabus)
+  // ============================================================
+  {
+    id: "l6-2digit-30row",
+    name: "2 Digit 30 Row Calculation",
+    level: 6,
+    category: "multi-row",
+    categoryGroup: "2 Digit Marathon",
+    icon: "⚡",
+    badge: "Level 6 • 2D 30 Rows",
+    description: "30 rows of 2-digit numbers.",
+    color: "from-teal-400 to-emerald-600",
+    digits: 2,
+    rowCount: 30,
+  },
+  {
+    id: "l6-3digit-20row",
+    name: "3 Digit 20 Row Calculation",
+    level: 6,
+    category: "multi-row",
+    categoryGroup: "3 Digit Calculations",
+    icon: "🔢",
+    badge: "Level 6 • 3D 20 Rows",
+    description: "20 rows of 3-digit numbers.",
+    color: "from-emerald-500 to-teal-700",
+    digits: 3,
+    rowCount: 20,
+  },
+  {
+    id: "l6-4digit-8row",
+    name: "4 Digit 8 Row Calculation",
+    level: 6,
+    category: "multi-row",
+    categoryGroup: "4 Digit Calculations",
+    icon: "💎",
+    badge: "Level 6 • 4D 8 Rows",
+    description: "8 rows of 4-digit numbers.",
+    color: "from-cyan-500 to-blue-600",
+    digits: 4,
+    rowCount: 8,
+  },
+  {
+    id: "l6-4digit-10row",
+    name: "4 Digit 10 Row Calculation",
+    level: 6,
+    category: "multi-row",
+    categoryGroup: "4 Digit Calculations",
+    icon: "🔟",
+    badge: "Level 6 • 4D 10 Rows",
+    description: "10 rows of 4-digit numbers.",
+    color: "from-blue-500 to-indigo-600",
+    digits: 4,
+    rowCount: 10,
+  },
+  {
+    id: "l6-5digit-3row",
+    name: "5 Digit 3 Row Calculation",
+    level: 6,
+    category: "multi-row",
+    categoryGroup: "5 Digit Calculations",
+    icon: "🌟",
+    badge: "Level 6 • 5D 3 Rows",
+    description: "Ten-thousands column abacus calculation.",
+    color: "from-indigo-500 to-purple-600",
+    digits: 5,
+    rowCount: 3,
+  },
+  {
+    id: "l6-5digit-5row",
+    name: "5 Digit 5 Row Calculation",
+    level: 6,
+    category: "multi-row",
+    categoryGroup: "5 Digit Calculations",
+    icon: "👑",
+    badge: "Level 6 • 5D 5 Rows",
+    description: "5 rows of 5-digit numbers.",
+    color: "from-purple-500 to-pink-600",
+    digits: 5,
+    rowCount: 5,
+  },
+  {
+    id: "l6-mult-3dx1d",
+    name: "Multiplication (3 Digit × 1 Digit)",
+    level: 6,
+    category: "multiplication",
+    categoryGroup: "Multiplication",
+    icon: "✖️",
+    badge: "Level 6 • 3D × 1D",
+    description: "3-digit multiplied by 1-digit on abacus.",
+    color: "from-orange-500 to-amber-600",
+    digits: 3,
+    operation: "*",
+  },
+  {
+    id: "l6-mult-4dx1d",
+    name: "Multiplication (4 Digit × 1 Digit)",
+    level: 6,
+    category: "multiplication",
+    categoryGroup: "Multiplication",
+    icon: "✖️",
+    badge: "Level 6 • 4D × 1D",
+    description: "4-digit multiplied by 1-digit on abacus.",
+    color: "from-amber-500 to-yellow-600",
+    digits: 4,
+    operation: "*",
+  },
+  {
+    id: "l6-mult-2dx2d",
+    name: "Multiplication (2 Digit × 2 Digit)",
+    level: 6,
+    category: "multiplication",
+    categoryGroup: "Multiplication",
+    icon: "✖️",
+    badge: "Level 6 • 2D × 2D",
+    description: "2D × 2D cross-column multiplication.",
+    color: "from-pink-500 to-rose-600",
+    digits: 2,
+    operation: "*",
+  },
+  {
+    id: "l6-div-2d1d",
+    name: "Division (2 Digit ÷ 1 Digit)",
+    level: 6,
+    category: "division",
+    categoryGroup: "Division",
+    icon: "➗",
+    badge: "Level 6 • 2D ÷ 1D",
+    description: "Quotient estimation and remainder placement.",
+    color: "from-sky-500 to-blue-600",
+    digits: 2,
+    operation: "/",
+  },
+
+  // ============================================================
+  // LEVEL 7 WORKSHEETS (Exact Syllabus)
+  // ============================================================
+  {
+    id: "l7-3digit-25row",
+    name: "3 Digit 25 Row Calculation",
+    level: 7,
+    category: "multi-row",
+    categoryGroup: "3 Digit High Rows",
+    icon: "⚡",
+    badge: "Level 7 • 3D 25 Rows",
+    description: "25 rows of 3-digit numbers.",
+    color: "from-amber-500 to-orange-600",
+    digits: 3,
+    rowCount: 25,
+  },
+  {
+    id: "l7-4digit-15row",
+    name: "4 Digit 15 Row Calculation",
+    level: 7,
+    category: "multi-row",
+    categoryGroup: "4 Digit High Rows",
+    icon: "🔥",
+    badge: "Level 7 • 4D 15 Rows",
+    description: "15 rows of 4-digit numbers.",
+    color: "from-orange-500 to-rose-600",
+    digits: 4,
+    rowCount: 15,
+  },
+  {
+    id: "l7-5digit-10row",
+    name: "5 Digit 10 Row Calculation",
+    level: 7,
+    category: "multi-row",
+    categoryGroup: "5 Digit Calculations",
+    icon: "🌟",
+    badge: "Level 7 • 5D 10 Rows",
+    description: "10 rows of 5-digit numbers.",
+    color: "from-rose-500 to-red-600",
+    digits: 5,
+    rowCount: 10,
+  },
+  {
+    id: "l7-mult-3dx2d",
+    name: "Multiplication (3 Digit × 2 Digit)",
+    level: 7,
+    category: "multiplication",
+    categoryGroup: "Advanced Multiplication",
+    icon: "✖️",
+    badge: "Level 7 • 3D × 2D",
+    description: "Multi-step cross multiplication.",
+    color: "from-violet-500 to-purple-600",
+    digits: 3,
+    operation: "*",
+  },
+  {
+    id: "l7-mult-3dx3d",
+    name: "Multiplication (3 Digit × 3 Digit)",
+    level: 7,
+    category: "multiplication",
+    categoryGroup: "Advanced Multiplication",
+    icon: "✖️",
+    badge: "Level 7 • 3D × 3D",
+    description: "Championship 3D × 3D calculations.",
+    color: "from-purple-600 to-pink-600",
+    digits: 3,
+    operation: "*",
+  },
+  {
+    id: "l7-div-3d1d",
+    name: "Division (3 Digit ÷ 1 Digit)",
+    level: 7,
+    category: "division",
+    categoryGroup: "Advanced Division",
+    icon: "➗",
+    badge: "Level 7 • 3D ÷ 1D",
+    description: "3-digit division on abacus.",
+    color: "from-teal-500 to-emerald-600",
+    digits: 3,
+    operation: "/",
+  },
+  {
+    id: "l7-div-3d2d",
+    name: "Division (3 Digit ÷ 2 Digit)",
+    level: 7,
+    category: "division",
+    categoryGroup: "Advanced Division",
+    icon: "➗",
+    badge: "Level 7 • 3D ÷ 2D",
+    description: "Complex 2-digit divisor operations.",
+    color: "from-emerald-500 to-cyan-600",
+    digits: 3,
+    operation: "/",
+  },
+
+  // ============================================================
+  // LEVEL 8 WORKSHEETS (Exact Syllabus)
+  // ============================================================
+  {
+    id: "l8-flash-anzan",
+    name: "Flash Anzan Mental Math",
+    level: 8,
+    category: "mental",
+    categoryGroup: "Mental Calculations",
+    icon: "⚡",
+    badge: "Level 8 • Flash Anzan",
+    description: "Rapid flashing numbers calculated mentally in seconds.",
+    color: "from-violet-600 to-purple-700",
+    digits: 1,
+    rowCount: 5,
+  },
+  {
+    id: "l8-mental-multirow",
+    name: "Mental Multi-Row Addition & Subtraction",
+    level: 8,
+    category: "mental",
+    categoryGroup: "Mental Calculations",
+    icon: "🧠",
+    badge: "Level 8 • Mental 10-20R",
+    description: "Calculate 10 to 20 rows mentally with zero physical abacus.",
+    color: "from-purple-600 to-indigo-700",
+    digits: 2,
+    rowCount: 10,
+  },
+  {
+    id: "l8-competition-speed",
+    name: "International Competition Speed Mental Math",
+    level: 8,
+    category: "mental",
+    categoryGroup: "Mental Calculations",
+    icon: "👑",
+    badge: "Level 8 • Speed Anzan",
+    description: "Championship standard speed arithmetic trials.",
+    color: "from-amber-500 to-yellow-600",
+    digits: 2,
+    rowCount: 15,
   },
 ];
 
 // Helper to sum numbers
 function sum(nums: number[]): number {
   return nums.reduce((a, b) => a + b, 0);
+}
+
+// Procedural multi-row numbers generator ensuring valid positive abacus running total
+export function generateMultiRowNumbers(digits: number, rowCount: number): number[] {
+  const minVal = digits === 1 ? 1 : Math.pow(10, digits - 1);
+  const maxVal = Math.pow(10, digits) - 1;
+
+  const numbers: number[] = [];
+  let currentTotal = Math.floor(Math.random() * (maxVal - minVal + 1)) + minVal;
+  numbers.push(currentTotal);
+
+  for (let r = 1; r < rowCount; r++) {
+    const canBeNegative = currentTotal > minVal * 2;
+    const isNegative = canBeNegative && Math.random() < 0.35;
+
+    let nextVal: number;
+    if (isNegative) {
+      const maxSub = Math.min(maxVal, currentTotal - 1);
+      const minSub = Math.min(minVal, maxSub);
+      nextVal = -(Math.floor(Math.random() * (maxSub - minSub + 1)) + minSub);
+    } else {
+      nextVal = Math.floor(Math.random() * (maxVal - minVal + 1)) + minVal;
+    }
+
+    currentTotal += nextVal;
+    numbers.push(nextVal);
+  }
+
+  return numbers;
 }
 
 // Helper to construct official PDF practice question
@@ -603,8 +1248,15 @@ export function generateUntimedWorksheetQuestions(
     let numbers: number[] = [];
     let explanation = "";
     let ruleHint: string | undefined = option.ruleFormula;
-    let digits: 1 | 2 = 1;
-    let rowCount = 3;
+    let digits: 1 | 2 | 3 | 4 | 5 = (option.digits as any) || 1;
+    let rowCount = option.rowCount || 3;
+    let questionType: QuestionType = "vertical-calc";
+    let operation: "+" | "-" | "*" | "/" | undefined = option.operation;
+    let factorA: number | undefined;
+    let factorB: number | undefined;
+    let dividend: number | undefined;
+    let divisor: number | undefined;
+    let targetAnswer = 0;
 
     // 1. SIMPLE 1 DIGIT (Direct)
     if (optionId === "simple-1digit") {
@@ -979,20 +1631,109 @@ export function generateUntimedWorksheetQuestions(
       explanation = `7-Row Single Digit: ${numbers.join(" ")} = ${ans}`;
     }
 
-    const targetAnswer = sum(numbers);
+    // MULTIPLICATION WORKSHEETS (Levels 5, 6, 7)
+    else if (option.operation === "*") {
+      let f1 = 10;
+      let f2 = 2;
+      if (option.id === "l5-mul-2d-1d") {
+        f1 = Math.floor(Math.random() * 90) + 10;
+        f2 = Math.floor(Math.random() * 8) + 2;
+      } else if (option.id === "l6-mul-3d-1d") {
+        f1 = Math.floor(Math.random() * 900) + 100;
+        f2 = Math.floor(Math.random() * 8) + 2;
+      } else if (option.id === "l6-mul-4d-1d") {
+        f1 = Math.floor(Math.random() * 9000) + 1000;
+        f2 = Math.floor(Math.random() * 8) + 2;
+      } else if (option.id === "l6-mul-2d-2d") {
+        f1 = Math.floor(Math.random() * 90) + 10;
+        f2 = Math.floor(Math.random() * 90) + 10;
+      } else if (option.id === "l7-mul-3d-2d") {
+        f1 = Math.floor(Math.random() * 900) + 100;
+        f2 = Math.floor(Math.random() * 90) + 10;
+      } else if (option.id === "l7-mul-3d-3d") {
+        f1 = Math.floor(Math.random() * 900) + 100;
+        f2 = Math.floor(Math.random() * 900) + 100;
+      } else {
+        f1 = Math.floor(Math.random() * 90) + 10;
+        f2 = Math.floor(Math.random() * 8) + 2;
+      }
+      factorA = f1;
+      factorB = f2;
+      numbers = [f1, f2];
+      questionType = "multiplication";
+      targetAnswer = f1 * f2;
+      explanation = `Multiplication: ${f1} × ${f2} = ${targetAnswer}`;
+    }
+
+    // DIVISION WORKSHEETS (Levels 6, 7)
+    else if (option.operation === "/") {
+      let div = 2;
+      let quot = 5;
+      if (option.id === "l6-div-2d-1d") {
+        div = Math.floor(Math.random() * 8) + 2;
+        quot = Math.floor(Math.random() * 40) + 5;
+        while (div * quot >= 100 || div * quot < 10) {
+          quot = Math.floor(Math.random() * 8) + 2;
+        }
+      } else if (option.id === "l7-div-3d-1d") {
+        div = Math.floor(Math.random() * 8) + 2;
+        quot = Math.floor(Math.random() * 300) + 50;
+        while (div * quot >= 1000 || div * quot < 100) {
+          quot = Math.floor(Math.random() * 80) + 12;
+        }
+      } else if (option.id === "l7-div-3d-2d") {
+        div = Math.floor(Math.random() * 80) + 11;
+        quot = Math.floor(Math.random() * 8) + 2;
+        while (div * quot >= 1000 || div * quot < 100) {
+          div = Math.floor(Math.random() * 40) + 11;
+        }
+      }
+      dividend = div * quot;
+      divisor = div;
+      numbers = [dividend, divisor];
+      questionType = "division";
+      targetAnswer = quot;
+      explanation = `Division: ${dividend} ÷ ${divisor} = ${quot}`;
+    }
+
+    // MULTI-ROW ADDITION & SUBTRACTION (Levels 2 - 8)
+    else {
+      digits = (option.digits as any) || 1;
+      rowCount = option.rowCount || 3;
+      numbers = generateMultiRowNumbers(digits, rowCount);
+      targetAnswer = sum(numbers);
+      questionType = "vertical-calc";
+      explanation = `${rowCount}-Row (${digits}-Digit): ${numbers.map((n, idx) => (idx === 0 ? String(n) : n < 0 ? `- ${Math.abs(n)}` : `+ ${n}`)).join(" ")} = ${targetAnswer}`;
+    }
+
+    if (option.operation !== "*" && option.operation !== "/") {
+      targetAnswer = sum(numbers);
+    }
+
+    let ruleType: RuleType = "direct";
+    if (option.category.startsWith("small")) ruleType = "small-friend";
+    else if (option.category.startsWith("big")) ruleType = "big-friend";
+    else if (option.category === "multiplication") ruleType = "multiplication";
+    else if (option.category === "division") ruleType = "division";
+    else if (option.category === "mental") ruleType = "mental";
 
     questions.push({
       id: qId,
-      level: 1,
+      level: option.level || 1,
       title: option.name,
       category: option.name,
       categoryId: option.id,
-      ruleType: option.category.startsWith("small") ? "small-friend" : option.category.startsWith("big") ? "big-friend" : "direct",
+      ruleType,
       digits,
       rowCount: numbers.length,
       numbers,
       targetAnswer,
-      questionType: "vertical-calc",
+      questionType,
+      operation,
+      factorA,
+      factorB,
+      dividend,
+      divisor,
       ruleHint,
       explanation,
     });

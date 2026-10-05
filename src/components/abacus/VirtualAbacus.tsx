@@ -1,26 +1,6 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import Link from "next/link";
-import { 
-  Calculator, 
-  Sparkles, 
-  BookOpen, 
-  Volume2, 
-  VolumeX, 
-  RotateCcw, 
-  HelpCircle, 
-  Award, 
-  Flame, 
-  Timer, 
-  Sliders, 
-  Eye, 
-  Play, 
-  CheckCircle2, 
-  ArrowRight,
-  Zap,
-  GraduationCap
-} from "lucide-react";
 import "@/styles/virtual-abacus.css";
 
 export default function VirtualAbacus() {
@@ -67,54 +47,8 @@ export default function VirtualAbacus() {
   }, []);
 
   return (
-    <div className="w-full min-h-screen bg-gradient-to-b from-[#FAFAFE] via-[#F3F0FF]/40 to-[#F0F4FF] py-6 px-3 sm:px-6">
+    <div className="w-full min-h-screen bg-gradient-to-b from-[#FAFAFE] via-[#F3F0FF]/40 to-[#F0F4FF] py-4 px-2 sm:px-6">
       <div className="max-w-7xl mx-auto">
-        
-        {/* Child-friendly MindBeads AI Top Banner */}
-        <div className="mb-6 p-4 sm:p-6 rounded-3xl bg-gradient-to-r from-purple-600 via-indigo-600 to-amber-500 text-white shadow-xl shadow-purple-200/50 relative overflow-hidden">
-          <div className="absolute right-0 top-0 translate-x-8 -translate-y-8 w-64 h-64 bg-white/10 rounded-full blur-2xl pointer-events-none" />
-          <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center text-3xl shadow-inner shadow-white/30">
-                🧮
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs uppercase tracking-widest font-black px-2.5 py-0.5 rounded-full bg-amber-400 text-amber-950 font-sans shadow-sm">
-                    Interactive Soroban
-                  </span>
-                  <span className="text-xs text-purple-200 font-medium hidden sm:inline-flex items-center gap-1">
-                    <Sparkles className="w-3.5 h-3.5 text-amber-300" /> Competition Ready
-                  </span>
-                </div>
-                <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight mt-1">
-                  Virtual Soroban Abacus
-                </h1>
-                <p className="text-sm text-purple-100/90 font-medium">
-                  5 Reckoner unit dots, real-time math HUD, tactile bead physics, and 4 fun training modes!
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 self-start sm:self-center">
-              <Link
-                href="/learning/practice"
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white/15 hover:bg-white/25 backdrop-blur-sm text-white text-xs font-bold transition-all border border-white/20"
-              >
-                <GraduationCap className="w-4 h-4 text-amber-300" />
-                Practice Mode
-              </Link>
-              <Link
-                href="/dashboard"
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white text-purple-800 hover:bg-amber-50 text-xs font-bold transition-all shadow-md"
-              >
-                Dashboard
-                <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
-            </div>
-          </div>
-        </div>
-
         {/* Virtual Abacus Main Host Container */}
         <div ref={containerRef} className="virtual-abacus-app" data-theme="light-classic">
           <div className="app-container">

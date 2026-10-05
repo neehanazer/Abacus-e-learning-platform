@@ -22,6 +22,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import Link from "next/link";
+import { useAuth } from "@/context/AuthContext";
 import { HomeworkIntroModal } from "./HomeworkIntroModal";
 import { HomeworkPlayer } from "./HomeworkPlayer";
 import { HomeworkSubmitModal } from "./HomeworkSubmitModal";
@@ -52,6 +53,9 @@ export function isDueDateOver(dueDateStr?: string): boolean {
 }
 
 export const HomeworkDashboard: React.FC = () => {
+  const { user } = useAuth();
+  const isLevel2 = (user?.selectedLevel?.includes("2") || user?.abacusLevel?.includes("2")) ?? false;
+
   const {
     homeworkList,
     viewMode,
@@ -109,13 +113,15 @@ export const HomeworkDashboard: React.FC = () => {
           <div className="space-y-2 max-w-xl">
             <div className="inline-flex items-center gap-2 px-3.5 py-1 bg-amber-100 text-amber-900 border-2 border-amber-300 rounded-full text-xs font-black uppercase tracking-wider">
               <Sparkles className="w-3.5 h-3.5 text-amber-600" />
-              Module 2 • Homework Section
+              {isLevel2 ? "Level 2 — Explorer • Homework Section 🚀" : "Module 2 • Homework Section"}
             </div>
             <h1 className="text-2xl sm:text-4xl font-black text-[#1D3557] font-heading">
-              Abacus Homework Hub
+              {isLevel2 ? "Level 2 Homework Hub 📝" : "Abacus Homework Hub"}
             </h1>
             <p className="text-stone-600 text-sm sm:text-base font-medium">
-              Reinforce what you learned in video lessons with targeted homework worksheets. Complete assignments, get instant evaluation, and track your accuracy.
+              {isLevel2
+                ? "Congratulations on completing Level 1! Your homework tasks are now upgraded to Level 2 (Two-Digit calculations & Small Friends rules). Complete assignments for instant evaluation!"
+                : "Reinforce what you learned in video lessons with targeted homework worksheets. Complete assignments, get instant evaluation, and track your accuracy."}
             </p>
           </div>
 
@@ -194,7 +200,7 @@ export const HomeworkDashboard: React.FC = () => {
             }`}
           >
             <span className="w-2 h-2 rounded-full bg-amber-500" />
-            Assigned Homework ({pendingTasks.length})
+            {isLevel2 ? `Level 2 Assigned Homework (${pendingTasks.length})` : `Assigned Homework (${pendingTasks.length})`}
           </button>
           <button
             onClick={() => setActiveTab("attempts")}

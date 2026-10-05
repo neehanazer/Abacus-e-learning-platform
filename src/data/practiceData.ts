@@ -1024,25 +1024,43 @@ export function generateWorksheet(filters: WorksheetFilterOptions, count: number
 // 3. Big Friend Rule
 // 4. 1-Digit 5-Row Calculation
 // ============================================================
-export function generateComprehensivePracticeQuestions(count: number = 20): PracticeQuestion[] {
+export function generateComprehensivePracticeQuestions(
+  count: number = 20,
+  targetLevel: number = 1
+): PracticeQuestion[] {
   const qPerCategory = Math.max(1, Math.floor(count / 4));
   const timestamp = Date.now();
 
-  // 1. Direct Calculation (Pure bead movements, no friend formulas)
-  const directPool: number[][] = [
-    [2, 1, 5],
-    [3, 5, -2],
-    [1, 3, 5],
-    [4, 5, -3],
-    [2, 2, 5, -4],
-    [7, -2, 4],
-    [14, 5, -3],
-    [23, 15, -12],
-    [5, 2, 1, -3],
-    [6, 3, -4, 2],
-    [11, 22, 15],
-    [35, 12, -21],
-  ];
+  // 1. Direct / 2-Digit Calculation
+  const directPool: number[][] = targetLevel >= 2
+    ? [
+        [23, 15, -12],
+        [35, 12, -21],
+        [42, 25, -16],
+        [18, 31, -24],
+        [54, 23, -15],
+        [67, 12, -34],
+        [29, 40, -18],
+        [33, 22, -11],
+        [45, 14, -23],
+        [51, 36, -42],
+        [62, 17, -25],
+        [78, 11, -36],
+      ]
+    : [
+        [2, 1, 5],
+        [3, 5, -2],
+        [1, 3, 5],
+        [4, 5, -3],
+        [2, 2, 5, -4],
+        [7, -2, 4],
+        [14, 5, -3],
+        [23, 15, -12],
+        [5, 2, 1, -3],
+        [6, 3, -4, 2],
+        [11, 22, 15],
+        [35, 12, -21],
+      ];
 
   const directQuestions: PracticeQuestion[] = [];
   for (let i = 0; i < qPerCategory; i++) {
@@ -1050,17 +1068,19 @@ export function generateComprehensivePracticeQuestions(count: number = 20): Prac
     const ans = calculateSum(nums);
     directQuestions.push({
       id: `q-direct-${i + 1}-${timestamp}`,
-      level: 1,
-      title: "Direct Calculation",
-      category: "Direct Calculation",
-      categoryId: "l1-simple-1digit",
+      level: targetLevel,
+      title: targetLevel >= 2 ? "2-Digit Direct Calculation" : "Direct Calculation",
+      category: targetLevel >= 2 ? "Level 2 — 2-Digit Calculation" : "Direct Calculation",
+      categoryId: targetLevel >= 2 ? "l2-2digit-5row" : "l1-simple-1digit",
       ruleType: "direct",
       digits: nums.some((n) => Math.abs(n) >= 10) ? 2 : 1,
       rowCount: nums.length,
       numbers: nums,
       targetAnswer: ans,
       questionType: "vertical-calc",
-      ruleHint: "Direct Calculation: Move upper (value 5) and lower (value 1) beads directly without friend rules.",
+      ruleHint: targetLevel >= 2
+        ? "Level 2: Coordinate finger movement across Tens and Units rods simultaneously."
+        : "Direct Calculation: Move upper (value 5) and lower (value 1) beads directly without friend rules.",
       explanation: `Direct bead calculation: ${nums.map((n, idx) => (idx === 0 ? String(n) : n > 0 ? `+ ${n}` : `- ${Math.abs(n)}`)).join(" ")} = ${ans}.`,
     });
   }
@@ -1087,9 +1107,9 @@ export function generateComprehensivePracticeQuestions(count: number = 20): Prac
     const ans = calculateSum(item.nums);
     sfQuestions.push({
       id: `q-sf-${i + 1}-${timestamp}`,
-      level: 1,
+      level: targetLevel,
       title: "Small Friend Rule",
-      category: "Small Friend Rule",
+      category: targetLevel >= 2 ? "Level 2 — Small Friends" : "Small Friend Rule",
       categoryId: "l1-small-friends",
       ruleType: "small-friend",
       digits: 1,
@@ -1124,9 +1144,9 @@ export function generateComprehensivePracticeQuestions(count: number = 20): Prac
     const ans = calculateSum(item.nums);
     bfQuestions.push({
       id: `q-bf-${i + 1}-${timestamp}`,
-      level: 1,
+      level: targetLevel,
       title: "Big Friend Rule",
-      category: "Big Friend Rule",
+      category: targetLevel >= 2 ? "Level 2 — Big Friends" : "Big Friend Rule",
       categoryId: "l1-big-friends",
       ruleType: "big-friend",
       digits: 1,
@@ -1161,9 +1181,9 @@ export function generateComprehensivePracticeQuestions(count: number = 20): Prac
     const ans = calculateSum(nums);
     fiveRowQuestions.push({
       id: `q-5row-${i + 1}-${timestamp}`,
-      level: 1,
-      title: "1-Digit 5-Row Calculation",
-      category: "1-Digit 5-Row Calculation",
+      level: targetLevel,
+      title: targetLevel >= 2 ? "Level 2: 1-Digit 5-Row Continuous" : "1-Digit 5-Row Calculation",
+      category: targetLevel >= 2 ? "Level 2 — 5-Row Drills" : "1-Digit 5-Row Calculation",
       categoryId: "l1-1digit-5row",
       ruleType: "all",
       digits: 1,
@@ -1171,7 +1191,7 @@ export function generateComprehensivePracticeQuestions(count: number = 20): Prac
       numbers: nums,
       targetAnswer: ans,
       questionType: "vertical-calc",
-      ruleHint: "1-Digit 5-Row Drill: Calculate 5 consecutive single-digit rows vertically on your soroban.",
+      ruleHint: "Continuous Drill: Calculate 5 consecutive rows vertically on your soroban with high speed.",
       explanation: `5-Row sequential calculation: ${nums.map((n, idx) => (idx === 0 ? String(n) : n > 0 ? `+ ${n}` : `- ${Math.abs(n)}`)).join(" ")} = ${ans}.`,
     });
   }

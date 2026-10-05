@@ -300,6 +300,25 @@ export async function authenticateRoute(
       };
     }
 
+    // Auto-promote student to Level 2 if Level 1 certification is completed
+    if (student && (!student.selectedLevel || student.selectedLevel.includes("Level 1"))) {
+      try {
+        const Certificate = (await import("@/models/Certificate")).default;
+        const cert = await Certificate.findOne({
+          studentId: student._id,
+          status: { $in: ["issued", "active"] },
+        }).lean();
+
+        if (cert) {
+          student.selectedLevel = "Level 2: Two-Digit Operations & Big Friend Subtraction";
+          (student as any).abacusLevel = "Level 2: Two-Digit Operations & Big Friend Subtraction";
+          await student.save();
+        }
+      } catch {
+        // Continue if promotion check fails
+      }
+    }
+
     return { user: student };
   } catch (error: unknown) {
     const errorMsg = error instanceof Error ? error.message : "Database error";

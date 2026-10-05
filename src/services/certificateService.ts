@@ -136,6 +136,19 @@ export class CertificateService {
           .populate("examId", "title type")
           .lean();
 
+        // Automatically promote student to Level 2 upon certification
+        try {
+          const Student = (await import("@/models/Student")).default;
+          await Student.findByIdAndUpdate(studentObjectId, {
+            $set: {
+              selectedLevel: "Level 2: Two-Digit Operations & Big Friend Subtraction",
+              abacusLevel: "Level 2: Two-Digit Operations & Big Friend Subtraction",
+            },
+          });
+        } catch (promoteErr) {
+          console.warn("[CertificateService]: Error promoting student:", promoteErr);
+        }
+
         // Also store in in-memory map
         inMemoryCertificates.set(certificateId, populated || created);
         inMemoryCertificates.set(verificationCode.toUpperCase(), populated || created);

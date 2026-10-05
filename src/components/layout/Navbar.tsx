@@ -29,7 +29,7 @@ export default function Navbar() {
   const displayName = user?.fullName || user?.name || "Student";
   const firstName = displayName.split(" ")[0] || "Student";
   const displayLevel = user?.abacusLevel || user?.selectedLevel || "Level 1 - Direct Addition & Subtraction";
-  const shortLevel = displayLevel.split(" - ")[0] || displayLevel;
+  const shortLevel = displayLevel.includes(":") ? displayLevel.split(":")[0] : displayLevel.split(" - ")[0] || displayLevel;
   const userAvatar = user?.avatar || "🧙‍♂️";
 
   // Hide global marketing navbar on the dedicated dashboard, learning, and admin pages

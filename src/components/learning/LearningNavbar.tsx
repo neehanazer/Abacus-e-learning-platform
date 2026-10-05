@@ -165,6 +165,7 @@ export default function LearningNavbar() {
   const userStars = 120 + bonusStars;
 
   const currentLessonObj = lessons.find((l) => l.id === currentLessonId) || lessons[0];
+  const isLevel2 = (user?.selectedLevel?.includes("2") || user?.abacusLevel?.includes("2")) ?? false;
 
   return (
     <>
@@ -198,7 +199,7 @@ export default function LearningNavbar() {
                   </div>
                   <span className="text-[10px] font-bold text-emerald-600 flex items-center gap-1 -mt-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                    Level 1 — Video Lessons
+                    {isLevel2 ? "Level 2 — Explorer Curriculum" : "Level 1 — Video Lessons"}
                   </span>
                 </div>
               </Link>
@@ -258,7 +259,7 @@ export default function LearningNavbar() {
                                   <span>🎬 All 8 Video Lessons</span>
                                 </h4>
                                 <p className="text-[11px] text-slate-500 font-medium">
-                                  Level 1: Basic Numbers & Operations
+                                  {isLevel2 ? "Level 2: Two-Digit & Rules Curriculum" : "Level 1: Basic Numbers & Operations"}
                                 </p>
                               </div>
                               <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">

@@ -39,6 +39,7 @@ export default function LearningDashboardPage() {
   const studioRef = useRef<HTMLDivElement>(null);
 
   const studentName = user?.fullName?.split(" ")[0] || "Arjun";
+  const isLevel2 = (user?.selectedLevel?.includes("2") || user?.abacusLevel?.includes("2")) ?? false;
   const currentIndex = lessons.findIndex((l) => l.id === currentLessonId);
   const hasPrevious = currentIndex > 0;
   const hasNext = currentIndex < lessons.length - 1;
@@ -102,10 +103,10 @@ export default function LearningDashboardPage() {
                 Current Level
               </span>
               <span className="text-sm font-extrabold text-[#1D3557] flex items-center gap-1 mt-0.5">
-                <span className="text-base">🥋</span> Level 1
+                <span className="text-base">🥋</span> {isLevel2 ? "Level 2" : "Level 1"}
               </span>
               <span className="text-[10px] font-bold text-orange-700 block mt-0.5">
-                Basic Numbers
+                {isLevel2 ? "Two-Digit & Rules" : "Basic Numbers"}
               </span>
             </div>
 

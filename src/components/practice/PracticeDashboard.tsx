@@ -41,6 +41,7 @@ export default function PracticeDashboard() {
     activeUntimedOptionId,
     backToDashboard,
     backToUntimedDirectory,
+    selectedLevel,
   } = usePractice();
 
   const [showHistoryDrawer, setShowHistoryDrawer] = useState<boolean>(false);
@@ -222,12 +223,12 @@ export default function PracticeDashboard() {
           <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100">
             {[
               { id: "all", label: "All (31)", count: 31 },
-              { id: "simple", label: "Simple Calculation (2)", count: 2 },
-              { id: "small-friend-add", label: "Small Friend (+) (4)", count: 4 },
-              { id: "small-friend-sub", label: "Small Friend (-) (4)", count: 4 },
-              { id: "big-friend-add", label: "Big Friend (+) (9)", count: 9 },
-              { id: "big-friend-sub", label: "Big Friend (-) (9)", count: 9 },
-              { id: "multi-row", label: "Multi-Row (3)", count: 3 },
+              { id: "small-friend-add", label: "🔥 Small Friend (+) (4)", count: 4 },
+              { id: "small-friend-sub", label: "🔥 Small Friend (-) (4)", count: 4 },
+              { id: "big-friend-add", label: "🔥 Big Friend (+) (9)", count: 9 },
+              { id: "big-friend-sub", label: "🔥 Big Friend (-) (9)", count: 9 },
+              { id: "multi-row", label: "🔥 Multi-Row (3)", count: 3 },
+              { id: "simple", label: selectedLevel >= 2 ? "Level 1 Review (2)" : "Simple Calculation (2)", count: 2 },
             ].map((tab) => {
               const active = categoryFilter === tab.id;
               return (
@@ -283,11 +284,13 @@ export default function PracticeDashboard() {
                       {opt.icon}
                     </span>
                     <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border ${
-                      opt.isPdfWorksheet
+                      opt.category === "simple" && selectedLevel >= 2
+                        ? "bg-slate-100 text-slate-700 border-slate-300 font-extrabold"
+                        : opt.isPdfWorksheet
                         ? "bg-emerald-100 text-emerald-900 border-emerald-300 font-extrabold"
                         : "bg-emerald-50 text-emerald-800 border-emerald-200"
                     }`}>
-                      {opt.badge}
+                      {opt.category === "simple" && selectedLevel >= 2 ? "Level 1 ✓" : opt.badge}
                     </span>
                   </div>
 
@@ -345,13 +348,15 @@ export default function PracticeDashboard() {
         <div className="space-y-1.5">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-100 text-orange-800 text-xs font-black uppercase tracking-wider">
             <Sparkles className="w-3.5 h-3.5 text-orange-600" />
-            <span>Interactive Abacus Practice Portal</span>
+            <span>Interactive Abacus Practice Portal {selectedLevel >= 2 ? "• Level 2 Active 🚀" : "• Level 1"}</span>
           </div>
           <h1 className="text-2xl sm:text-4xl font-extrabold text-[#1D3557] font-heading">
-            Choose Your Practice Mode 🎯
+            {selectedLevel >= 2 ? "Level 2 Practice Portal 🎯" : "Choose Your Practice Mode 🎯"}
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 font-medium max-w-2xl">
-            Select one of the 2 practice options below. Practice Without Timer provides 31 targeted worksheets, while Practice With Timer tests your speed!
+            {selectedLevel >= 2
+              ? "Congratulations on your Level 1 Certification! Your practice worksheets, 2-digit operations, and timed challenges are now upgraded to Level 2."
+              : "Select one of the 2 practice options below. Practice Without Timer provides 31 targeted worksheets, while Practice With Timer tests your speed!"}
           </p>
         </div>
 
@@ -385,7 +390,7 @@ export default function PracticeDashboard() {
                 🌱
               </span>
               <span className="px-3.5 py-1.5 rounded-full bg-emerald-100 text-emerald-800 text-xs font-black uppercase tracking-wider border border-emerald-200">
-                Option 1 • 31 Worksheets
+                {selectedLevel >= 2 ? "Option 1 • 31 Worksheets (Level 2 Active)" : "Option 1 • 31 Worksheets"}
               </span>
             </div>
 
@@ -503,16 +508,18 @@ export default function PracticeDashboard() {
                 ⏱️
               </span>
               <span className="px-3.5 py-1.5 rounded-full bg-orange-100 text-orange-800 text-xs font-black uppercase tracking-wider border border-orange-200">
-                Option 2 • Timed Drill
+                {selectedLevel >= 2 ? "Option 2 • Level 2 Timed Drill" : "Option 2 • Timed Drill"}
               </span>
             </div>
 
             <div>
               <h2 className="text-2xl font-black text-[#1D3557] font-heading mb-1.5">
-                Practice With Timer
+                {selectedLevel >= 2 ? "Level 2 Practice With Timer" : "Practice With Timer"}
               </h2>
               <p className="text-xs sm:text-sm text-slate-600 font-medium leading-relaxed">
-                Boost your calculation velocity and mental agility against the clock. Set your target duration in minutes and challenge yourself to complete calculations before time runs out!
+                {selectedLevel >= 2
+                  ? "Boost your 2-digit calculation velocity and Small/Big Friend rules under timed pressure. Challenge yourself to complete calculations before time runs out!"
+                  : "Boost your calculation velocity and mental agility against the clock. Set your target duration in minutes and challenge yourself to complete calculations before time runs out!"}
               </p>
             </div>
 

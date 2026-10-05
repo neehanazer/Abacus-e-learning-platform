@@ -103,14 +103,19 @@ export const PracticeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const { user } = useAuth();
 
   // Extract initial level from auth user (e.g. Level 2)
-  const initialStudentLevel = parseInt(user?.abacusLevel?.match(/\d+/)?.[0] || "2", 10);
-  const [studentMaxLevel, setStudentMaxLevel] = useState<number>(initialStudentLevel || 2);
+  const initialStudentLevel = parseInt(
+    user?.selectedLevel?.match(/\d+/)?.[0] || user?.abacusLevel?.match(/\d+/)?.[0] || "1",
+    10
+  );
+  const effectiveLevel = Math.max(1, initialStudentLevel || 1);
+  const [studentMaxLevel, setStudentMaxLevel] = useState<number>(effectiveLevel);
 
-  const defaultCategory = PRACTICE_CATEGORIES[0];
+  const defaultCategory =
+    PRACTICE_CATEGORIES.find((c) => c.level === effectiveLevel) || PRACTICE_CATEGORIES[0];
   const [viewMode, setViewMode] = useState<"dashboard" | "worksheet" | "result">("dashboard");
-  const [selectedLevel, setSelectedLevelState] = useState<number>(1);
+  const [selectedLevel, setSelectedLevelState] = useState<number>(effectiveLevel);
   const [activeFilter, setActiveFilter] = useState<WorksheetFilterOptions>({
-    level: 1,
+    level: effectiveLevel,
     digits: defaultCategory.digits,
     ruleType: defaultCategory.ruleType,
     rowCount: defaultCategory.rowCount,
@@ -122,11 +127,40 @@ export const PracticeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   // Untimed worksheets directory & active category state
   const [showUntimedDirectory, setShowUntimedDirectory] = useState<boolean>(false);
   const [activeUntimedOptionId, setActiveUntimedOptionId] = useState<string | null>(null);
-  const [activeUntimedCategory, setActiveUntimedCategory] = useState<string>("all");
+  const [activeUntimedCategory, setActiveUntimedCategory] = useState<string>(
+    effectiveLevel >= 2 ? "small-friend-add" : "all"
+  );
 
   const [questions, setQuestions] = useState<PracticeQuestion[]>(() => {
-    return generateComprehensivePracticeQuestions(20);
+    return generateComprehensivePracticeQuestions(20, effectiveLevel);
   });
+
+  // Dynamically sync level when user logs in or is promoted to Level 2
+  useEffect(() => {
+    if (user) {
+      const userLvl = parseInt(
+        user.selectedLevel?.match(/\d+/)?.[0] || user.abacusLevel?.match(/\d+/)?.[0] || "1",
+        10
+      );
+      if (userLvl && userLvl !== selectedLevel) {
+        setSelectedLevelState(userLvl);
+        setStudentMaxLevel(Math.max(studentMaxLevel, userLvl));
+        const cat = PRACTICE_CATEGORIES.find((c) => c.level === userLvl) || PRACTICE_CATEGORIES[0];
+        setActiveCategory(cat);
+        setActiveFilter({
+          level: userLvl,
+          digits: cat.digits,
+          ruleType: cat.ruleType,
+          rowCount: cat.rowCount,
+          categoryId: cat.id,
+        });
+        if (userLvl >= 2) {
+          setActiveUntimedCategory("small-friend-add");
+        }
+        setQuestions(generateComprehensivePracticeQuestions(20, userLvl));
+      }
+    }
+  }, [user]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(0);
   const [userAnswers, setUserAnswers] = useState<Record<string, number | null>>({});
   const [isSubmitted, setIsSubmitted] = useState<Record<string, boolean>>({});
@@ -222,7 +256,7 @@ export const PracticeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       setTargetMinutesState(selectedMins);
     }
 
-    const generated = generateComprehensivePracticeQuestions(20);
+    const generated = generateComprehensivePracticeQuestions(20, selectedLevel);
     setQuestions(generated);
     setCurrentQuestionIndex(0);
     setUserAnswers({});
@@ -431,7 +465,7 @@ export const PracticeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   // Generate a brand new random set of 20 questions with the 4 core topics
   const generateNewRandomWorksheet = () => {
-    const generated = generateComprehensivePracticeQuestions(20);
+    const generated = generateComprehensivePracticeQuestions(20, selectedLevel);
     setQuestions(generated);
     setUserAnswers({});
     setIsSubmitted({});

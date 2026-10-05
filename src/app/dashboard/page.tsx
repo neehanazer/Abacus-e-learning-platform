@@ -41,7 +41,8 @@ export default function AbacusWorldDashboard() {
   }
 
   const studentName = user?.fullName?.split(" ")[0] || "Arjun";
-  const studentLevel = user?.abacusLevel?.split(" - ")[0] || "Level 2";
+  const rawLevel = user?.selectedLevel || user?.abacusLevel || "Level 1";
+  const studentLevel = rawLevel.includes(":") ? rawLevel.split(":")[0] : rawLevel.split(" - ")[0] || rawLevel;
   const userStars = 120 + (user?.earnedBadges?.length || 0) * 15;
 
   const handleLogout = () => {

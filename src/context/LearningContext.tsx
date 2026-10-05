@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { Lesson, MOCK_LESSONS } from "@/data/lessonsData";
 import confetti from "canvas-confetti";
+import { useAuth } from "@/context/AuthContext";
 
 interface LearningContextType {
   lessons: Lesson[];
@@ -29,11 +30,35 @@ const STORAGE_KEY = "abacus_learning_state_v1";
 export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
+  const { user } = useAuth();
   const [lessons, setLessons] = useState<Lesson[]>(MOCK_LESSONS);
   const [currentLessonId, setCurrentLessonId] = useState<string>("lesson-4");
   const [bonusStars, setBonusStars] = useState<number>(150);
   const [isCelebrationModalOpen, setIsCelebrationModalOpen] = useState(false);
   const [completedLessonForModal, setCompletedLessonForModal] = useState<Lesson | null>(null);
+
+  // Synchronize with user level: if student is promoted to Level 2, mark Level 1 lessons completed & unlock Level 2
+  useEffect(() => {
+    const isLevel2 = (user?.selectedLevel?.includes("2") || user?.abacusLevel?.includes("2")) ?? false;
+    if (isLevel2) {
+      setLessons((prev) =>
+        prev.map((l) => {
+          if (l.lessonNumber <= 4) {
+            return { ...l, completed: true, isLocked: false, watchedSeconds: l.durationSeconds };
+          }
+          if (l.lessonNumber === 5) {
+            return { ...l, isLocked: false };
+          }
+          return l;
+        })
+      );
+      setCurrentLessonId((prev) =>
+        prev === "lesson-1" || prev === "lesson-2" || prev === "lesson-3" || prev === "lesson-4"
+          ? "lesson-5"
+          : prev
+      );
+    }
+  }, [user?.selectedLevel, user?.abacusLevel]);
 
   // Load persisted state if available
   useEffect(() => {

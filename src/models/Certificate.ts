@@ -45,7 +45,6 @@ const CertificateSchema = new Schema<ICertificate>(
       required: [true, "Certificate ID is required"],
       unique: true,
       trim: true,
-      index: true,
     },
     studentId: {
       type: Schema.Types.ObjectId,
@@ -91,7 +90,6 @@ const CertificateSchema = new Schema<ICertificate>(
       required: [true, "Verification code is required"],
       unique: true,
       trim: true,
-      index: true,
     },
     status: {
       type: String,
@@ -106,10 +104,8 @@ const CertificateSchema = new Schema<ICertificate>(
   }
 );
 
-// Indexes
+// Compound Index
 CertificateSchema.index({ studentId: 1, levelId: 1 });
-CertificateSchema.index({ verificationCode: 1 });
-CertificateSchema.index({ certificateId: 1 });
 
 const Certificate: Model<ICertificate> =
   mongoose.models.Certificate ||

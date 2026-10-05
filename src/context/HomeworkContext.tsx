@@ -6,6 +6,7 @@ import {
   HomeworkAttempt,
   INITIAL_HOMEWORK_LIST,
   createHomeworkFromPractice,
+  isDueDateOver,
 } from "@/data/homeworkData";
 import { PracticeCategoryOption } from "@/data/practiceData";
 import confetti from "canvas-confetti";
@@ -128,19 +129,25 @@ export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     };
   }, [isTimerRunning, viewMode]);
 
-  // Open Intro Screen (only for pending or in-progress homework)
+  // Open Intro Screen (only for pending or in-progress homework and not overdue)
   const openHomeworkIntro = (hw: HomeworkTask) => {
     if (hw.status === "evaluated" || hw.status === "submitted") {
       return; // Once it is done then done
+    }
+    if (isDueDateOver(hw.dueDate)) {
+      return; // Overdue homework cannot be attended
     }
     setActiveHomework(hw);
     setViewMode("intro");
   };
 
-  // Start Homework Player (only for non-completed homework)
+  // Start Homework Player (only for non-completed and non-overdue homework)
   const startHomework = (hw: HomeworkTask) => {
     if (hw.status === "evaluated" || hw.status === "submitted") {
       return; // Once it is done then done
+    }
+    if (isDueDateOver(hw.dueDate)) {
+      return; // Overdue homework cannot be attended
     }
     setActiveHomework(hw);
     setActiveQuestionIndex(0);
@@ -267,6 +274,25 @@ export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
     saveTasks(updatedTasks);
     setActiveHomework(updatedTasks.find((t) => t.id === activeHomework.id) || null);
+
+    // Sync with backend API in background if authenticated
+    try {
+      fetch(`/api/homework/${activeHomework.id}/submit`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          answers: answersRecord.map((a) => ({
+            questionId: a.questionId,
+            studentAnswer: a.userAnswer,
+            timeSpent: Math.round(timerSeconds / Math.max(1, answersRecord.length)),
+          })),
+          timeTaken: timerSeconds,
+        }),
+      }).catch(() => {});
+    } catch {
+      // Ignore offline errors
+    }
 
     // Trigger fireworks confetti
     if (accuracy >= 60) {

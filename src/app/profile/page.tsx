@@ -26,6 +26,7 @@ import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import SectionHeader from "@/components/ui/SectionHeader";
 import { useAuth } from "@/context/AuthContext";
+import AuthGuard from "@/components/auth/AuthGuard";
 
 const AVATAR_OPTIONS = [
   { id: "🧙‍♂️", label: "Math Wizard" },
@@ -37,8 +38,16 @@ const AVATAR_OPTIONS = [
 ];
 
 export default function ProfilePage() {
+  return (
+    <AuthGuard>
+      <ProfileContent />
+    </AuthGuard>
+  );
+}
+
+function ProfileContent() {
   const router = useRouter();
-  const { user, isAuthenticated, isLoading, updateProfile } = useAuth();
+  const { user, updateProfile } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [savedNotice, setSavedNotice] = useState(false);
 
@@ -64,19 +73,7 @@ export default function ProfilePage() {
     }
   }, [user]);
 
-  useEffect(() => {
-    if (!isLoading && (!isAuthenticated || !user)) {
-      router.push("/login");
-    }
-  }, [isLoading, isAuthenticated, user, router]);
-
-  if (isLoading || !isAuthenticated || !user) {
-    return (
-      <div className="min-h-[70vh] flex items-center justify-center">
-        <p className="text-sm font-bold text-purple-700 animate-pulse">Loading Profile...</p>
-      </div>
-    );
-  }
+  if (!user) return null;
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
@@ -336,7 +333,7 @@ export default function ProfilePage() {
           <div className="pt-2">
             <span className="text-xs font-bold text-slate-700 block mb-2">Earned Badges:</span>
             <div className="flex flex-wrap gap-2">
-              {user.earnedBadges.map((b) => (
+              {(user?.earnedBadges || []).map((b) => (
                 <span
                   key={b}
                   className="px-3 py-1 rounded-full bg-purple-100 text-purple-800 text-xs font-bold border border-purple-200 flex items-center gap-1"

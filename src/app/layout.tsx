@@ -19,7 +19,7 @@ const plusJakartaSans = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "AbacusMind AI | Interactive Abacus E-Learning & Assessment Platform",
+  title: "Mind Beads AI | Interactive Abacus E-Learning & Assessment Platform",
   description:
     "An interactive, friendly, and affordable AI-powered Abacus learning platform where children learn mental math, practice with virtual abacus, take mock exams, and build lifelong math confidence.",
 };

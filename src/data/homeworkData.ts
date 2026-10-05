@@ -64,6 +64,31 @@ export function generateQuestionsForHomework(
   return questions;
 }
 
+// Check if due date is passed
+export function isDueDateOver(dueDateStr?: string): boolean {
+  if (!dueDateStr) return false;
+  const now = new Date();
+
+  // 1. Direct ISO or standard date parse
+  let parsed = new Date(dueDateStr);
+  if (!isNaN(parsed.getTime())) {
+    if (!dueDateStr.includes("T") && !dueDateStr.includes(":")) {
+      parsed.setHours(23, 59, 59, 999);
+    }
+    return now.getTime() > parsed.getTime();
+  }
+
+  // 2. Parse format like "18 September" or "18 September 2026"
+  const currentYear = now.getFullYear();
+  parsed = new Date(`${dueDateStr} ${currentYear}`);
+  if (!isNaN(parsed.getTime())) {
+    parsed.setHours(23, 59, 59, 999);
+    return now.getTime() > parsed.getTime();
+  }
+
+  return false;
+}
+
 // Initial Curated Mock Homework Data Linked to Lessons & Syllabus
 export const INITIAL_HOMEWORK_LIST: HomeworkTask[] = [
   {
@@ -197,6 +222,86 @@ export const INITIAL_HOMEWORK_LIST: HomeworkTask[] = [
       PRACTICE_CATEGORIES.find((c) => c.id === "l2-2digit-5row") || PRACTICE_CATEGORIES[0],
       10
     ),
+    attemptsCount: 0,
+  },
+  {
+    id: "hw-07",
+    homeworkNumber: 7,
+    title: "Homework 07: Small Friends Addition (+4 Rule)",
+    level: 1,
+    levelName: "Level 1 — Foundations",
+    topic: "Small Friends Addition (+4 Rule)",
+    topicId: "l1-small-friends",
+    relatedLessonId: "lesson-3",
+    relatedLessonTitle: "Lesson 3: Complementary Addition & Small Friends (+5 Rule)",
+    questionCount: 10,
+    dueDate: "28 September",
+    assignedDate: "15 September",
+    status: "pending",
+    instructions:
+      "Practice adding 4 using formula +4 = +5 - 1 when lower earth beads are unavailable.",
+    recommendedMinutes: 12,
+    questions: generateQuestionsForHomework(PRACTICE_CATEGORIES[2], 10),
+    attemptsCount: 0,
+  },
+  {
+    id: "hw-08",
+    homeworkNumber: 8,
+    title: "Homework 08: Small Friends Subtraction (-4 to -1)",
+    level: 1,
+    levelName: "Level 1 — Foundations",
+    topic: "Small Friends Subtraction (-4 to -1)",
+    topicId: "l1-small-friends",
+    relatedLessonId: "lesson-4",
+    relatedLessonTitle: "Lesson 4: Small Friends Subtraction Drills",
+    questionCount: 10,
+    dueDate: "02 October",
+    assignedDate: "18 September",
+    status: "pending",
+    instructions:
+      "Apply reverse complement formulas: -4 = -5 + 1, -3 = -5 + 2, -2 = -5 + 3, -1 = -5 + 4.",
+    recommendedMinutes: 14,
+    questions: generateQuestionsForHomework(PRACTICE_CATEGORIES[2], 10),
+    attemptsCount: 0,
+  },
+  {
+    id: "hw-09",
+    homeworkNumber: 9,
+    title: "Homework 09: Mixed Combination Formulas",
+    level: 2,
+    levelName: "Level 2 — Explorer",
+    topic: "Big Friend Rules (+9..+1, -9..-1)",
+    topicId: "l1-big-friends",
+    relatedLessonId: "lesson-5",
+    relatedLessonTitle: "Lesson 5: Base-10 Carrying & Big Friends Formulas",
+    questionCount: 10,
+    dueDate: "15 October",
+    assignedDate: "01 October",
+    status: "pending",
+    instructions:
+      "Master carrying and borrowing across 10 rod combinations with high accuracy.",
+    recommendedMinutes: 15,
+    questions: generateQuestionsForHomework(PRACTICE_CATEGORIES[3], 10),
+    attemptsCount: 0,
+  },
+  {
+    id: "hw-10",
+    homeworkNumber: 10,
+    title: "Homework 10: Mental Abacus Flash Visualization",
+    level: 2,
+    levelName: "Level 2 — Explorer",
+    topic: "1 Digit 5 Row Calculation",
+    topicId: "l1-1digit-5row",
+    relatedLessonId: "lesson-7",
+    relatedLessonTitle: "Lesson 7: Mental Abacus Imagery (Anzan Basics)",
+    questionCount: 10,
+    dueDate: "20 October",
+    assignedDate: "03 October",
+    status: "pending",
+    instructions:
+      "Perform Anzan mental abacus calculations without touching a physical soroban.",
+    recommendedMinutes: 10,
+    questions: generateQuestionsForHomework(PRACTICE_CATEGORIES[5], 10),
     attemptsCount: 0,
   },
 ];

@@ -319,7 +319,7 @@ export default function DashboardBoxCard({ type, onClick }: TwoDashboardBoxProps
           <p className="text-xs sm:text-sm text-slate-500 font-medium max-w-xs mx-auto">
             {isLearning
               ? "Master abacus video tutorials, step-by-step formulas & worksheets"
-              : "Boost speed, memory flash drills, spatial puzzles & math battle quizzes"}
+              : "Animals, Fruits, Planets, Odd One Out, Memory Match & Spot Difference"}
           </p>
         </div>
 

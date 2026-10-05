@@ -8,8 +8,12 @@ import { Calculator, ShieldCheck, Heart, Share2, Globe, Video, MessageCircle } f
 export default function Footer() {
   const pathname = usePathname();
 
-  // Hide global marketing footer on dedicated dashboard and learning portal pages
-  if (pathname === "/dashboard" || pathname.startsWith("/learning")) {
+  // Hide global marketing footer on dedicated dashboard, learning, and admin pages
+  if (
+    pathname?.startsWith("/dashboard") ||
+    pathname?.startsWith("/learning") ||
+    pathname?.startsWith("/admin")
+  ) {
     return null;
   }
 
@@ -30,7 +34,7 @@ export default function Footer() {
                 </div>
               </div>
               <span className="font-heading font-extrabold text-2xl text-white">
-                Abacus<span className="text-purple-400">Mind</span> <span className="text-amber-400">AI</span>
+                Mind<span className="text-purple-400">Beads</span> <span className="text-amber-400">AI</span>
               </span>
             </Link>
             <p className="text-slate-400 text-sm leading-relaxed max-w-sm">
@@ -143,7 +147,7 @@ export default function Footer() {
 
         {/* Bottom Bar */}
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-4">
-          <p>© {new Date().getFullYear()} AbacusMind AI Platform. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} Mind Beads AI Platform. All rights reserved.</p>
           <div className="flex items-center gap-1">
             <span>Made with</span>
             <Heart className="w-3.5 h-3.5 text-rose-500 fill-rose-500 inline" />

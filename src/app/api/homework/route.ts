@@ -42,9 +42,9 @@ export async function GET(req: NextRequest) {
     try {
       await connectToDatabase();
 
-      // Ensure seed data exists if database is fresh
+      // Ensure full homework catalog is seeded if fewer than 10 exist
       const count = await Homework.countDocuments();
-      if (count === 0) {
+      if (count < 10) {
         await seedHomeworkData();
       }
 

@@ -116,7 +116,19 @@ export async function POST(req: NextRequest) {
     }
 
     // Connect to MongoDB
-    await connectToDatabase();
+    try {
+      await connectToDatabase();
+    } catch (connErr: any) {
+      console.warn("[Register API]: Database connection not available (check MongoDB Atlas IP whitelist):", connErr?.message || connErr);
+      return NextResponse.json(
+        {
+          success: false,
+          databaseUnavailable: true,
+          error: "Database connection temporarily unavailable. Please check your MongoDB Atlas IP whitelist.",
+        },
+        { status: 503 }
+      );
+    }
 
     // 6. Duplicate email check
     const existingStudent = await Student.findOne({ email });

@@ -37,33 +37,7 @@ export default function AbacusWorldDashboard() {
   }
 
   if (!isAuthenticated || !user) {
-    return (
-      <div className="min-h-[75vh] flex items-center justify-center p-4 bg-[#FFFBF0]">
-        <div className="glass-card rounded-3xl p-8 max-w-md text-center space-y-5 border-2 border-yellow-200 shadow-2xl bg-white">
-          <div className="w-16 h-16 rounded-full bg-yellow-100 text-yellow-600 flex items-center justify-center mx-auto text-3xl">
-            🔒
-          </div>
-          <h2 className="text-2xl font-extrabold text-[#1D3557] font-heading">
-            Student Login Required
-          </h2>
-          <p className="text-sm text-slate-600 leading-relaxed">
-            Please log in to access your Learning Hub and Braingym Games with interactive abacus training!
-          </p>
-          <div className="pt-2 flex flex-col gap-3">
-            <Link href="/login">
-              <Button variant="primary" size="md" fullWidth icon={<UserCheck className="w-4 h-4" />}>
-                Log In Now
-              </Button>
-            </Link>
-            <Link href="/register">
-              <Button variant="outline" size="md" fullWidth>
-                Register New Student
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
+    return null;
   }
 
   const studentName = user?.fullName?.split(" ")[0] || "Arjun";
@@ -203,7 +177,7 @@ export default function AbacusWorldDashboard() {
         <div className="grid md:grid-cols-2 gap-6 lg:gap-8 max-w-5xl mx-auto">
           {/* Learning Hub Card */}
           <div 
-            onClick={() => router.push("/learning")}
+            onClick={() => router.push("/learning/syllabus")}
             className="group relative bg-gradient-to-b from-[#FFF8E7] to-[#FFF3D6] rounded-[2rem] p-8 border-2 border-yellow-200/50 shadow-xl shadow-yellow-100/50 hover:shadow-2xl hover:shadow-yellow-200/50 hover:-translate-y-1 transition-all duration-300 overflow-hidden cursor-pointer"
           >
             {/* Cloud Decorations */}
@@ -222,11 +196,11 @@ export default function AbacusWorldDashboard() {
                 <span className="text-[#1D3557]">Hub</span>
               </h2>
               <p className="text-gray-500 mb-8 max-w-xs mx-auto leading-relaxed">
-                Explore abacus lessons, practice exercises and improve your skills.
+                Explore abacus syllabus, curriculum levels, practice exercises and improve your skills.
               </p>
               
               <Link 
-                href="/learning"
+                href="/learning/syllabus"
                 onClick={(e) => {
                   e.stopPropagation();
                 }}
@@ -241,7 +215,7 @@ export default function AbacusWorldDashboard() {
 
           {/* Braingym Games Card */}
           <div 
-            onClick={() => setActiveModal("braingym")}
+            onClick={() => router.push("/dashboard/braingym")}
             className="group relative bg-gradient-to-b from-[#E8F4FD] to-[#D6EBFA] rounded-[2rem] p-8 border-2 border-blue-200/50 shadow-xl shadow-blue-100/50 hover:shadow-2xl hover:shadow-blue-200/50 hover:-translate-y-1 transition-all duration-300 overflow-hidden cursor-pointer"
           >
             {/* Cloud Decorations */}
@@ -265,20 +239,20 @@ export default function AbacusWorldDashboard() {
                 <span className="text-[#1D3557]">Games</span>
               </h2>
               <p className="text-gray-500 mb-8 max-w-xs mx-auto leading-relaxed">
-                Play fun games, challenge yourself and train your brain!
+                Play 4 Pics 1 Word, Logo Quiz, Landmark Countries, Memory & more!
               </p>
               
-              <button 
+              <Link 
+                href="/dashboard/braingym"
                 onClick={(e) => {
                   e.stopPropagation();
-                  setActiveModal("braingym");
                 }}
                 className="inline-flex items-center gap-3 bg-gradient-to-r from-[#1976D2] to-[#42A5F5] hover:from-[#42A5F5] hover:to-[#1976D2] text-white font-bold text-lg px-8 py-4 rounded-full shadow-lg shadow-blue-200 group-hover:shadow-xl group-hover:shadow-blue-300/50 transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer"
               >
                 <Gamepad2 className="w-5 h-5" />
                 <span>Play Games</span>
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </button>
+              </Link>
             </div>
           </div>
         </div>

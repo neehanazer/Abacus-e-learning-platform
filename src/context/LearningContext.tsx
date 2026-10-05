@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { Lesson, MOCK_LESSONS } from "@/data/lessonsData";
 import confetti from "canvas-confetti";
 
@@ -128,23 +128,29 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
-  const updateLessonProgress = (id: string, seconds: number) => {
-    const updated = lessons.map((l) => {
-      if (l.id === id) {
-        const clampedSeconds = Math.min(Math.max(0, seconds), l.durationSeconds);
-        const isNowCompleted = clampedSeconds >= l.durationSeconds - 2;
-        return {
-          ...l,
-          watchedSeconds: clampedSeconds,
-          completed: isNowCompleted ? true : l.completed,
-        };
+  const updateLessonProgress = useCallback((id: string, seconds: number) => {
+    setLessons((prev) => {
+      const target = prev.find((l) => l.id === id);
+      if (!target) return prev;
+      const clampedSeconds = Math.min(Math.max(0, seconds), target.durationSeconds);
+      // Avoid state update if seconds haven't changed significantly (less than 2s difference)
+      if (Math.abs(target.watchedSeconds - clampedSeconds) < 2) {
+        return prev;
       }
-      return l;
+      const isNowCompleted = clampedSeconds >= target.durationSeconds - 2;
+      const updated = prev.map((l) => {
+        if (l.id === id) {
+          return {
+            ...l,
+            watchedSeconds: clampedSeconds,
+            completed: isNowCompleted ? true : l.completed,
+          };
+        }
+        return l;
+      });
+      return updated;
     });
-
-    setLessons(updated);
-    saveState(updated, currentLessonId, bonusStars);
-  };
+  }, []);
 
   const resetProgress = () => {
     setLessons(MOCK_LESSONS);

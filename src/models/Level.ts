@@ -30,7 +30,6 @@ const LevelSchema = new Schema<ILevel>(
       type: Number,
       required: [true, "Level order is required"],
       unique: true,
-      index: true,
     },
     status: {
       type: String,

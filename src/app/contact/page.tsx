@@ -99,7 +99,7 @@ export default function ContactPage() {
                       Email Support
                     </span>
                     <span className="font-bold text-slate-800 text-sm">
-                      support@abacusmind.ai
+                      support@mindbeads.ai
                     </span>
                   </div>
                 </div>

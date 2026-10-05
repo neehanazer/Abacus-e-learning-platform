@@ -78,56 +78,6 @@ export default function LessonInfoSection({
         </div>
       </div>
 
-      {/* Learning Objectives ("What you will learn") */}
-      <div className="space-y-4">
-        <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-yellow-100 text-[#F4A261] flex items-center justify-center font-bold text-sm">
-            🎯
-          </div>
-          <div>
-            <h3 className="text-lg font-extrabold text-[#1D3557] font-heading">
-              What You Will Learn
-            </h3>
-            <p className="text-xs text-slate-500">
-              By the end of this lesson, you will be able to:
-            </p>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {lesson.learningObjectives.map((objective, idx) => (
-            <div
-              key={idx}
-              className="flex items-start gap-3 p-3.5 rounded-2xl bg-[#FFFBF0] border border-yellow-200 text-slate-800 text-xs sm:text-sm font-medium hover:border-yellow-300 transition-colors"
-            >
-              <div className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center flex-shrink-0 mt-0.5 font-bold">
-                ✓
-              </div>
-              <span className="leading-snug">{objective}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Teacher Key Takeaways & Formula Tip */}
-      <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-amber-50 to-orange-50 border border-orange-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="flex items-start gap-3">
-          <div className="text-2xl mt-0.5">💡</div>
-          <div>
-            <h4 className="font-extrabold text-xs sm:text-sm text-amber-950 font-heading">
-              Key Abacus Takeaway:
-            </h4>
-            <p className="text-xs text-amber-900 mt-0.5 leading-relaxed">
-              {lesson.keyTakeaways[0]}
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-full border border-orange-200 text-xs font-bold text-orange-800 flex-shrink-0">
-          <span>{lesson.instructor.avatar}</span>
-          <span>{lesson.instructor.name}</span>
-        </div>
-      </div>
-
       {/* Navigation Buttons Row: Previous / Next Lesson */}
       <div className="pt-4 border-t border-yellow-100 flex items-center justify-between gap-3">
         <button

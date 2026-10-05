@@ -87,7 +87,7 @@ export default function CertificateVerifierSection({
           </h3>
         </div>
         <p className="text-xs text-slate-500 max-w-xs">
-          Verify digital credentials issued by AbacusMind AI. Enter the cryptographic code printed on the certificate.
+          Verify digital credentials issued by Mind Beads AI. Enter the cryptographic code printed on the certificate.
         </p>
       </div>
 
@@ -139,7 +139,7 @@ export default function CertificateVerifierSection({
                       Authentic & Verified Certificate
                     </h4>
                     <p className="text-xs text-emerald-700">
-                      Matches official accreditation records in AbacusMind AI central ledger.
+                      Matches official accreditation records in Mind Beads AI central ledger.
                     </p>
                   </div>
                 </div>

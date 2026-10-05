@@ -5,6 +5,8 @@ import Topic from "@/models/Topic";
 import Lesson from "@/models/Lesson";
 import Homework, { IHomework } from "@/models/Homework";
 import HomeworkQuestion, { IHomeworkQuestion } from "@/models/HomeworkQuestion";
+import Student from "@/models/Student";
+import HomeworkAttempt from "@/models/HomeworkAttempt";
 
 export interface SeedHomeworkQuestionDef {
   _id: string;
@@ -779,6 +781,268 @@ export const HOMEWORK_CATALOG: SeedHomeworkDef[] = [
       },
     ],
   },
+  // =========================================================================
+  // HOMEWORK 7: Small Friends Addition (+4 Rule)
+  // =========================================================================
+  {
+    _id: "67a900000000000000000007",
+    homeworkNumber: 7,
+    title: "Homework 07: Small Friends Addition (+4 Rule)",
+    description:
+      "Practice adding 4 using formula +4 = +5 - 1 when lower earth beads are unavailable.",
+    levelOrder: 1,
+    levelId: "678900000000000000000001",
+    topicId: "678900000000000000010002",
+    lessonId: "678900000000000001000003",
+    lessonNumber: 3,
+    recommendedTime: 12,
+    dueDateDaysAhead: -7,
+    status: "pending",
+    questions: [
+      {
+        _id: "67aa00000000000000007001",
+        question: "Calculate: 1 + 4",
+        questionType: "numberInput",
+        numbers: [1, 4],
+        correctAnswer: 5,
+        options: [5, 4, 6, 3],
+        difficulty: "easy",
+        marks: 1,
+        operation: "+",
+        ruleHint: "+4 = +5 - 1.",
+        explanation: "1 + 4 = 5.",
+        order: 1,
+      },
+      {
+        _id: "67aa00000000000000007002",
+        question: "Calculate: 2 + 4",
+        questionType: "numberInput",
+        numbers: [2, 4],
+        correctAnswer: 6,
+        options: [6, 5, 7, 8],
+        difficulty: "easy",
+        marks: 1,
+        operation: "+",
+        ruleHint: "+4 = +5 - 1.",
+        explanation: "2 + 4 = 6.",
+        order: 2,
+      },
+      {
+        _id: "67aa00000000000000007003",
+        question: "Calculate: 3 + 4",
+        questionType: "numberInput",
+        numbers: [3, 4],
+        correctAnswer: 7,
+        options: [7, 6, 8, 9],
+        difficulty: "easy",
+        marks: 1,
+        operation: "+",
+        ruleHint: "+4 = +5 - 1.",
+        explanation: "3 + 4 = 7.",
+        order: 3,
+      },
+      {
+        _id: "67aa00000000000000007004",
+        question: "Calculate: 4 + 4",
+        questionType: "numberInput",
+        numbers: [4, 4],
+        correctAnswer: 8,
+        options: [8, 7, 9, 6],
+        difficulty: "medium",
+        marks: 1,
+        operation: "+",
+        ruleHint: "+4 = +5 - 1.",
+        explanation: "4 + 4 = 8.",
+        order: 4,
+      },
+    ],
+  },
+  // =========================================================================
+  // HOMEWORK 8: Small Friends Subtraction (-4 to -1)
+  // =========================================================================
+  {
+    _id: "67a900000000000000000008",
+    homeworkNumber: 8,
+    title: "Homework 08: Small Friends Subtraction (-4 to -1)",
+    description:
+      "Apply reverse complement formulas: -4 = -5 + 1, -3 = -5 + 2, -2 = -5 + 3, -1 = -5 + 4.",
+    levelOrder: 1,
+    levelId: "678900000000000000000001",
+    topicId: "678900000000000000010002",
+    lessonId: "678900000000000001000004",
+    lessonNumber: 4,
+    recommendedTime: 14,
+    dueDateDaysAhead: -3,
+    status: "pending",
+    questions: [
+      {
+        _id: "67aa00000000000000008001",
+        question: "Calculate: 5 - 4",
+        questionType: "numberInput",
+        numbers: [5, -4],
+        correctAnswer: 1,
+        options: [1, 2, 0, 3],
+        difficulty: "easy",
+        marks: 1,
+        operation: "-",
+        ruleHint: "-4 = -5 + 1.",
+        explanation: "5 - 4 = 1.",
+        order: 1,
+      },
+      {
+        _id: "67aa00000000000000008002",
+        question: "Calculate: 6 - 3",
+        questionType: "numberInput",
+        numbers: [6, -3],
+        correctAnswer: 3,
+        options: [3, 2, 4, 5],
+        difficulty: "easy",
+        marks: 1,
+        operation: "-",
+        ruleHint: "-3 = -5 + 2.",
+        explanation: "6 - 3 = 3.",
+        order: 2,
+      },
+      {
+        _id: "67aa00000000000000008003",
+        question: "Calculate: 7 - 4",
+        questionType: "numberInput",
+        numbers: [7, -4],
+        correctAnswer: 3,
+        options: [3, 4, 2, 1],
+        difficulty: "medium",
+        marks: 1,
+        operation: "-",
+        ruleHint: "-4 = -5 + 1.",
+        explanation: "7 - 4 = 3.",
+        order: 3,
+      },
+      {
+        _id: "67aa00000000000000008004",
+        question: "Calculate: 8 - 4",
+        questionType: "numberInput",
+        numbers: [8, -4],
+        correctAnswer: 4,
+        options: [4, 5, 3, 2],
+        difficulty: "medium",
+        marks: 1,
+        operation: "-",
+        ruleHint: "-4 = -5 + 1.",
+        explanation: "8 - 4 = 4.",
+        order: 4,
+      },
+    ],
+  },
+  // =========================================================================
+  // HOMEWORK 9: Mixed Combination Formulas
+  // =========================================================================
+  {
+    _id: "67a900000000000000000009",
+    homeworkNumber: 9,
+    title: "Homework 09: Mixed Combination Formulas",
+    description:
+      "Master carrying and borrowing across 10 rod combinations with high accuracy.",
+    levelOrder: 2,
+    levelId: "678900000000000000000002",
+    topicId: "678900000000000000010003",
+    lessonId: "678900000000000001000005",
+    lessonNumber: 5,
+    recommendedTime: 15,
+    dueDateDaysAhead: 10,
+    status: "pending",
+    questions: [
+      {
+        _id: "67aa00000000000000009001",
+        question: "Calculate: 9 + 6",
+        questionType: "numberInput",
+        numbers: [9, 6],
+        correctAnswer: 15,
+        options: [15, 14, 16, 17],
+        difficulty: "medium",
+        marks: 1,
+        operation: "+",
+        ruleHint: "+6 = -4 + 10.",
+        explanation: "9 + 6 = 15.",
+        order: 1,
+      },
+      {
+        _id: "67aa00000000000000009002",
+        question: "Calculate: 14 + 7",
+        questionType: "numberInput",
+        numbers: [14, 7],
+        correctAnswer: 21,
+        options: [21, 20, 22, 19],
+        difficulty: "medium",
+        marks: 1,
+        operation: "+",
+        ruleHint: "+7 = -3 + 10.",
+        explanation: "14 + 7 = 21.",
+        order: 2,
+      },
+      {
+        _id: "67aa00000000000000009003",
+        question: "Calculate: 25 - 8",
+        questionType: "numberInput",
+        numbers: [25, -8],
+        correctAnswer: 17,
+        options: [17, 18, 16, 15],
+        difficulty: "hard",
+        marks: 1,
+        operation: "-",
+        ruleHint: "-8 = -10 + 2.",
+        explanation: "25 - 8 = 17.",
+        order: 3,
+      },
+    ],
+  },
+  // =========================================================================
+  // HOMEWORK 10: Mental Abacus Flash Visualization
+  // =========================================================================
+  {
+    _id: "67a900000000000000000010",
+    homeworkNumber: 10,
+    title: "Homework 10: Mental Abacus Flash Visualization",
+    description:
+      "Perform Anzan mental abacus calculations without touching a physical soroban.",
+    levelOrder: 2,
+    levelId: "678900000000000000000002",
+    topicId: "678900000000000000010003",
+    lessonId: "678900000000000001000007",
+    lessonNumber: 7,
+    recommendedTime: 10,
+    dueDateDaysAhead: 15,
+    status: "pending",
+    questions: [
+      {
+        _id: "67aa00000000000000010001",
+        question: "Mental Flash: 2 + 5 + 1",
+        questionType: "numberInput",
+        numbers: [2, 5, 1],
+        correctAnswer: 8,
+        options: [8, 7, 9, 6],
+        difficulty: "medium",
+        marks: 1,
+        operation: "+",
+        ruleHint: "Visualize upper bead 5 moving down, then lower bead 1 up.",
+        explanation: "2 + 5 + 1 = 8.",
+        order: 1,
+      },
+      {
+        _id: "67aa00000000000000010002",
+        question: "Mental Flash: 7 - 2 + 4",
+        questionType: "numberInput",
+        numbers: [7, -2, 4],
+        correctAnswer: 9,
+        options: [9, 8, 10, 7],
+        difficulty: "hard",
+        marks: 1,
+        operation: "+",
+        ruleHint: "7 - 2 = 5; 5 + 4 = 9.",
+        explanation: "7 - 2 + 4 = 9.",
+        order: 2,
+      },
+    ],
+  },
 ];
 
 /**
@@ -786,14 +1050,6 @@ export const HOMEWORK_CATALOG: SeedHomeworkDef[] = [
  */
 export async function seedHomeworkData() {
   await connectToDatabase();
-
-  const count = await Homework.countDocuments();
-  if (count > 0) {
-    return {
-      message: `Homework catalog already seeded (${count} homework assignments exist).`,
-      count,
-    };
-  }
 
   // Ensure levels and lessons exist in DB so we can bind accurate ObjectIds
   const dbLevels = await Level.find().lean();
@@ -850,9 +1106,15 @@ export async function seedHomeworkData() {
       createdQuestionCount++;
     }
 
-    // Create Homework assignment
-    const dueDate = new Date();
-    dueDate.setDate(dueDate.getDate() + hwDef.dueDateDaysAhead);
+    // Determine due date: homework 1 to 8 have past due dates (expired); 9 & 10 have future due dates
+    let dueDate: Date;
+    if (hwDef.homeworkNumber <= 8) {
+      // Expired due dates (September to early October)
+      dueDate = new Date(`2026-09-${(10 + hwDef.homeworkNumber * 2).toString().padStart(2, "0")}T23:59:59.000Z`);
+    } else {
+      // Future active due dates
+      dueDate = new Date(Date.now() + hwDef.dueDateDaysAhead * 24 * 60 * 60 * 1000);
+    }
 
     await Homework.findOneAndUpdate(
       { _id: homeworkId },
@@ -866,13 +1128,55 @@ export async function seedHomeworkData() {
         questionIds,
         recommendedTime: hwDef.recommendedTime,
         dueDate,
-        status: hwDef.status,
+        status: hwDef.homeworkNumber <= 2 ? "evaluated" : "pending",
         homeworkNumber: hwDef.homeworkNumber,
         order: hwDef.homeworkNumber,
       },
       { upsert: true, new: true }
     );
     createdHomeworkCount++;
+  }
+
+  // Ensure default student attempts for neehanaz226@gmail.com if not already created
+  try {
+    const student = await Student.findOne({ email: "neehanaz226@gmail.com" });
+    if (student) {
+      const existingAttempts = await HomeworkAttempt.countDocuments({ studentId: student._id });
+      if (existingAttempts === 0) {
+        const hw1 = await Homework.findOne({ homeworkNumber: 1 });
+        const hw2 = await Homework.findOne({ homeworkNumber: 2 });
+        if (hw1) {
+          await HomeworkAttempt.create({
+            studentId: student._id,
+            homeworkId: hw1._id,
+            answers: [],
+            attemptNumber: 1,
+            score: 9,
+            totalQuestions: 10,
+            accuracy: 90,
+            timeTaken: 360,
+            submittedAt: new Date("2026-09-09T10:30:00.000Z"),
+            status: "evaluated",
+          });
+        }
+        if (hw2) {
+          await HomeworkAttempt.create({
+            studentId: student._id,
+            homeworkId: hw2._id,
+            answers: [],
+            attemptNumber: 1,
+            score: 8,
+            totalQuestions: 10,
+            accuracy: 80,
+            timeTaken: 420,
+            submittedAt: new Date("2026-09-10T14:15:00.000Z"),
+            status: "evaluated",
+          });
+        }
+      }
+    }
+  } catch (attErr) {
+    console.warn("Could not seed default student homework attempts:", attErr);
   }
 
   return {

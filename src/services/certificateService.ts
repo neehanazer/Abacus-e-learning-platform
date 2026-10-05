@@ -73,12 +73,32 @@ export class CertificateService {
     const studentObjectId = mongoose.Types.ObjectId.isValid(studentId)
       ? new mongoose.Types.ObjectId(studentId)
       : null;
-    const levelObjectId = mongoose.Types.ObjectId.isValid(levelId)
+    let levelObjectId = mongoose.Types.ObjectId.isValid(levelId)
       ? new mongoose.Types.ObjectId(levelId)
       : null;
     const examObjectId = mongoose.Types.ObjectId.isValid(examId)
       ? new mongoose.Types.ObjectId(examId)
       : null;
+
+    // Defensively resolve levelObjectId if missing or invalid
+    if (!levelObjectId && mongoose.connection?.readyState === 1) {
+      try {
+        if (examObjectId) {
+          const examDoc = await Exam.findById(examObjectId).lean();
+          if (examDoc && (examDoc as any).levelId && mongoose.Types.ObjectId.isValid((examDoc as any).levelId)) {
+            levelObjectId = new mongoose.Types.ObjectId((examDoc as any).levelId);
+          }
+        }
+        if (!levelObjectId) {
+          const firstLevel = await Level.findOne().sort({ order: 1 }).lean();
+          if (firstLevel) {
+            levelObjectId = new mongoose.Types.ObjectId(firstLevel._id);
+          }
+        }
+      } catch (e) {
+        console.warn("[CertificateService]: Error resolving level ObjectId:", e);
+      }
+    }
 
     // Check if certificate already exists in DB
     if (mongoose.connection?.readyState === 1 && studentObjectId && examObjectId) {

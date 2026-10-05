@@ -246,7 +246,7 @@ export class AIEvaluationService {
     const { apiKey, summary, topics, weakAreas, readiness } = context;
 
     const prompt = `
-You are an expert Abacus Math Sensei evaluating a student's performance on the AbacusMind e-learning platform.
+You are an expert Abacus Math Sensei evaluating a student's performance on the Mind Beads e-learning platform.
 Analyze the following student performance data and return a JSON object with constructive, encouraging, and specific evaluation feedback:
 
 STUDENT PERFORMANCE DATA:

@@ -1,7 +1,6 @@
 "use client";
 
 import React from "react";
-import { motion } from "framer-motion";
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
@@ -23,16 +22,11 @@ export default function Card({
   hoverEffect = true,
 }: CardProps) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-40px" }}
-      transition={{ duration: 0.4 }}
-      whileHover={hoverEffect ? { y: -6, scale: 1.01 } : undefined}
+    <div
       className={twMerge(
         clsx(
           "glass-card rounded-3xl p-6 md:p-8 relative overflow-hidden transition-all duration-300",
-          hoverEffect && "hover:shadow-xl hover:border-purple-200/90",
+          hoverEffect && "hover:shadow-xl hover:border-purple-200/90 hover:-translate-y-1.5",
           className
         )
       )}
@@ -50,6 +44,6 @@ export default function Card({
       )}
 
       {children}
-    </motion.div>
+    </div>
   );
 }

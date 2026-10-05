@@ -11,6 +11,9 @@ export interface IHomework extends Document {
   questionIds: mongoose.Types.ObjectId[];
   recommendedTime: number; // in minutes
   dueDate: Date;
+  assignedDate?: Date;
+  assignedType?: "all_level" | "selected_students";
+  assignedStudentIds?: mongoose.Types.ObjectId[];
   status: HomeworkStatus;
   homeworkNumber?: number;
   order?: number;
@@ -64,6 +67,22 @@ const HomeworkSchema = new Schema<IHomework>(
       required: [true, "Due date is required"],
       default: () => new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days from now
     },
+    assignedDate: {
+      type: Date,
+      default: Date.now,
+      index: true,
+    },
+    assignedType: {
+      type: String,
+      enum: ["all_level", "selected_students"],
+      default: "all_level",
+    },
+    assignedStudentIds: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "Student",
+      },
+    ],
     status: {
       type: String,
       enum: ["pending", "inProgress", "submitted", "evaluated"],

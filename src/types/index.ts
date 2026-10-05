@@ -560,4 +560,45 @@ export interface IProctoringSummary {
   events: IProctoringEventDocument[];
 }
 
+// ==============================================================
+// ADMIN MANAGEMENT TYPES
+// ==============================================================
+
+export type AdminRole = "admin";
+export type AdminStatus = "active" | "inactive" | "suspended";
+
+export interface IAdminDocument {
+  _id: string;
+  name: string;
+  email: string;
+  passwordHash: string;
+  role: AdminRole;
+  status: AdminStatus;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface ISafeAdmin {
+  id: string;
+  name: string;
+  email: string;
+  role: AdminRole;
+  status: AdminStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AdminTokenPayload {
+  adminId: string;
+  email: string;
+  role: AdminRole;
+  iat?: number;
+  exp?: number;
+}
+
+export interface AdminLoginDTO {
+  email: string;
+  password: string;
+}
+
 

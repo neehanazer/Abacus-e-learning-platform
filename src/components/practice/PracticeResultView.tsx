@@ -14,9 +14,9 @@ import {
   ArrowLeft,
   BookOpen,
   TrendingUp,
-  Award,
   ListOrdered,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { usePractice } from "@/context/PracticeContext";
 
 export default function PracticeResultView() {
@@ -27,7 +27,23 @@ export default function PracticeResultView() {
     generateNewRandomWorksheet,
     restartSameWorksheet,
     backToDashboard,
+    backToUntimedDirectory,
+    activeUntimedCategory,
+    practiceMode,
   } = usePractice();
+
+  const router = useRouter();
+
+  const handleBackToTopics = () => {
+    if (practiceMode === "untimed") {
+      const cat = activeUntimedCategory || "simple";
+      backToUntimedDirectory(cat);
+      router.push(`/learning/practice?mode=untimed&category=${cat}`);
+    } else {
+      backToDashboard();
+      router.push("/learning/practice");
+    }
+  };
 
   if (!currentAttempt) return null;
 
@@ -62,7 +78,7 @@ export default function PracticeResultView() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-3 sm:px-6 py-6 space-y-8">
+    <div className="max-w-4xl mx-auto px-3 sm:px-6 py-6 space-y-6">
       {/* ============================================================ */}
       {/* 1. CELEBRATION HERO CARD */}
       {/* ============================================================ */}
@@ -187,10 +203,11 @@ export default function PracticeResultView() {
           </button>
 
           <button
-            onClick={backToDashboard}
-            className="px-5 py-3.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold text-sm transition-all hover:scale-105 flex items-center gap-1.5 cursor-pointer"
+            type="button"
+            onClick={handleBackToTopics}
+            className="px-5 py-3.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold text-sm transition-all hover:scale-105 flex items-center gap-1.5 cursor-pointer shadow-xs border border-slate-200"
           >
-            <ArrowLeft className="w-4 h-4" />
+            <ArrowLeft className="w-4 h-4 text-slate-500" />
             <span>Back to Topics</span>
           </button>
         </div>

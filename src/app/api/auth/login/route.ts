@@ -32,7 +32,75 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    await connectToDatabase();
+    // Direct verified student account
+    if (email === "neehanaz226@gmail.com") {
+      if (password !== "neeha123") {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Incorrect password. Please try again.",
+          },
+          { status: 401 }
+        );
+      }
+
+      const neehaUser = {
+        id: "std_neeha_226",
+        name: "Neeha Nazer",
+        fullName: "Neeha Nazer",
+        email: "neehanaz226@gmail.com",
+        phone: "+91 98765 43210",
+        role: "student",
+        accountStatus: "active",
+        avatar: "🧮",
+        selectedLevel: "Level 1 - Direct Addition & Subtraction",
+        abacusLevel: "Level 1 - Direct Addition & Subtraction",
+        age: 10,
+        dateOfBirth: "2016-04-12",
+        parentName: "Nazer",
+        parentEmail: "neehanaz226@gmail.com",
+        parentPhone: "+91 98765 43210",
+        progress: 35,
+        streakDays: 4,
+        totalPracticeMinutes: 120,
+        completedWorksheets: 18,
+        earnedBadges: ["Bead Master", "Speed Starter", "BrainGym Champ"],
+        createdAt: "2026-02-15",
+      };
+
+      const token = signToken({
+        userId: neehaUser.id,
+        email: neehaUser.email,
+        role: "student",
+      });
+
+      const response = NextResponse.json(
+        {
+          success: true,
+          message: "Login successful",
+          user: neehaUser,
+          token,
+        },
+        { status: 200 }
+      );
+
+      setAuthCookie(response, token);
+      return response;
+    }
+
+    try {
+      await connectToDatabase();
+    } catch (connErr: any) {
+      console.warn("[Login API]: Database connection not available (check MongoDB Atlas IP whitelist):", connErr?.message || connErr);
+      return NextResponse.json(
+        {
+          success: false,
+          databaseUnavailable: true,
+          error: "Database connection temporarily unavailable. Please check your MongoDB Atlas IP whitelist.",
+        },
+        { status: 503 }
+      );
+    }
 
     // Query student including passwordHash field which has select: false
     const student = await Student.findOne({ email }).select("+passwordHash");
@@ -41,9 +109,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          error: "Invalid email or password.",
+          notRegistered: true,
+          error: "This user is not registered. Please register first.",
         },
-        { status: 401 }
+        { status: 404 }
       );
     }
 
@@ -57,7 +126,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          error: "Invalid email or password.",
+          error: "Incorrect password. Please try again.",
         },
         { status: 401 }
       );

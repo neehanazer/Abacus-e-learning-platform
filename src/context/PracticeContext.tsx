@@ -10,6 +10,10 @@ import {
   generateWorksheet,
   generateComprehensivePracticeQuestions,
 } from "@/data/practiceData";
+import {
+  generateUntimedWorksheetQuestions,
+  UNTIMED_WORKSHEET_OPTIONS,
+} from "@/data/untimedWorksheetsData";
 import confetti from "canvas-confetti";
 
 import { useAuth } from "@/context/AuthContext";
@@ -58,8 +62,19 @@ interface PracticeContextType {
   currentAttempt: PracticeAttempt | null;
   attemptHistory: PracticeAttempt[];
 
+  // Untimed Worksheets Navigation & Active Categories
+  showUntimedDirectory: boolean;
+  setShowUntimedDirectory: (val: boolean) => void;
+  activeUntimedOptionId: string | null;
+  setActiveUntimedOptionId: (id: string | null) => void;
+  activeUntimedCategory: string;
+  setActiveUntimedCategory: (cat: string) => void;
+  backToUntimedDirectory: (category?: string) => void;
+  backToSimpleCalculation: () => void;
+
   // Action Handlers
   startPracticeSession: (mode: "untimed" | "timed", minutes?: number) => void;
+  startUntimedWorksheet: (optionId: string, count?: number) => void;
   startCategoryWorksheet: (category: PracticeCategoryOption) => void;
   startCustomWorksheet: (filter: WorksheetFilterOptions, title?: string) => void;
   answerQuestion: (questionId: string, answer: number | null) => void;
@@ -103,6 +118,11 @@ export const PracticeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   });
   const [activeCategory, setActiveCategory] = useState<PracticeCategoryOption | null>(defaultCategory);
   const [worksheetTitle, setWorksheetTitle] = useState<string>("Practice Without Timer");
+
+  // Untimed worksheets directory & active category state
+  const [showUntimedDirectory, setShowUntimedDirectory] = useState<boolean>(false);
+  const [activeUntimedOptionId, setActiveUntimedOptionId] = useState<string | null>(null);
+  const [activeUntimedCategory, setActiveUntimedCategory] = useState<string>("all");
 
   const [questions, setQuestions] = useState<PracticeQuestion[]>(() => {
     return generateComprehensivePracticeQuestions(20);
@@ -216,6 +236,26 @@ export const PracticeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setWorksheetTitle(mode === "timed" ? `Practice With Timer (${selectedMins} Mins)` : "Practice Without Timer");
     setViewMode("worksheet");
   }, [targetMinutes]);
+
+  // Start specific untimed worksheet from the 31 options (loads all 30 questions from official PDF where available)
+  const startUntimedWorksheet = useCallback((optionId: string, count: number = 30) => {
+    const option = UNTIMED_WORKSHEET_OPTIONS.find((o) => o.id === optionId) || UNTIMED_WORKSHEET_OPTIONS[0];
+    const generated = generateUntimedWorksheetQuestions(optionId, count);
+    setActiveUntimedOptionId(optionId);
+    setActiveUntimedCategory(option.category || "simple");
+    setShowUntimedDirectory(true);
+    setQuestions(generated);
+    setCurrentQuestionIndex(0);
+    setUserAnswers({});
+    setIsSubmitted({});
+    setIsWorksheetComplete(false);
+    setTimerSeconds(0);
+    setPracticeMode("untimed");
+    setIsTimerRunning(false);
+    setCurrentAttempt(null);
+    setWorksheetTitle(option.name);
+    setViewMode("worksheet");
+  }, []);
 
   // Start category worksheet
   const startCategoryWorksheet = useCallback((category: PracticeCategoryOption) => {
@@ -405,10 +445,28 @@ export const PracticeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setViewMode("worksheet");
   };
 
-  const backToDashboard = () => {
+  const backToUntimedDirectory = useCallback((category?: string) => {
     setIsTimerRunning(false);
+    setShowUntimedDirectory(true);
+    if (category) {
+      setActiveUntimedCategory(category);
+    }
     setViewMode("dashboard");
-  };
+  }, []);
+
+  const backToSimpleCalculation = useCallback(() => {
+    setIsTimerRunning(false);
+    setShowUntimedDirectory(true);
+    setActiveUntimedCategory("simple");
+    setViewMode("dashboard");
+  }, []);
+
+  const backToDashboard = useCallback(() => {
+    setIsTimerRunning(false);
+    setShowUntimedDirectory(false);
+    setActiveUntimedOptionId(null);
+    setViewMode("dashboard");
+  }, []);
 
   // Analytics
   const getCategoryAttemptsList = (categoryId: string) => {
@@ -489,7 +547,16 @@ export const PracticeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         accuracy,
         currentAttempt,
         attemptHistory,
+        showUntimedDirectory,
+        setShowUntimedDirectory,
+        activeUntimedOptionId,
+        setActiveUntimedOptionId,
+        activeUntimedCategory,
+        setActiveUntimedCategory,
+        backToUntimedDirectory,
+        backToSimpleCalculation,
         startPracticeSession,
+        startUntimedWorksheet,
         startCategoryWorksheet,
         startCustomWorksheet,
         answerQuestion,

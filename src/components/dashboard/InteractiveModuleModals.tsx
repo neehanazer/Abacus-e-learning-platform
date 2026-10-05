@@ -19,9 +19,22 @@ import {
   Gamepad2,
   GraduationCap,
   Calculator,
+  Brain,
+  Eye,
+  Target,
+  Maximize2,
+  Minimize2,
+  Image as ImageIcon,
+  Globe,
 } from "lucide-react";
 import Button from "@/components/ui/Button";
 import Link from "next/link";
+import OddOneOutGame from "./games/OddOneOutGame";
+import MemoryMatchGame from "./games/MemoryMatchGame";
+import SpotTheDifferenceGame from "./games/SpotTheDifferenceGame";
+import FourPicsOneWordGame from "./games/FourPicsOneWordGame";
+import ScrambledLogoGame from "./games/ScrambledLogoGame";
+import LandmarkCountryGame from "./games/LandmarkCountryGame";
 
 interface ModalProps {
   isOpen: boolean;
@@ -521,7 +534,10 @@ function QuizQuestGame() {
 
 export default function InteractiveModuleModal({ isOpen, onClose, type }: ModalProps) {
   const [learningTab, setLearningTab] = useState<"abacus" | "spell">("abacus");
-  const [brainTab, setBrainTab] = useState<"quiz" | "puzzle">("quiz");
+  const [brainTab, setBrainTab] = useState<
+    "fourpics" | "scrambled" | "landmark" | "odd" | "memory" | "spot" | "quiz" | "puzzle"
+  >("fourpics");
+  const [isFullScreen, setIsFullScreen] = useState(false);
 
   if (!isOpen || !type) return null;
 
@@ -529,25 +545,41 @@ export default function InteractiveModuleModal({ isOpen, onClose, type }: ModalP
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
+      <div className={`fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center ${isFullScreen ? "p-0" : "p-2 sm:p-4"} overflow-hidden`}>
         <motion.div
-          initial={{ opacity: 0, scale: 0.9, y: 20 }}
+          initial={{ opacity: 0, scale: 0.95, y: 15 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.9, y: 20 }}
-          className="w-full max-w-2xl bg-white rounded-[36px] p-6 sm:p-8 border-4 border-slate-200 shadow-2xl relative my-8"
+          exit={{ opacity: 0, scale: 0.95, y: 15 }}
+          className={`w-full ${
+            isFullScreen
+              ? "w-screen h-screen rounded-none p-4 sm:p-6"
+              : isLearning
+              ? "max-w-3xl max-h-[92vh] rounded-[36px] p-6 sm:p-8"
+              : "w-[98vw] max-w-7xl h-[94vh] max-h-[96vh] rounded-[36px] p-4 sm:p-6"
+          } bg-white border-4 border-slate-200 shadow-2xl relative flex flex-col`}
         >
-          {/* Close button */}
-          <button
-            onClick={onClose}
-            className="absolute top-5 right-5 w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition cursor-pointer z-20"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          {/* Top Right Action Controls: Fullscreen + Close */}
+          <div className="absolute top-4 right-4 sm:top-5 sm:right-5 flex items-center gap-2 z-20">
+            <button
+              onClick={() => setIsFullScreen(!isFullScreen)}
+              className="w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition cursor-pointer"
+              title={isFullScreen ? "Exit Fullscreen" : "Expand to Fullscreen"}
+            >
+              {isFullScreen ? <Minimize2 className="w-5 h-5" /> : <Maximize2 className="w-5 h-5" />}
+            </button>
+            <button
+              onClick={onClose}
+              className="w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition cursor-pointer"
+              title="Close"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
 
           {/* Modal Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-100">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-4 pb-4 border-b border-slate-100 pr-24">
             <div className="flex items-center gap-3">
-              <span className="text-4xl">{isLearning ? "📚" : "🎮"}</span>
+              <span className="text-3xl sm:text-4xl">{isLearning ? "📚" : "🎮"}</span>
               <div>
                 <h2 className="text-2xl sm:text-3xl font-black font-serif tracking-tight text-slate-800">
                   {isLearning ? (
@@ -563,13 +595,15 @@ export default function InteractiveModuleModal({ isOpen, onClose, type }: ModalP
                   )}
                 </h2>
                 <span className="text-xs font-bold text-slate-400">
-                  {isLearning ? "Interactive Abacus Lessons & Spelling Bytes" : "Speed Drills, Puzzles & Timed Battles"}
+                  {isLearning 
+                    ? "Interactive Abacus Lessons & Spelling Bytes" 
+                    : "4 Pics 1 Word, Logo Quiz, Landmark Countries, Memory & Visual Drills"}
                 </span>
               </div>
             </div>
 
             {/* Inner Sub-Navigation Tabs */}
-            <div className="flex gap-2 bg-slate-100 p-1.5 rounded-2xl w-fit">
+            <div className="flex flex-wrap gap-1.5 bg-slate-100 p-1.5 rounded-2xl w-fit">
               {isLearning ? (
                 <>
                   <button
@@ -598,10 +632,76 @@ export default function InteractiveModuleModal({ isOpen, onClose, type }: ModalP
               ) : (
                 <>
                   <button
-                    onClick={() => setBrainTab("quiz")}
-                    className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition cursor-pointer flex items-center gap-1.5 ${
-                      brainTab === "quiz"
+                    onClick={() => setBrainTab("fourpics")}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-black transition cursor-pointer flex items-center gap-1.5 ${
+                      brainTab === "fourpics"
                         ? "bg-rose-600 text-white shadow-sm"
+                        : "text-slate-600 hover:text-slate-900"
+                    }`}
+                  >
+                    <ImageIcon className="w-3.5 h-3.5" />
+                    4 Pics 1 Word
+                  </button>
+                  <button
+                    onClick={() => setBrainTab("scrambled")}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-black transition cursor-pointer flex items-center gap-1.5 ${
+                      brainTab === "scrambled"
+                        ? "bg-indigo-600 text-white shadow-sm"
+                        : "text-slate-600 hover:text-slate-900"
+                    }`}
+                  >
+                    <Sparkles className="w-3.5 h-3.5" />
+                    Logo Quiz
+                  </button>
+                  <button
+                    onClick={() => setBrainTab("landmark")}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-black transition cursor-pointer flex items-center gap-1.5 ${
+                      brainTab === "landmark"
+                        ? "bg-emerald-600 text-white shadow-sm"
+                        : "text-slate-600 hover:text-slate-900"
+                    }`}
+                  >
+                    <Globe className="w-3.5 h-3.5" />
+                    Landmark Country
+                  </button>
+                  <button
+                    onClick={() => setBrainTab("odd")}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-black transition cursor-pointer flex items-center gap-1.5 ${
+                      brainTab === "odd"
+                        ? "bg-amber-600 text-white shadow-sm"
+                        : "text-slate-600 hover:text-slate-900"
+                    }`}
+                  >
+                    <Target className="w-3.5 h-3.5" />
+                    Odd One Out
+                  </button>
+                  <button
+                    onClick={() => setBrainTab("memory")}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-black transition cursor-pointer flex items-center gap-1.5 ${
+                      brainTab === "memory"
+                        ? "bg-cyan-600 text-white shadow-sm"
+                        : "text-slate-600 hover:text-slate-900"
+                    }`}
+                  >
+                    <Brain className="w-3.5 h-3.5" />
+                    Memory Match
+                  </button>
+                  <button
+                    onClick={() => setBrainTab("spot")}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-black transition cursor-pointer flex items-center gap-1.5 ${
+                      brainTab === "spot"
+                        ? "bg-purple-600 text-white shadow-sm"
+                        : "text-slate-600 hover:text-slate-900"
+                    }`}
+                  >
+                    <Eye className="w-3.5 h-3.5" />
+                    Spot Difference
+                  </button>
+                  <button
+                    onClick={() => setBrainTab("quiz")}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-black transition cursor-pointer flex items-center gap-1.5 ${
+                      brainTab === "quiz"
+                        ? "bg-yellow-600 text-white shadow-sm"
                         : "text-slate-600 hover:text-slate-900"
                     }`}
                   >
@@ -610,9 +710,9 @@ export default function InteractiveModuleModal({ isOpen, onClose, type }: ModalP
                   </button>
                   <button
                     onClick={() => setBrainTab("puzzle")}
-                    className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition cursor-pointer flex items-center gap-1.5 ${
+                    className={`px-3 py-1.5 rounded-xl text-xs font-black transition cursor-pointer flex items-center gap-1.5 ${
                       brainTab === "puzzle"
-                        ? "bg-rose-600 text-white shadow-sm"
+                        ? "bg-pink-600 text-white shadow-sm"
                         : "text-slate-600 hover:text-slate-900"
                     }`}
                   >
@@ -624,8 +724,8 @@ export default function InteractiveModuleModal({ isOpen, onClose, type }: ModalP
             </div>
           </div>
 
-          {/* Modal Interactive Content */}
-          <div className="py-2">
+          {/* Modal Interactive Content Area with dedicated scrolling */}
+          <div className="flex-1 overflow-y-auto px-1 sm:px-3 py-2">
             {isLearning && (
               <>
                 {learningTab === "abacus" && <AbacusMasterGame />}
@@ -635,6 +735,12 @@ export default function InteractiveModuleModal({ isOpen, onClose, type }: ModalP
 
             {!isLearning && (
               <>
+                {brainTab === "fourpics" && <FourPicsOneWordGame />}
+                {brainTab === "scrambled" && <ScrambledLogoGame />}
+                {brainTab === "landmark" && <LandmarkCountryGame />}
+                {brainTab === "odd" && <OddOneOutGame />}
+                {brainTab === "memory" && <MemoryMatchGame />}
+                {brainTab === "spot" && <SpotTheDifferenceGame />}
                 {brainTab === "quiz" && <QuizQuestGame />}
                 {brainTab === "puzzle" && <WizyPuzzleGame />}
               </>

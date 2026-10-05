@@ -48,8 +48,12 @@ export default function RotaryFabNav() {
   const [isDraggingDial, setIsDraggingDial] = useState(false);
   const dialRef = useRef<HTMLDivElement>(null);
 
-  // Hide on dedicated dashboard and learning portal pages
-  if (pathname === "/dashboard" || pathname.startsWith("/learning")) {
+  // Hide on dedicated dashboard, learning portal, and admin pages
+  if (
+    pathname?.startsWith("/dashboard") ||
+    pathname?.startsWith("/learning") ||
+    pathname?.startsWith("/admin")
+  ) {
     return null;
   }
 
@@ -168,7 +172,7 @@ export default function RotaryFabNav() {
             </div>
           </div>
           <div className="flex items-center gap-1.5 font-heading font-extrabold text-lg tracking-tight text-slate-800">
-            <span>Abacus<span className="text-purple-600">Mind</span></span>
+            <span>Mind<span className="text-purple-600">Beads</span></span>
             <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-bold border border-amber-200">
               AI
             </span>

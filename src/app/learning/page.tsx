@@ -13,7 +13,6 @@ import {
   RotateCcw,
   Flame,
   ArrowRight,
-  Lightbulb,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useLearning } from "@/context/LearningContext";
@@ -184,21 +183,6 @@ export default function LearningDashboardPage() {
                 });
               }}
             />
-
-            {/* Quick Practice Tip Card */}
-            <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-3xl p-5 border-2 border-indigo-100 shadow-sm space-y-3">
-              <div className="flex items-center gap-2 text-indigo-900 font-extrabold font-heading text-sm">
-                <Lightbulb className="w-4 h-4 text-indigo-600" />
-                <span>Sensei's Learning Habit:</span>
-              </div>
-              <p className="text-xs text-indigo-800 leading-relaxed">
-                Watch each video once carefully, then practice moving your fingers in the air while visualizing the beads!
-              </p>
-              <div className="pt-1 flex items-center justify-between text-[11px] text-indigo-600 font-bold">
-                <span>Daily Goal: 1 Video Lesson</span>
-                <span>🔥 5-Day Streak</span>
-              </div>
-            </div>
 
             {/* Reset Demo State Button (Helper for reviewing) */}
             <div className="text-center pt-2">

@@ -32,8 +32,12 @@ export default function Navbar() {
   const shortLevel = displayLevel.split(" - ")[0] || displayLevel;
   const userAvatar = user?.avatar || "🧙‍♂️";
 
-  // Hide global marketing navbar on the dedicated dashboard and learning portal pages
-  if (pathname === "/dashboard" || pathname.startsWith("/learning")) {
+  // Hide global marketing navbar on the dedicated dashboard, learning, and admin pages
+  if (
+    pathname?.startsWith("/dashboard") ||
+    pathname?.startsWith("/learning") ||
+    pathname?.startsWith("/admin")
+  ) {
     return null;
   }
 
@@ -50,7 +54,7 @@ export default function Navbar() {
             </div>
             <div className="flex flex-col">
               <span className="font-heading font-extrabold text-2xl tracking-tight text-slate-800 flex items-center gap-1">
-                Abacus<span className="text-purple-600">Mind</span>
+                Mind<span className="text-purple-600">Beads</span>
                 <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-semibold border border-amber-200">
                   AI
                 </span>

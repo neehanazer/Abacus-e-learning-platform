@@ -20,6 +20,7 @@ import {
   Layers,
   ChevronRight,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { usePractice } from "@/context/PracticeContext";
 import AbacusRodDisplay from "./AbacusRodDisplay";
 
@@ -43,6 +44,8 @@ export default function WorksheetPlayer() {
     goToQuestion,
     submitWorksheet,
     backToDashboard,
+    backToUntimedDirectory,
+    activeUntimedCategory,
     generateNewRandomWorksheet,
     practiceMode,
     setPracticeMode,
@@ -51,6 +54,19 @@ export default function WorksheetPlayer() {
     resetTimer,
     isTimeUp,
   } = usePractice();
+
+  const router = useRouter();
+
+  const handleBack = () => {
+    if (practiceMode === "untimed") {
+      const cat = activeUntimedCategory || "simple";
+      backToUntimedDirectory(cat);
+      router.push(`/learning/practice?mode=untimed&category=${cat}`);
+    } else {
+      backToDashboard();
+      router.push("/learning/practice");
+    }
+  };
 
   const [inputVal, setInputVal] = useState<string>("");
   const [showRuleTip, setShowRuleTip] = useState<boolean>(false);
@@ -157,12 +173,13 @@ export default function WorksheetPlayer() {
         {/* Left: Worksheet Info */}
         <div className="flex items-center gap-3">
           <button
-            onClick={backToDashboard}
+            type="button"
+            onClick={handleBack}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-yellow-50 hover:bg-yellow-100 border border-yellow-200 text-[#1D3557] font-extrabold text-xs transition-transform hover:scale-105 cursor-pointer shadow-sm"
-            title="Back to practice options"
+            title="Back to worksheets"
           >
-            <ArrowLeft className="w-4 h-4" />
-            <span>Options</span>
+            <ArrowLeft className="w-4 h-4 text-[#F4A261]" />
+            <span>Back</span>
           </button>
           <div>
             <span className="text-[10px] font-extrabold text-orange-600 uppercase tracking-wider block">

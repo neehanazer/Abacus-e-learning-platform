@@ -32,7 +32,7 @@ interface AuthContextType {
   user: StudentUser | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (email: string, pass: string) => Promise<{ success: boolean; error?: string }>;
+  login: (email: string, pass: string) => Promise<{ success: boolean; error?: string; notRegistered?: boolean }>;
   register: (
     data: Omit<
       StudentUser,
@@ -49,71 +49,128 @@ interface AuthContextType {
   updateProfile: (updated: Partial<StudentUser>) => Promise<boolean>;
 }
 
-const DEFAULT_DEMO_STUDENT: StudentUser = {
-  id: "std_demo_101",
-  fullName: "Alex Parker",
-  name: "Alex Parker",
-  email: "student@abacus.com",
-  phone: "+1 (555) 234-5678",
-  age: 8,
-  dateOfBirth: "2018-05-14",
-  abacusLevel: "Level 2 - Small Friends",
-  selectedLevel: "Level 2 - Small Friends",
-  avatar: "🧙‍♂️",
-  parentName: "Emma Parker",
-  guardianName: "Emma Parker",
-  parentEmail: "emma.parker@example.com",
-  parentPhone: "+1 (555) 234-5678",
-  guardianPhone: "+1 (555) 234-5678",
-  role: "student",
-  accountStatus: "active",
-  progress: 42,
-  streakDays: 5,
-  totalPracticeMinutes: 180,
-  completedWorksheets: 24,
-  earnedBadges: ["Bead Master", "Speed Starter", "5-Day Streak", "Level 1 Certified"],
-  createdAt: "2026-01-10",
-};
+const PRE_REGISTERED_STUDENTS: (StudentUser & { password?: string })[] = [
+  {
+    id: "std_neeha_226",
+    fullName: "Neeha Nazer",
+    name: "Neeha",
+    email: "neehanaz226@gmail.com",
+    password: "neeha123",
+    phone: "+91 98765 43210",
+    age: 10,
+    dateOfBirth: "2016-04-12",
+    abacusLevel: "Level 1 - Direct Addition & Subtraction",
+    selectedLevel: "Level 1 - Direct Addition & Subtraction",
+    avatar: "🧮",
+    parentName: "Nazer",
+    parentEmail: "neehanaz226@gmail.com",
+    parentPhone: "+91 98765 43210",
+    role: "student",
+    accountStatus: "active",
+    progress: 35,
+    streakDays: 4,
+    totalPracticeMinutes: 120,
+    completedWorksheets: 18,
+    earnedBadges: ["Bead Master", "Speed Starter", "BrainGym Champ"],
+    createdAt: "2026-02-15",
+  },
+  {
+    id: "std_demo_101",
+    fullName: "Alex Parker",
+    name: "Alex Parker",
+    email: "student@abacus.com",
+    password: "password123",
+    phone: "+1 (555) 234-5678",
+    age: 8,
+    dateOfBirth: "2018-05-14",
+    abacusLevel: "Level 2 - Small Friends",
+    selectedLevel: "Level 2 - Small Friends",
+    avatar: "🧙‍♂️",
+    parentName: "Emma Parker",
+    guardianName: "Emma Parker",
+    parentEmail: "emma.parker@example.com",
+    parentPhone: "+1 (555) 234-5678",
+    guardianPhone: "+1 (555) 234-5678",
+    role: "student",
+    accountStatus: "active",
+    progress: 42,
+    streakDays: 5,
+    totalPracticeMinutes: 180,
+    completedWorksheets: 24,
+    earnedBadges: ["Bead Master", "Speed Starter", "5-Day Streak", "Level 1 Certified"],
+    createdAt: "2026-01-10",
+  },
+];
+
+const DEFAULT_DEMO_STUDENT = PRE_REGISTERED_STUDENTS[1];
 
 export const sanitizeUser = (
   raw: (Partial<StudentUser> & Record<string, unknown>) | null | undefined
-): StudentUser => {
-  if (!raw) return DEFAULT_DEMO_STUDENT;
+): StudentUser | null => {
+  if (!raw || (!raw.id && !raw.email && !raw.fullName && !raw.name)) {
+    return null;
+  }
   const fullName =
     (typeof raw.fullName === "string"
       ? raw.fullName
       : typeof raw.name === "string"
       ? raw.name
-      : "") || DEFAULT_DEMO_STUDENT.fullName;
+      : "") || "Student Explorer";
   const name =
     (typeof raw.name === "string"
       ? raw.name
       : typeof raw.fullName === "string"
       ? raw.fullName
-      : "") || DEFAULT_DEMO_STUDENT.name;
+      : "") || fullName.split(" ")[0] || "Student";
+  const email = (typeof raw.email === "string" ? raw.email : "") || "";
   const abacusLevel =
     (typeof raw.abacusLevel === "string"
       ? raw.abacusLevel
       : typeof raw.selectedLevel === "string"
       ? raw.selectedLevel
-      : "") || DEFAULT_DEMO_STUDENT.abacusLevel;
+      : "") || "Level 1 - Direct Addition & Subtraction";
   const selectedLevel =
     (typeof raw.selectedLevel === "string"
       ? raw.selectedLevel
       : typeof raw.abacusLevel === "string"
       ? raw.abacusLevel
-      : "") || DEFAULT_DEMO_STUDENT.selectedLevel;
+      : "") || abacusLevel;
   const avatar =
-    (typeof raw.avatar === "string" ? raw.avatar : "") || DEFAULT_DEMO_STUDENT.avatar;
+    (typeof raw.avatar === "string" ? raw.avatar : "") || "🧙‍♂️";
 
   return {
-    ...DEFAULT_DEMO_STUDENT,
-    ...raw,
+    id: raw.id || `std_${Date.now()}`,
     fullName,
     name,
+    email,
+    phone: typeof raw.phone === "string" ? raw.phone : "",
+    age: typeof raw.age === "number" ? raw.age : 8,
+    dateOfBirth: typeof raw.dateOfBirth === "string" ? raw.dateOfBirth : "",
     abacusLevel,
     selectedLevel,
     avatar,
+    parentName:
+      typeof raw.parentName === "string"
+        ? raw.parentName
+        : typeof raw.guardianName === "string"
+        ? raw.guardianName
+        : "",
+    parentEmail: typeof raw.parentEmail === "string" ? raw.parentEmail : "",
+    parentPhone:
+      typeof raw.parentPhone === "string"
+        ? raw.parentPhone
+        : typeof raw.guardianPhone === "string"
+        ? raw.guardianPhone
+        : "",
+    role: typeof raw.role === "string" ? raw.role : "student",
+    accountStatus: typeof raw.accountStatus === "string" ? raw.accountStatus : "active",
+    progress: typeof raw.progress === "number" ? raw.progress : 0,
+    streakDays: typeof raw.streakDays === "number" ? raw.streakDays : 1,
+    totalPracticeMinutes: typeof raw.totalPracticeMinutes === "number" ? raw.totalPracticeMinutes : 0,
+    completedWorksheets: typeof raw.completedWorksheets === "number" ? raw.completedWorksheets : 0,
+    earnedBadges: Array.isArray(raw.earnedBadges) ? raw.earnedBadges : ["Welcome Explorer"],
+    createdAt: typeof raw.createdAt === "string" ? raw.createdAt : new Date().toISOString().split("T")[0],
+    ...raw,
   };
 };
 
@@ -138,27 +195,50 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const data = await res.json();
           if (data.success && data.user && isMounted) {
             const sanitized = sanitizeUser(data.user);
-            setUser(sanitized);
-            localStorage.setItem("abacus_active_student", JSON.stringify(sanitized));
-            setIsLoading(false);
-            return;
+            if (sanitized) {
+              setUser(sanitized);
+              localStorage.setItem("abacus_active_student", JSON.stringify(sanitized));
+              setIsLoading(false);
+              return;
+            }
           }
         }
       } catch {
         // Fallback to local storage if API call fails
       }
 
-      // Local storage fallback for offline or phase 1 demo sessions
+      // Local storage fallback for previously logged-in students
       try {
         const storedUser = localStorage.getItem("abacus_active_student");
         if (storedUser && isMounted) {
-          const sanitized = sanitizeUser(JSON.parse(storedUser));
-          setUser(sanitized);
+          const parsed = JSON.parse(storedUser);
+          // If stored user was the auto-seeded demo user and not explicitly logged in, clear it!
+          if (parsed && (parsed.id === "std_demo_101" || parsed.email === "student@abacus.com")) {
+            const explicitlyLoggedIn = localStorage.getItem("abacus_demo_explicitly_logged_in");
+            if (!explicitlyLoggedIn) {
+              localStorage.removeItem("abacus_active_student");
+              setUser(null);
+              setIsLoading(false);
+              return;
+            }
+          }
+
+          if (parsed && (parsed.id || parsed.email)) {
+            const sanitized = sanitizeUser(parsed);
+            if (sanitized) {
+              setUser(sanitized);
+              setIsLoading(false);
+              return;
+            }
+          }
         }
       } catch {
         // ignore
-      } finally {
-        if (isMounted) setIsLoading(false);
+      }
+
+      if (isMounted) {
+        setUser(null);
+        setIsLoading(false);
       }
     }
 
@@ -172,7 +252,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (
     email: string,
     pass: string
-  ): Promise<{ success: boolean; error?: string }> => {
+  ): Promise<{ success: boolean; error?: string; notRegistered?: boolean }> => {
     setIsLoading(true);
 
     try {
@@ -187,58 +267,69 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (res.ok && data?.success && data.user) {
         const sanitized = sanitizeUser(data.user);
-        setUser(sanitized);
-        localStorage.setItem("abacus_active_student", JSON.stringify(sanitized));
-        setIsLoading(false);
-        return { success: true };
-      }
-
-      // If backend returns an error response
-      if (!res.ok || (data && !data.success)) {
-        if (data?.error?.includes("whitelisted") || data?.error?.includes("MongoDB")) {
-          setIsLoading(false);
-          return {
-            success: false,
-            error: "MongoDB Atlas IP not whitelisted. Please add your IP (or 0.0.0.0/0) in MongoDB Atlas -> Network Access.",
-          };
-        }
-
-        // Check if user is logging into demo account as fallback
-        if (email.toLowerCase() === "student@abacus.com" && pass === "password123") {
-          setUser(DEFAULT_DEMO_STUDENT);
-          localStorage.setItem("abacus_active_student", JSON.stringify(DEFAULT_DEMO_STUDENT));
+        if (sanitized) {
+          setUser(sanitized);
+          localStorage.setItem("abacus_active_student", JSON.stringify(sanitized));
           setIsLoading(false);
           return { success: true };
         }
+      }
 
+      // If backend explicitly returned 401 (incorrect password in database), return error immediately
+      if (res.status === 401) {
         setIsLoading(false);
         return {
           success: false,
-          error: data?.error || "Invalid email or password.",
+          error: data?.error || "Incorrect password. Please try again.",
         };
       }
     } catch {
-      // Network failure, fallback to localStorage/demo check
+      // Network failure, fallback to localStorage check
     }
 
-    // Phase 1 demo account & local storage pool fallback
+    // Check pre-registered accounts (e.g. neehanaz226@gmail.com)
+    const preRegistered = PRE_REGISTERED_STUDENTS.find(
+      (u) => u.email.toLowerCase() === email.toLowerCase()
+    );
+
+    if (preRegistered) {
+      if (preRegistered.password && preRegistered.password !== pass) {
+        setIsLoading(false);
+        return {
+          success: false,
+          error: "Incorrect password. Please try again.",
+        };
+      }
+      setUser(preRegistered);
+      localStorage.setItem("abacus_active_student", JSON.stringify(preRegistered));
+      localStorage.setItem("abacus_demo_explicitly_logged_in", "true");
+      setIsLoading(false);
+      return { success: true };
+    }
+
+    // Local storage pool fallback for locally registered accounts
     const registeredPoolStr = localStorage.getItem("abacus_registered_students") || "[]";
-    const registeredPool: StudentUser[] = JSON.parse(registeredPoolStr);
+    let registeredPool: (StudentUser & { password?: string })[] = [];
+    try {
+      registeredPool = JSON.parse(registeredPoolStr);
+    } catch {
+      registeredPool = [];
+    }
 
     const foundUser = registeredPool.find(
       (u) => u.email.toLowerCase() === email.toLowerCase()
     );
 
     if (foundUser) {
+      if (foundUser.password && foundUser.password !== pass) {
+        setIsLoading(false);
+        return {
+          success: false,
+          error: "Incorrect password. Please try again.",
+        };
+      }
       setUser(foundUser);
       localStorage.setItem("abacus_active_student", JSON.stringify(foundUser));
-      setIsLoading(false);
-      return { success: true };
-    }
-
-    if (email.toLowerCase() === "student@abacus.com" && pass === "password123") {
-      setUser(DEFAULT_DEMO_STUDENT);
-      localStorage.setItem("abacus_active_student", JSON.stringify(DEFAULT_DEMO_STUDENT));
       setIsLoading(false);
       return { success: true };
     }
@@ -246,7 +337,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(false);
     return {
       success: false,
-      error: "Invalid email or password. Try demo: student@abacus.com / password123",
+      notRegistered: true,
+      error: "This user is not registered. Redirecting to register page...",
     };
   };
 
@@ -310,15 +402,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // Phase 1 local storage fallback
     const registeredPoolStr = localStorage.getItem("abacus_registered_students") || "[]";
-    const registeredPool: StudentUser[] = JSON.parse(registeredPoolStr);
+    let registeredPool: (StudentUser & { password?: string })[] = [];
+    try {
+      registeredPool = JSON.parse(registeredPoolStr);
+    } catch {
+      registeredPool = [];
+    }
 
     if (registeredPool.some((u) => u.email.toLowerCase() === data.email.toLowerCase())) {
       setIsLoading(false);
       return { success: false, error: "An account with this email already exists." };
     }
 
-    const newUser: StudentUser = {
+    const newUser: StudentUser & { password?: string } = {
       ...data,
+      password: data.password,
       id: `std_${Date.now()}`,
       progress: 5,
       streakDays: 1,
@@ -344,6 +442,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     setUser(null);
     localStorage.removeItem("abacus_active_student");
+    localStorage.removeItem("abacus_demo_explicitly_logged_in");
   };
 
   const updateProfile = async (updated: Partial<StudentUser>): Promise<boolean> => {

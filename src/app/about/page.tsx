@@ -65,7 +65,7 @@ export default function AboutPage() {
         </h1>
 
         <p className="text-lg sm:text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed">
-          AbacusMind AI was created with a simple belief: every child can master mental arithmetic when learning is visual, interactive, and joyful.
+          Mind Beads AI was created with a simple belief: every child can master mental arithmetic when learning is visual, interactive, and joyful.
         </p>
       </section>
 

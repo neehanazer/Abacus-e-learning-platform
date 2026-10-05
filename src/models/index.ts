@@ -52,5 +52,8 @@ export { default as ProctoringEvent } from "./ProctoringEvent";
 export * from "./Certificate";
 export { default as Certificate } from "./Certificate";
 
+export * from "./Admin";
+export { default as Admin } from "./Admin";
+
 
 

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
@@ -10,55 +10,45 @@ import {
   Eye,
   EyeOff,
   LogIn,
-  Sparkles,
   AlertCircle,
-  CheckCircle2,
   Calculator,
-  UserCheck,
 } from "lucide-react";
 import Button from "@/components/ui/Button";
 import { useAuth } from "@/context/AuthContext";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login, isLoading, isAuthenticated } = useAuth();
+  const { login, isLoading } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
-  // Redirect if already logged in
-  useEffect(() => {
-    if (isAuthenticated) {
-      router.push("/dashboard");
-    }
-  }, [isAuthenticated, router]);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg("");
 
-    if (!email.trim() || !password.trim()) {
-      setErrorMsg("Please enter both email address and password.");
+    const cleanEmail = email.trim();
+    const cleanPassword = password.trim();
+
+    if (!cleanEmail || !cleanPassword) {
+      setErrorMsg("Please enter both your email address and password.");
       return;
     }
 
-    const res = await login(email, password);
+    const res = await login(cleanEmail, cleanPassword);
     if (res.success) {
       router.push("/dashboard");
     } else {
-      setErrorMsg(res.error || "Invalid credentials.");
-    }
-  };
-
-  const handleDemoLogin = async () => {
-    setEmail("student@abacus.com");
-    setPassword("password123");
-    setErrorMsg("");
-    const res = await login("student@abacus.com", "password123");
-    if (res.success) {
-      router.push("/dashboard");
+      if (res.notRegistered) {
+        setErrorMsg("This user is not registered. Redirecting to registration page...");
+        setTimeout(() => {
+          router.push(`/register?email=${encodeURIComponent(cleanEmail)}`);
+        }, 1500);
+      } else {
+        setErrorMsg(res.error || "Invalid email or password.");
+      }
     }
   };
 
@@ -83,30 +73,11 @@ export default function LoginPage() {
           </div>
 
           <h1 className="text-3xl font-extrabold text-slate-800 font-heading">
-            Welcome Back! 👋
+            Student Login
           </h1>
           <p className="text-xs sm:text-sm text-slate-500">
-            Log in to continue your Abacus learning & BrainGym adventures!
+            Enter your registered email and password to log in
           </p>
-        </div>
-
-        {/* Quick Demo Login Banner */}
-        <div className="mb-6 p-3.5 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-amber-500 shrink-0" />
-            <div className="text-left text-xs">
-              <span className="font-bold text-amber-900 block">Want to test immediately?</span>
-              <span className="text-amber-700 text-[11px]">Use demo student account</span>
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={handleDemoLogin}
-            disabled={isLoading}
-            className="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs transition shadow-sm"
-          >
-            One-Click Login
-          </button>
         </div>
 
         {/* Error Alert */}
@@ -122,7 +93,7 @@ export default function LoginPage() {
         )}
 
         {/* Login Form */}
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit} className="space-y-5" autoComplete="off">
           <div className="space-y-1.5">
             <label className="text-xs font-bold text-slate-700 block">
               Student Email Address
@@ -134,7 +105,8 @@ export default function LoginPage() {
               <input
                 type="email"
                 required
-                placeholder="student@abacus.com"
+                autoComplete="off"
+                placeholder="Enter your registered email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full pl-10 pr-4 py-3 rounded-2xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/50 text-sm bg-slate-50/50 font-medium"
@@ -155,7 +127,8 @@ export default function LoginPage() {
               <input
                 type={showPassword ? "text" : "password"}
                 required
-                placeholder="••••••••"
+                autoComplete="new-password"
+                placeholder="Enter your password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full pl-10 pr-10 py-3 rounded-2xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/50 text-sm bg-slate-50/50 font-medium"
@@ -184,7 +157,7 @@ export default function LoginPage() {
 
         {/* Footer Link */}
         <div className="mt-6 pt-6 border-t border-slate-100 text-center text-xs text-slate-500">
-          New to AbacusMind AI?{" "}
+          Not registered yet?{" "}
           <Link href="/register" className="font-bold text-purple-600 hover:underline">
             Register Student Account Free
           </Link>

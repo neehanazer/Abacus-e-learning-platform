@@ -12,7 +12,6 @@ import {
   RotateCcw,
   Sparkles,
   Star,
-  PlusCircle,
   Video,
   Award,
   Calendar,
@@ -20,13 +19,37 @@ import {
   ArrowRight,
   TrendingUp,
   Filter,
+  AlertCircle,
 } from "lucide-react";
 import Link from "next/link";
 import { HomeworkIntroModal } from "./HomeworkIntroModal";
 import { HomeworkPlayer } from "./HomeworkPlayer";
 import { HomeworkSubmitModal } from "./HomeworkSubmitModal";
 import { HomeworkResultView } from "./HomeworkResultView";
-import { AssignHomeworkModal } from "./AssignHomeworkModal";
+
+export function isDueDateOver(dueDateStr?: string): boolean {
+  if (!dueDateStr) return false;
+  const now = new Date();
+
+  // Try direct parse
+  let parsed = new Date(dueDateStr);
+  if (!isNaN(parsed.getTime())) {
+    if (!dueDateStr.includes("T") && !dueDateStr.includes(":")) {
+      parsed.setHours(23, 59, 59, 999);
+    }
+    return now.getTime() > parsed.getTime();
+  }
+
+  // Handle format like "18 September" or "18 September 2026"
+  const currentYear = now.getFullYear();
+  parsed = new Date(`${dueDateStr} ${currentYear}`);
+  if (!isNaN(parsed.getTime())) {
+    parsed.setHours(23, 59, 59, 999);
+    return now.getTime() > parsed.getTime();
+  }
+
+  return false;
+}
 
 export const HomeworkDashboard: React.FC = () => {
   const {
@@ -37,7 +60,6 @@ export const HomeworkDashboard: React.FC = () => {
     openHomeworkIntro,
     startHomework,
     retryHomework,
-    setAssignModalOpen,
     attemptHistory,
   } = useHomework();
 
@@ -54,20 +76,16 @@ export const HomeworkDashboard: React.FC = () => {
   }
   if (viewMode === "result") return <HomeworkResultView />;
 
-  // Filter tasks according to active tab
+  // Filter tasks: completed homeworks must NOT be visible on the homework page!
   const pendingTasks = homeworkList.filter(
-    (t) => t.status === "pending" || t.status === "in-progress"
+    (t) => t.status !== "submitted" && t.status !== "evaluated"
   );
   const completedTasks = homeworkList.filter(
     (t) => t.status === "submitted" || t.status === "evaluated"
   );
 
-  const displayedTasks =
-    activeTab === "pending"
-      ? pendingTasks
-      : activeTab === "completed"
-      ? completedTasks
-      : homeworkList;
+  // Completed homeworks are never visible in the tasks grid
+  const displayedTasks = pendingTasks;
 
   // Calculate high-level stats
   const totalCompleted = completedTasks.length;
@@ -119,14 +137,6 @@ export const HomeworkDashboard: React.FC = () => {
                 {avgScore > 0 ? `${avgScore}%` : "—"}
               </div>
             </div>
-
-            <button
-              onClick={() => setAssignModalOpen(true)}
-              className="w-full sm:w-auto px-4 py-3.5 bg-gradient-to-r from-[#F4A261] to-[#E76F51] hover:from-[#E76F51] hover:to-[#F4A261] text-white font-black text-sm rounded-2xl shadow-md transition-all flex items-center justify-center gap-2 border-b-4 border-[#C85A3D]"
-            >
-              <PlusCircle className="w-4 h-4" />
-              <span>Assign Homework</span>
-            </button>
           </div>
         </div>
       </div>
@@ -176,36 +186,15 @@ export const HomeworkDashboard: React.FC = () => {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2 bg-stone-100 p-1.5 rounded-2xl border border-stone-200">
           <button
-            onClick={() => setActiveTab("all")}
-            className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-black transition-all ${
-              activeTab === "all"
-                ? "bg-white text-[#1D3557] shadow-sm"
-                : "text-stone-600 hover:text-stone-900"
-            }`}
-          >
-            All Tasks ({homeworkList.length})
-          </button>
-          <button
             onClick={() => setActiveTab("pending")}
             className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-black transition-all flex items-center gap-1.5 ${
-              activeTab === "pending"
+              activeTab !== "attempts"
                 ? "bg-white text-amber-700 shadow-sm"
                 : "text-stone-600 hover:text-stone-900"
             }`}
           >
             <span className="w-2 h-2 rounded-full bg-amber-500" />
-            Pending ({pendingTasks.length})
-          </button>
-          <button
-            onClick={() => setActiveTab("completed")}
-            className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-black transition-all flex items-center gap-1.5 ${
-              activeTab === "completed"
-                ? "bg-white text-emerald-700 shadow-sm"
-                : "text-stone-600 hover:text-stone-900"
-            }`}
-          >
-            <span className="w-2 h-2 rounded-full bg-emerald-500" />
-            Completed ({completedTasks.length})
+            Assigned Homework ({pendingTasks.length})
           </button>
           <button
             onClick={() => setActiveTab("attempts")}
@@ -293,12 +282,23 @@ export const HomeworkDashboard: React.FC = () => {
             </div>
           )}
         </div>
+      ) : displayedTasks.length === 0 ? (
+        /* Empty State: All Homework Completed */
+        <div className="bg-white rounded-3xl p-12 border-3 border-amber-200 text-center space-y-3 shadow-sm">
+          <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto text-3xl">
+            🎉
+          </div>
+          <h3 className="text-xl font-black text-[#1D3557]">All Homework Completed!</h3>
+          <p className="text-stone-500 text-sm max-w-md mx-auto font-medium">
+            Great job! Completed homeworks are safely submitted. You have no pending homework tasks right now.
+          </p>
+        </div>
       ) : (
         /* Homework Tasks Grid */
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {displayedTasks.map((task) => {
-            const isEvaluated = task.status === "evaluated";
             const isInProgress = task.status === "in-progress";
+            const isOverdue = isDueDateOver(task.dueDate);
 
             return (
               <motion.div
@@ -306,8 +306,8 @@ export const HomeworkDashboard: React.FC = () => {
                 whileHover={{ y: -4 }}
                 transition={{ duration: 0.2 }}
                 className={`bg-white rounded-3xl border-3 p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between relative overflow-hidden ${
-                  isEvaluated
-                    ? "border-emerald-300"
+                  isOverdue
+                    ? "border-rose-200 bg-rose-50/20"
                     : isInProgress
                     ? "border-blue-300"
                     : "border-amber-200"
@@ -320,10 +320,10 @@ export const HomeworkDashboard: React.FC = () => {
                       Level {task.level}
                     </span>
 
-                    {isEvaluated ? (
-                      <span className="text-xs font-black px-3 py-1 rounded-full bg-emerald-100 text-emerald-900 border border-emerald-300 flex items-center gap-1 shadow-sm">
-                        <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-500" />
-                        Evaluated ({task.score}/10)
+                    {isOverdue ? (
+                      <span className="text-xs font-black px-3 py-1 rounded-full bg-rose-100 text-rose-800 border border-rose-300 flex items-center gap-1 shadow-sm">
+                        <AlertCircle className="w-3.5 h-3.5 text-rose-600" />
+                        Expired
                       </span>
                     ) : isInProgress ? (
                       <span className="text-xs font-black px-3 py-1 rounded-full bg-blue-100 text-blue-900 border border-blue-300 flex items-center gap-1 shadow-sm">
@@ -355,28 +355,33 @@ export const HomeworkDashboard: React.FC = () => {
                   </div>
 
                   {/* Due Date & Questions Badge */}
-                  <div className="flex items-center justify-between text-xs font-bold text-stone-500 bg-stone-50 p-2.5 rounded-xl border border-stone-200 mb-4">
-                    <span className="flex items-center gap-1">
-                      <Calendar className="w-3.5 h-3.5 text-stone-400" />
+                  <div
+                    className={`flex items-center justify-between text-xs font-bold p-2.5 rounded-xl border mb-4 ${
+                      isOverdue
+                        ? "bg-rose-50 border-rose-200 text-rose-700"
+                        : "bg-stone-50 border-stone-200 text-stone-500"
+                    }`}
+                  >
+                    <span className="flex items-center gap-1.5">
+                      <Calendar className={`w-3.5 h-3.5 ${isOverdue ? "text-rose-500" : "text-stone-400"}`} />
                       Due: {task.dueDate}
                     </span>
-                    <span>10 Questions</span>
+                    {isOverdue ? (
+                      <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-rose-200 text-rose-900 border border-rose-300">
+                        Overdue
+                      </span>
+                    ) : (
+                      <span>10 Questions</span>
+                    )}
                   </div>
-
-                  {/* Feedback Snippet if evaluated */}
-                  {task.evaluatedFeedback && (
-                    <div className="bg-amber-50/70 p-2.5 rounded-xl border border-amber-200 mb-4 text-xs font-bold text-amber-900 line-clamp-2">
-                      🧙‍♂️ <span className="font-semibold">{task.evaluatedFeedback}</span>
-                    </div>
-                  )}
                 </div>
 
                 {/* Card Action CTA */}
                 <div className="pt-2">
-                  {isEvaluated ? (
-                    <div className="w-full py-2.5 px-3 bg-emerald-50 text-emerald-800 rounded-xl font-black text-xs border border-emerald-300 flex items-center justify-center gap-1.5 shadow-sm select-none">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                      <span>Completed</span>
+                  {isOverdue ? (
+                    <div className="w-full py-3 px-3 bg-rose-50 border-2 border-rose-200 text-rose-700 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm text-center leading-tight select-none">
+                      <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0" />
+                      <span>will not be able to attend because due dates are over</span>
                     </div>
                   ) : (
                     <motion.button
@@ -396,8 +401,6 @@ export const HomeworkDashboard: React.FC = () => {
         </div>
       )}
 
-      {/* Assign Homework Modal */}
-      <AssignHomeworkModal />
     </div>
   );
 };

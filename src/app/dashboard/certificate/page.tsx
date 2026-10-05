@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import CertificatePageView from "@/components/certificate/CertificatePageView";
 
 export const metadata: Metadata = {
-  title: "Official Certificates & Re-Examination | AbacusMind AI",
+  title: "Official Certificates & Re-Examination | Mind Beads AI",
   description:
     "View your certified Abacus Soroban diplomas, manage 24-hour re-examination eligibility, and verify cryptographic credentials.",
 };

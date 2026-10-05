@@ -131,7 +131,7 @@ export class ExamService {
    * GET /api/exams/mock
    * Retrieves all available mock exams with student attempt status
    */
-  static async getMockExams(studentId: string) {
+  static async getMockExams(studentId: string, allowedLevel?: number) {
     try {
       await connectToDatabase();
       await this.ensureCatalogSeeded();
@@ -161,8 +161,18 @@ export class ExamService {
             return orderA - orderB;
           });
 
+          let filteredExams = mockExams;
+          if (allowedLevel) {
+            filteredExams = mockExams.filter((exam: any) => {
+              const order =
+                exam.levelId?.order ||
+                (exam.title.match(/Level\s*(\d+)/i) ? parseInt(exam.title.match(/Level\s*(\d+)/i)[1], 10) : 1);
+              return order === allowedLevel;
+            });
+          }
+
           const result = await Promise.all(
-            mockExams.map(async (exam: any) => {
+            filteredExams.map(async (exam: any) => {
               let attemptsCount = 0;
               let bestScore = 0;
               let latestAttempt: any = null;
@@ -217,7 +227,12 @@ export class ExamService {
     }
 
     // Offline / fallback mock catalog
-    return EXAM_CATALOG.filter((e) => e.type === "mock").map((e) => {
+    let fallback = EXAM_CATALOG.filter((e) => e.type === "mock");
+    if (allowedLevel) {
+      fallback = fallback.filter((e) => e.levelOrder === allowedLevel);
+    }
+
+    return fallback.map((e) => {
       const attempts = Array.from(inMemoryAttempts.values()).filter(
         (a) => a.examId === e._id && a.studentId === studentId && a.status === "evaluated"
       );
@@ -231,6 +246,146 @@ export class ExamService {
         levelName: `Level ${e.levelOrder}`,
         levelOrder: e.levelOrder,
         type: "mock",
+        duration: Math.min(e.duration || 10, 10),
+        totalQuestions: e.totalQuestions,
+        totalMarks: e.totalMarks,
+        passingMarks: e.passingMarks,
+        status: e.status,
+        attemptsCount: attempts.length,
+        bestScore: best,
+        latestScore: latest?.score ?? null,
+        latestPercentage: latest?.percentage ?? null,
+        isPassed: latest?.isPassed ?? false,
+        lastAttemptDate: latest?.submittedAt || null,
+      };
+    });
+  }
+
+  /**
+   * GET /api/exams/final
+   * Retrieves final certification exams with attempt status, restricted by allowedLevel
+   */
+  static async getFinalExams(studentId: string, allowedLevel?: number) {
+    try {
+      await connectToDatabase();
+      await this.ensureCatalogSeeded();
+    } catch {
+      // offline fallback
+    }
+
+    if (mongoose.connection?.readyState === 1) {
+      try {
+        const studentObjectId = mongoose.Types.ObjectId.isValid(studentId)
+          ? new mongoose.Types.ObjectId(studentId)
+          : null;
+
+        const finalExams = await Exam.find({ type: "final", status: "active" })
+          .populate("levelId", "levelName order")
+          .lean();
+
+        if (finalExams.length > 0) {
+          finalExams.sort((a: any, b: any) => {
+            const orderA =
+              a.levelId?.order ||
+              (a.title.match(/Level\s*(\d+)/i) ? parseInt(a.title.match(/Level\s*(\d+)/i)[1], 10) : 1);
+            const orderB =
+              b.levelId?.order ||
+              (b.title.match(/Level\s*(\d+)/i) ? parseInt(b.title.match(/Level\s*(\d+)/i)[1], 10) : 1);
+            return orderA - orderB;
+          });
+
+          let filtered = finalExams;
+          if (allowedLevel) {
+            filtered = finalExams.filter((exam: any) => {
+              const order =
+                exam.levelId?.order ||
+                (exam.title.match(/Level\s*(\d+)/i) ? parseInt(exam.title.match(/Level\s*(\d+)/i)[1], 10) : 1);
+              return order === allowedLevel;
+            });
+          }
+
+          const result = await Promise.all(
+            filtered.map(async (exam: any) => {
+              let attemptsCount = 0;
+              let bestScore = 0;
+              let latestAttempt: any = null;
+
+              if (studentObjectId) {
+                const attempts = await ExamAttempt.find({
+                  studentId: studentObjectId,
+                  examId: exam._id,
+                  status: "evaluated",
+                })
+                  .sort({ submittedAt: -1 })
+                  .lean();
+
+                attemptsCount = attempts.length;
+                if (attemptsCount > 0) {
+                  latestAttempt = attempts[0];
+                  bestScore = Math.max(...attempts.map((a: any) => a.score || 0));
+                }
+              }
+
+              const detectedLevelName =
+                exam.levelId?.levelName ||
+                (exam.title.match(/Level\s*(\d+)/i)
+                  ? `Level ${exam.title.match(/Level\s*(\d+)/i)[1]}`
+                  : "Level 1");
+
+              const detectedLevelOrder =
+                exam.levelId?.order ||
+                (exam.title.match(/Level\s*(\d+)/i)
+                  ? parseInt(exam.title.match(/Level\s*(\d+)/i)[1], 10)
+                  : 1);
+
+              return {
+                id: exam._id.toString(),
+                title: exam.title,
+                description: exam.description || "",
+                levelName: detectedLevelName,
+                levelOrder: detectedLevelOrder,
+                type: "final",
+                duration: Math.min(exam.duration || 10, 10),
+                totalQuestions: exam.totalQuestions,
+                totalMarks: exam.totalMarks,
+                passingMarks: exam.passingMarks,
+                status: exam.status,
+                attemptsCount,
+                bestScore,
+                latestScore: latestAttempt?.score ?? null,
+                latestPercentage: latestAttempt?.percentage ?? null,
+                isPassed: latestAttempt?.isPassed ?? false,
+                lastAttemptDate: latestAttempt?.submittedAt || null,
+              };
+            })
+          );
+
+          return result;
+        }
+      } catch (err) {
+        console.warn("[ExamService]: Failed fetching final exams from DB:", err);
+      }
+    }
+
+    let fallback = EXAM_CATALOG.filter((e) => e.type === "final");
+    if (allowedLevel) {
+      fallback = fallback.filter((e) => e.levelOrder === allowedLevel);
+    }
+
+    return fallback.map((e) => {
+      const attempts = Array.from(inMemoryAttempts.values()).filter(
+        (a) => a.examId === e._id && a.studentId === studentId && a.status === "evaluated"
+      );
+      const latest = attempts[attempts.length - 1];
+      const best = attempts.reduce((max, a) => Math.max(max, a.score), 0);
+
+      return {
+        id: e._id,
+        title: e.title,
+        description: e.description,
+        levelName: `Level ${e.levelOrder}`,
+        levelOrder: e.levelOrder,
+        type: "final",
         duration: Math.min(e.duration || 10, 10),
         totalQuestions: e.totalQuestions,
         totalMarks: e.totalMarks,
@@ -376,6 +531,34 @@ export class ExamService {
 
     const examData = await this.getExamById(examId, studentId);
 
+    // Verify student's currentLevel strictly matches the exam level
+    const studentObjectId = mongoose.Types.ObjectId.isValid(studentId)
+      ? new mongoose.Types.ObjectId(studentId)
+      : null;
+
+    let studentCurrentLevel = 1;
+    if (studentObjectId) {
+      const Student = (await import("@/models/Student")).default;
+      const studentDoc = await Student.findById(studentObjectId).lean();
+      if (studentDoc) {
+        if (typeof (studentDoc as any).currentLevel === "number" && (studentDoc as any).currentLevel >= 1) {
+          studentCurrentLevel = (studentDoc as any).currentLevel;
+        } else {
+          const match = String((studentDoc as any).selectedLevel || (studentDoc as any).abacusLevel || "").match(/Level\s*(\d+)/i);
+          studentCurrentLevel = match ? parseInt(match[1], 10) : 1;
+        }
+      }
+    }
+
+    const examLevelMatch = (examData.levelName || examData.title || "").match(/Level\s*(\d+)/i);
+    const examLevel = examLevelMatch ? parseInt(examLevelMatch[1], 10) : 1;
+
+    if (examLevel !== studentCurrentLevel) {
+      throw new Error(
+        `Access denied: This exam is for Level ${examLevel}, but your enrolled level is Level ${studentCurrentLevel}. You can only attend exams for your current level.`
+      );
+    }
+
     // Explicit Final Exam Readiness Check
     if (examData.type === "final") {
       const readiness = await PerformanceService.getReadiness(studentId);
@@ -390,9 +573,6 @@ export class ExamService {
       throw new Error(examData.lockReason || "Readiness requirements not met for this Final Exam.");
     }
 
-    const studentObjectId = mongoose.Types.ObjectId.isValid(studentId)
-      ? new mongoose.Types.ObjectId(studentId)
-      : null;
     const examObjectId = mongoose.Types.ObjectId.isValid(examId)
       ? new mongoose.Types.ObjectId(examId)
       : null;
@@ -698,7 +878,11 @@ export class ExamService {
 
     // Certificate auto-creation: ONLY after successful final exam completion
     let certificate = null;
-    if (isPassed && (examDoc.type === "final" || (examDoc as any).type === "final")) {
+    const isFinalExam = examDoc.type === "final" || (examDoc as any).type === "final";
+    const levelMatch = (examDoc.levelId?.levelName || examDoc.title || "").match(/Level\s*(\d+)/i);
+    const examLevel = levelMatch ? parseInt(levelMatch[1], 10) : (examDoc.levelId?.order || 1);
+
+    if (isPassed && isFinalExam) {
       try {
         certificate = await CertificateService.createCertificateForFinalExam({
           studentId,
@@ -710,6 +894,39 @@ export class ExamService {
         });
       } catch (certErr) {
         console.warn("[ExamService]: Failed auto-creating certificate:", certErr);
+      }
+    }
+
+    // Level Progression: Level completion and automatic upgrade
+    if (isFinalExam && studentObjectId) {
+      try {
+        const Student = (await import("@/models/Student")).default;
+        const studentDoc = await Student.findById(studentObjectId);
+        if (studentDoc) {
+          if (isPassed) {
+            const nextLevel = Math.min(8, examLevel + 1);
+            studentDoc.currentLevel = nextLevel;
+            studentDoc.selectedLevel = `Level ${nextLevel}`;
+            (studentDoc as any).abacusLevel = `Level ${nextLevel}`;
+            studentDoc.finalExamStatus = "PASS";
+            studentDoc.finalExamScore = score;
+            studentDoc.completionDate = submittedAt;
+
+            const completed = Array.isArray(studentDoc.completedLevels) ? [...studentDoc.completedLevels] : [];
+            if (!completed.includes(examLevel)) {
+              completed.push(examLevel);
+            }
+            studentDoc.completedLevels = completed;
+            await studentDoc.save();
+          } else {
+            studentDoc.finalExamStatus = "FAIL";
+            studentDoc.finalExamScore = score;
+            studentDoc.currentLevel = examLevel;
+            await studentDoc.save();
+          }
+        }
+      } catch (stErr) {
+        console.warn("[ExamService]: Failed updating student progression on final exam submit:", stErr);
       }
     }
 

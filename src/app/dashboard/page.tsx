@@ -174,6 +174,90 @@ export default function AbacusWorldDashboard() {
           </p>
         </section>
 
+        {/* Student Level Progression Tracker Banner */}
+        {(() => {
+          const studentLevelNum =
+            typeof user?.currentLevel === "number" && user.currentLevel >= 1
+              ? user.currentLevel
+              : (user?.selectedLevel || user?.abacusLevel || "").includes("Level 2") ||
+                (user?.email || "").toLowerCase() === "neehanaz226@gmail.com"
+              ? 2
+              : 1;
+
+          const completedLevelNums =
+            Array.isArray(user?.completedLevels) && user.completedLevels.length > 0
+              ? user.completedLevels
+              : studentLevelNum > 1
+              ? Array.from({ length: studentLevelNum - 1 }, (_, i) => i + 1)
+              : [];
+
+          return (
+            <div className="max-w-5xl mx-auto mb-10 bg-white rounded-3xl p-5 sm:p-7 border-2 border-amber-200/90 shadow-md">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5 border-b border-amber-100 pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white text-2xl shadow-sm">
+                    🎓
+                  </div>
+                  <div>
+                    <span className="text-xs font-black text-amber-700 uppercase tracking-wider block">
+                      Current Enrolled Level
+                    </span>
+                    <h2 className="text-2xl font-black text-[#1D3557] font-heading">
+                      🎓 Current Level: Level {studentLevelNum}
+                    </h2>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold bg-emerald-100 text-emerald-800 px-3 py-1.5 rounded-full border border-emerald-300">
+                    Completed Levels: {completedLevelNums.length > 0 ? completedLevelNums.map((n) => `Level ${n}`).join(", ") : "None yet"}
+                  </span>
+                </div>
+              </div>
+
+              {/* Level Progression Track */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2.5">
+                {[1, 2, 3, 4, 5, 6, 7, 8].map((lvl) => {
+                  const isCompleted = completedLevelNums.includes(lvl) || lvl < studentLevelNum;
+                  const isCurrent = lvl === studentLevelNum;
+                  const isLocked = lvl > studentLevelNum;
+
+                  return (
+                    <div
+                      key={lvl}
+                      className={`p-3 rounded-2xl text-center border transition-all ${
+                        isCurrent
+                          ? "bg-gradient-to-b from-amber-50 to-orange-100 border-amber-400 shadow-sm ring-2 ring-amber-400/40"
+                          : isCompleted
+                          ? "bg-emerald-50/80 border-emerald-200 text-emerald-900"
+                          : "bg-slate-50 border-slate-200 text-slate-400 opacity-60"
+                      }`}
+                    >
+                      <div className="text-xs font-black text-[#1D3557] mb-1">
+                        Level {lvl}
+                      </div>
+                      <div className="text-xs font-extrabold flex items-center justify-center gap-1">
+                        {isCurrent ? (
+                          <span className="text-amber-800 bg-amber-200 px-2 py-0.5 rounded-full text-[10px]">
+                            → In Progress
+                          </span>
+                        ) : isCompleted ? (
+                          <span className="text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full text-[10px]">
+                            ✓ Completed
+                          </span>
+                        ) : (
+                          <span className="text-slate-500 bg-slate-200 px-2 py-0.5 rounded-full text-[10px]">
+                            🔒 Locked
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })()}
+
         {/* Cards Grid */}
         <div className="grid md:grid-cols-2 gap-6 lg:gap-8 max-w-5xl mx-auto">
           {/* Learning Hub Card */}

@@ -173,7 +173,8 @@ export default function PracticeDashboard() {
     if (levelParam) {
       const parsed = parseInt(levelParam, 10);
       if (!isNaN(parsed) && parsed >= 1 && parsed <= 8) {
-        setActiveLevelTab(parsed);
+        const maxLevel = selectedLevel || 1;
+        setActiveLevelTab(Math.min(parsed, maxLevel));
       }
     }
 
@@ -202,7 +203,8 @@ export default function PracticeDashboard() {
   }, [searchParams]);
 
   const handleOpenUntimedDirectory = (cat: string = "all", level?: number) => {
-    const targetLvl = level !== undefined ? level : activeLevelTab;
+    const rawTargetLvl = level !== undefined ? level : activeLevelTab;
+    const targetLvl = Math.min(rawTargetLvl, selectedLevel || 1);
     setActiveLevelTab(targetLvl);
     setShowUntimedDirectory(true);
     setCategoryFilter(cat);
@@ -302,22 +304,29 @@ export default function PracticeDashboard() {
         {LEVELS_LIST.map((lvl) => {
           const isActive = activeLevelTab === lvl.level;
           const isUserLevel = selectedLevel === lvl.level;
+          const isLocked = lvl.level > (selectedLevel || 1);
+          const isCompleted = lvl.level < (selectedLevel || 1);
+
           return (
             <button
               key={lvl.level}
               type="button"
+              disabled={isLocked}
               onClick={() => {
+                if (isLocked) return;
                 setActiveLevelTab(lvl.level);
                 setCategoryFilter("all");
                 setActiveUntimedCategory("all");
               }}
-              className={`p-2.5 rounded-2xl text-left transition-all duration-200 relative cursor-pointer border ${
-                isActive
-                  ? "bg-gradient-to-br from-emerald-600 to-teal-700 text-white border-emerald-500 shadow-md scale-[1.02]"
-                  : "bg-[#FFFBF0] hover:bg-emerald-50 text-slate-700 border-emerald-200/70"
+              className={`p-2.5 rounded-2xl text-left transition-all duration-200 relative border ${
+                isLocked
+                  ? "bg-slate-100/90 text-slate-400 border-slate-200 cursor-not-allowed opacity-55"
+                  : isActive
+                  ? "bg-gradient-to-br from-emerald-600 to-teal-700 text-white border-emerald-500 shadow-md scale-[1.02] cursor-pointer"
+                  : "bg-[#FFFBF0] hover:bg-emerald-50 text-slate-700 border-emerald-200/70 cursor-pointer"
               }`}
             >
-              {isUserLevel && (
+              {isUserLevel ? (
                 <span
                   className={`absolute -top-1.5 -right-1.5 text-[9px] font-black px-1.5 py-0.5 rounded-full uppercase tracking-tighter ${
                     isActive ? "bg-amber-400 text-slate-900" : "bg-emerald-600 text-white"
@@ -325,15 +334,27 @@ export default function PracticeDashboard() {
                 >
                   Current
                 </span>
-              )}
+              ) : isCompleted ? (
+                <span className="absolute -top-1.5 -right-1.5 text-[9px] font-black px-1.5 py-0.5 rounded-full uppercase tracking-tighter bg-emerald-100 text-emerald-800 border border-emerald-300">
+                  ✓ Done
+                </span>
+              ) : isLocked ? (
+                <span className="absolute -top-1.5 -right-1.5 text-[9px] font-black px-1.5 py-0.5 rounded-full uppercase tracking-tighter bg-slate-200 text-slate-600">
+                  🔒 Locked
+                </span>
+              ) : null}
               <div className="flex items-center gap-1.5">
-                <span className="text-base">{lvl.icon}</span>
-                <span className={`text-xs font-black ${isActive ? "text-white" : "text-[#1D3557]"}`}>
+                <span className="text-base">{isLocked ? "🔒" : lvl.icon}</span>
+                <span className={`text-xs font-black ${isLocked ? "text-slate-400" : isActive ? "text-white" : "text-[#1D3557]"}`}>
                   Level {lvl.level}
                 </span>
               </div>
-              <div className={`text-[10px] font-bold truncate mt-0.5 ${isActive ? "text-emerald-100" : "text-slate-500"}`}>
-                {lvl.count} Worksheets
+              <div
+                className={`text-[10px] font-bold truncate mt-0.5 ${
+                  isLocked ? "text-slate-400" : isActive ? "text-emerald-100" : "text-slate-500"
+                }`}
+              >
+                {isLocked ? "Locked" : `${lvl.count} Worksheets`}
               </div>
             </button>
           );

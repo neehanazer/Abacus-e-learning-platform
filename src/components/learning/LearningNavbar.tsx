@@ -24,6 +24,7 @@ import {
   Play,
   ChevronDown,
   Clock,
+  Calculator,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useLearning } from "@/context/LearningContext";
@@ -74,6 +75,8 @@ export default function LearningNavbar() {
   const isMockExam = pathname.startsWith("/learning/mock-exam");
   const isExam = pathname.startsWith("/learning/exam");
   const isCertificate = pathname.startsWith("/learning/certificate");
+  const isVirtualAbacus =
+    pathname.startsWith("/learning/virtual-abacus") || pathname === "/virtual-abacus";
   const isLearning =
     !isSyllabus &&
     !isPractice &&
@@ -81,6 +84,7 @@ export default function LearningNavbar() {
     !isMockExam &&
     !isExam &&
     !isCertificate &&
+    !isVirtualAbacus &&
     pathname.startsWith("/learning");
 
   const navItems: NavOption[] = [
@@ -97,6 +101,13 @@ export default function LearningNavbar() {
       href: "/learning",
       icon: <Video className="w-4 h-4" />,
       isActive: isLearning,
+    },
+    {
+      id: "virtual-abacus",
+      name: "Virtual Abacus",
+      href: "/learning/virtual-abacus",
+      icon: <Calculator className="w-4 h-4" />,
+      isActive: isVirtualAbacus,
     },
     {
       id: "practice",
@@ -140,6 +151,8 @@ export default function LearningNavbar() {
       router.push("/learning");
     } else if (item.id === "syllabus") {
       router.push("/learning/syllabus");
+    } else if (item.id === "virtual-abacus") {
+      router.push("/learning/virtual-abacus");
     } else if (item.id === "practice") {
       router.push("/learning/practice");
     } else if (item.id === "homework") {

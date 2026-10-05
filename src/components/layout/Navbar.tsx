@@ -16,6 +16,7 @@ export default function Navbar() {
 
   const navLinks = [
     { name: "Home", href: "/" },
+    { name: "Virtual Abacus", href: "/virtual-abacus" },
     { name: "About Us", href: "/about" },
     { name: "How It Works", href: "/how-it-works" },
     { name: "Contact", href: "/contact" },

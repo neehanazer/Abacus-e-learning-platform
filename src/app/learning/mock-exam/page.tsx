@@ -474,60 +474,25 @@ export default function MockExamPage() {
             </div>
           )}
 
-          {/* Syllabus Level Ribbon */}
-          <div className="bg-white rounded-3xl p-3 sm:p-4 border-2 border-orange-200/90 shadow-sm space-y-2 mb-6">
-            <div className="flex items-center justify-between gap-2 px-1">
-              <span className="text-xs font-black uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
-                <span>⏱️</span> Select Level Mock Exam:
-              </span>
-              <span className="text-[11px] font-bold text-orange-900 bg-orange-100/90 px-2.5 py-0.5 rounded-full border border-orange-300/80">
-                Enrolled Student Level: <strong className="font-black">Level {studentLevel}</strong>
-              </span>
+          {/* Enrolled Level Mock Exam Banner (No level switching allowed) */}
+          <div className="bg-white rounded-3xl p-4 sm:p-5 border-2 border-orange-200/90 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-orange-100 flex items-center justify-center text-xl shadow-inner">
+                ⏱️
+              </div>
+              <div>
+                <div className="text-xs font-black uppercase tracking-wider text-slate-500">
+                  Assigned Mock Exam Level:
+                </div>
+                <div className="text-base font-extrabold text-[#1D3557]">
+                  Level {studentLevel} Mock Exam Only
+                </div>
+              </div>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2">
-              {MOCK_LEVELS.map((lvl) => {
-                const isActive = activeLevelTab === lvl.level;
-                const isUserLevel = studentLevel === lvl.level;
-                const examForLevel = exams.find(
-                  (e) => (e as any).levelOrder === lvl.level || e.title.includes(`Level ${lvl.level}`)
-                );
-
-                return (
-                  <button
-                    key={lvl.level}
-                    type="button"
-                    onClick={() => setActiveLevelTab(lvl.level)}
-                    className={`p-2.5 rounded-2xl text-left transition-all duration-200 relative cursor-pointer border ${
-                      isActive
-                        ? "bg-gradient-to-br from-[#F4A261] to-[#E76F51] text-white border-orange-400 shadow-md scale-[1.02]"
-                        : "bg-[#FFFBF0] hover:bg-orange-50 text-slate-700 border-orange-200/70"
-                    }`}
-                  >
-                    {isUserLevel && (
-                      <span
-                        className={`absolute -top-1.5 -right-1.5 text-[9px] font-black px-1.5 py-0.5 rounded-full uppercase tracking-tighter ${
-                          isActive ? "bg-white text-slate-900" : "bg-orange-600 text-white"
-                        }`}
-                      >
-                        Current
-                      </span>
-                    )}
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-base">{lvl.icon}</span>
-                      <span className={`text-xs font-black ${isActive ? "text-white" : "text-[#1D3557]"}`}>
-                        Level {lvl.level}
-                      </span>
-                    </div>
-                    <div
-                      className={`text-[10px] font-bold truncate mt-0.5 ${
-                        isActive ? "text-orange-100" : "text-slate-500"
-                      }`}
-                    >
-                      {examForLevel?.attemptsCount ? `${examForLevel.attemptsCount} attempts` : "Official Exam"}
-                    </div>
-                  </button>
-                );
-              })}
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-orange-900 bg-orange-100 px-3 py-1 rounded-full border border-orange-300">
+                🔒 Mock Exam Restricted to Enrolled Level {studentLevel}
+              </span>
             </div>
           </div>
 

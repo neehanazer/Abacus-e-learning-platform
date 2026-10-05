@@ -25,6 +25,11 @@ export interface StudentUser {
   totalPracticeMinutes: number;
   completedWorksheets: number;
   earnedBadges: string[];
+  currentLevel?: number;
+  completedLevels?: number[];
+  finalExamStatus?: "PASS" | "FAIL" | "NOT_ATTENDED";
+  finalExamScore?: number | null;
+  completionDate?: string | null;
   createdAt: string;
 }
 
@@ -72,6 +77,11 @@ const PRE_REGISTERED_STUDENTS: (StudentUser & { password?: string })[] = [
     totalPracticeMinutes: 120,
     completedWorksheets: 18,
     earnedBadges: ["Bead Master", "Speed Starter", "BrainGym Champ", "Level 1 Certified"],
+    currentLevel: 2,
+    completedLevels: [1],
+    finalExamStatus: "PASS",
+    finalExamScore: 86,
+    completionDate: "2026-10-05T00:00:00.000Z",
     createdAt: "2026-02-15",
   },
   {
@@ -196,6 +206,30 @@ export const sanitizeUser = (
     totalPracticeMinutes: typeof raw.totalPracticeMinutes === "number" ? raw.totalPracticeMinutes : 0,
     completedWorksheets: typeof raw.completedWorksheets === "number" ? raw.completedWorksheets : 0,
     earnedBadges,
+    currentLevel:
+      typeof raw.currentLevel === "number" && raw.currentLevel >= 1
+        ? raw.currentLevel
+        : isLevel1Certified || String(selectedLevel).includes("Level 2")
+        ? 2
+        : 1,
+    completedLevels:
+      Array.isArray(raw.completedLevels) && raw.completedLevels.length > 0
+        ? raw.completedLevels
+        : (typeof raw.currentLevel === "number" && raw.currentLevel > 1) ||
+          isLevel1Certified ||
+          String(selectedLevel).includes("Level 2")
+        ? [1]
+        : [],
+    finalExamStatus:
+      (raw.finalExamStatus as any) || (isLevel1Certified ? "PASS" : "NOT_ATTENDED"),
+    finalExamScore:
+      typeof raw.finalExamScore === "number" ? raw.finalExamScore : isLevel1Certified ? 86 : null,
+    completionDate:
+      typeof raw.completionDate === "string"
+        ? raw.completionDate
+        : isLevel1Certified
+        ? "2026-10-05T00:00:00.000Z"
+        : null,
     createdAt: typeof raw.createdAt === "string" ? raw.createdAt : new Date().toISOString().split("T")[0],
   };
 };

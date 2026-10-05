@@ -46,6 +46,11 @@ export interface ISafeStudent {
   totalPracticeMinutes?: number;
   completedWorksheets?: number;
   earnedBadges?: string[];
+  currentLevel?: number;
+  completedLevels?: number[];
+  finalExamStatus?: "PASS" | "FAIL" | "NOT_ATTENDED";
+  finalExamScore?: number | null;
+  completionDate?: string | null;
   createdAt: string;
   updatedAt: string;
 }

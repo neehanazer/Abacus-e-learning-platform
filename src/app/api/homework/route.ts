@@ -39,6 +39,17 @@ export async function GET(req: NextRequest) {
     const authResult = await authenticateRoute(req);
     const student = authResult.user || null;
 
+    // Resolve student's currentLevel
+    let studentCurrentLevel = 1;
+    if (student) {
+      if (typeof (student as any).currentLevel === "number" && (student as any).currentLevel >= 1) {
+        studentCurrentLevel = (student as any).currentLevel;
+      } else {
+        const match = String((student as any).selectedLevel || (student as any).abacusLevel || "").match(/Level\s*(\d+)/i);
+        studentCurrentLevel = match ? parseInt(match[1], 10) : 1;
+      }
+    }
+
     try {
       await connectToDatabase();
 
@@ -70,19 +81,24 @@ export async function GET(req: NextRequest) {
         }
       }
 
-      // Filter by Level
+      // Homework Access Rule: strictly restricted to student's current level!
       if (levelParam) {
-        if (mongoose.Types.ObjectId.isValid(levelParam)) {
-          filter.levelId = new mongoose.Types.ObjectId(levelParam);
-        } else {
-          const num = Number(levelParam);
-          if (!isNaN(num)) {
-            const levelDoc = await Level.findOne({ order: num });
-            if (levelDoc) {
-              filter.levelId = levelDoc._id;
-            }
-          }
+        const num = Number(levelParam);
+        if (!isNaN(num) && num !== studentCurrentLevel) {
+          return NextResponse.json(
+            {
+              success: false,
+              error: `Access denied: Homework is restricted to your current enrolled level (Level ${studentCurrentLevel}). You cannot access Level ${num} homework.`,
+              data: [],
+            },
+            { status: 403 }
+          );
         }
+      }
+
+      const targetLevelDoc = await Level.findOne({ order: studentCurrentLevel });
+      if (targetLevelDoc) {
+        filter.levelId = targetLevelDoc._id;
       }
 
       // Filter by Topic
@@ -202,7 +218,9 @@ export async function GET(req: NextRequest) {
     } catch (dbErr) {
       console.warn("[GET /api/homework]: DB offline, serving fallback catalog...", dbErr);
 
-      let fallbackList = getFallbackHomeworkList();
+      let fallbackList = getFallbackHomeworkList().filter(
+        (h: any) => (h.level || 1) === studentCurrentLevel
+      );
 
       if (statusParam) {
         fallbackList = fallbackList.filter((h) => h.status === statusParam);

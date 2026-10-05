@@ -150,7 +150,7 @@ const CERTIFICATION_LEVELS = [
 
 export default function FinalExamPage() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, updateProfile } = useAuth();
 
   const studentLevel = React.useMemo(() => {
     const raw = user?.selectedLevel || user?.abacusLevel || (user as any)?.currentLevel || "";
@@ -370,6 +370,30 @@ export default function FinalExamPage() {
       if (document.fullscreenElement) {
         document.exitFullscreen().catch(() => {});
       }
+
+      // Automatic level upgrade upon passing final exam
+      if (data.data.isPassed) {
+        const nextLevel = Math.min(8, studentLevel + 1);
+        const existingCompleted = Array.isArray(user?.completedLevels) ? [...user.completedLevels] : [];
+        if (!existingCompleted.includes(studentLevel)) {
+          existingCompleted.push(studentLevel);
+        }
+        updateProfile({
+          currentLevel: nextLevel,
+          selectedLevel: `Level ${nextLevel}`,
+          abacusLevel: `Level ${nextLevel}`,
+          completedLevels: existingCompleted,
+          finalExamStatus: "PASS",
+          finalExamScore: data.data.score,
+          completionDate: new Date().toISOString(),
+        });
+      } else {
+        updateProfile({
+          finalExamStatus: "FAIL",
+          finalExamScore: data.data.score,
+        });
+      }
+
       setViewState("result");
     } catch (err: any) {
       alert("Submission error: " + (err.message || "Failed to submit exam"));
@@ -527,57 +551,25 @@ export default function FinalExamPage() {
             </div>
           )}
 
-          {/* Syllabus Level Ribbon */}
-          <div className="bg-white rounded-3xl p-3 sm:p-4 border-2 border-indigo-200/90 shadow-sm space-y-2 mb-8">
-            <div className="flex items-center justify-between gap-2 px-1">
-              <span className="text-xs font-black uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
-                <span>🎓</span> Select Certification Level Exam:
-              </span>
-              <span className="text-[11px] font-bold text-indigo-900 bg-indigo-100/90 px-2.5 py-0.5 rounded-full border border-indigo-300/80">
-                Enrolled Student Level: <strong className="font-black">Level {studentLevel}</strong>
-              </span>
+          {/* Enrolled Level Final Exam Banner (No level switching allowed) */}
+          <div className="bg-white rounded-3xl p-4 sm:p-5 border-2 border-indigo-200/90 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-8">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-indigo-100 flex items-center justify-center text-xl shadow-inner">
+                🎓
+              </div>
+              <div>
+                <div className="text-xs font-black uppercase tracking-wider text-slate-500">
+                  Assigned Final Examination:
+                </div>
+                <div className="text-base font-extrabold text-[#1D3557]">
+                  Level {studentLevel} Final Certification Exam Only
+                </div>
+              </div>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2">
-              {CERTIFICATION_LEVELS.map((lvl) => {
-                const isActive = activeLevelTab === lvl.level;
-                const isUserLevel = studentLevel === lvl.level;
-
-                return (
-                  <button
-                    key={lvl.level}
-                    type="button"
-                    onClick={() => setActiveLevelTab(lvl.level)}
-                    className={`p-2.5 rounded-2xl text-left transition-all duration-200 relative cursor-pointer border ${
-                      isActive
-                        ? "bg-gradient-to-br from-indigo-700 to-purple-800 text-white border-indigo-500 shadow-md scale-[1.02]"
-                        : "bg-[#FFFBF0] hover:bg-indigo-50 text-slate-700 border-indigo-200/70"
-                    }`}
-                  >
-                    {isUserLevel && (
-                      <span
-                        className={`absolute -top-1.5 -right-1.5 text-[9px] font-black px-1.5 py-0.5 rounded-full uppercase tracking-tighter ${
-                          isActive ? "bg-amber-400 text-slate-900" : "bg-indigo-600 text-white"
-                        }`}
-                      >
-                        Current
-                      </span>
-                    )}
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-base">{lvl.icon}</span>
-                      <span className={`text-xs font-black ${isActive ? "text-white" : "text-[#1D3557]"}`}>
-                        Level {lvl.level}
-                      </span>
-                    </div>
-                    <div
-                      className={`text-[10px] font-bold truncate mt-0.5 ${
-                        isActive ? "text-indigo-200" : "text-slate-500"
-                      }`}
-                    >
-                      {lvl.name}
-                    </div>
-                  </button>
-                );
-              })}
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-indigo-900 bg-indigo-100 px-3 py-1 rounded-full border border-indigo-300">
+                🔒 Exam Access Restricted to Enrolled Level {studentLevel}
+              </span>
             </div>
           </div>
 

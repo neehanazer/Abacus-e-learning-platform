@@ -186,7 +186,20 @@ export async function calculateStudentProgress(
     });
   }
 
-  // If no level is in progress, find the next level after the last completed one
+  const studentDoc = await Student.findById(studentObjId).lean();
+  if (studentDoc && typeof (studentDoc as any).currentLevel === "number" && (studentDoc as any).currentLevel >= 1) {
+    const curOrder = (studentDoc as any).currentLevel;
+    detectedCurrentLevel = levels.find((l) => l.order === curOrder)?.levelName || `Level ${curOrder}`;
+    if (Array.isArray((studentDoc as any).completedLevels)) {
+      for (const cl of (studentDoc as any).completedLevels) {
+        const clName = levels.find((l) => l.order === cl)?.levelName || `Level ${cl}`;
+        if (!completedLevelNames.includes(clName)) {
+          completedLevelNames.push(clName);
+        }
+      }
+    }
+  }
+
   if (!detectedCurrentLevel) {
     const firstNotStarted = levelProgress.find((lp) => lp.status === "Not Started");
     if (firstNotStarted) {

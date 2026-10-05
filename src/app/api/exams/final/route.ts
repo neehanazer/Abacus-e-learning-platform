@@ -5,8 +5,9 @@ import ExamService from "@/services/examService";
 export const dynamic = "force-dynamic";
 
 /**
- * GET /api/exams/mock
- * Retrieves all active mock exams with student attempt status, best score, and latest performance.
+ * GET /api/exams/final
+ * Retrieves the final certification exam for the student's current enrolled level only.
+ * Future or other levels are strictly prohibited.
  */
 export async function GET(req: NextRequest) {
   try {
@@ -34,7 +35,7 @@ export async function GET(req: NextRequest) {
         return NextResponse.json(
           {
             success: false,
-            error: `Access denied: Mock exam is restricted to your current enrolled level (Level ${studentLevel}). You cannot access Level ${parsedLevel} mock exams.`,
+            error: `Access denied: Final Certification Exam is restricted to your current enrolled level (Level ${studentLevel}). You cannot access Level ${parsedLevel} final exams.`,
             data: [],
           },
           { status: 403 }
@@ -42,20 +43,20 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    const mockExams = await ExamService.getMockExams(targetStudentId, studentLevel);
+    const finalExams = await ExamService.getFinalExams(targetStudentId, studentLevel);
 
     return NextResponse.json(
       {
         success: true,
-        count: mockExams.length,
-        data: mockExams,
+        count: finalExams.length,
+        data: finalExams,
         currentLevel: studentLevel,
       },
       { status: 200 }
     );
   } catch (error: unknown) {
     const errorMsg = error instanceof Error ? error.message : "Internal Server Error";
-    console.error("[GET /api/exams/mock Error]:", error);
+    console.error("[GET /api/exams/final Error]:", error);
     return NextResponse.json(
       {
         success: false,

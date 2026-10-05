@@ -28,6 +28,7 @@ interface MockExamCard {
   title: string;
   description: string;
   levelName: string;
+  levelOrder?: number;
   duration: number; // in minutes
   totalQuestions: number;
   totalMarks: number;
@@ -38,6 +39,68 @@ interface MockExamCard {
   latestPercentage: number | null;
   isPassed: boolean;
 }
+
+const MOCK_LEVELS = [
+  { level: 1, name: "Foundations", icon: "🌱" },
+  { level: 2, name: "Explorer", icon: "🚀" },
+  { level: 3, name: "Intermediate", icon: "⭐" },
+  { level: 4, name: "Advanced", icon: "⚡" },
+  { level: 5, name: "Senior Expert", icon: "🔥" },
+  { level: 6, name: "Master", icon: "🏆" },
+  { level: 7, name: "Champion", icon: "👑" },
+  { level: 8, name: "Grand Master", icon: "🧙‍♂️" },
+];
+
+const LEVEL_TOPICS_SUMMARY: Record<number, { title: string; desc: string }[]> = {
+  1: [
+    { title: "Direct Calculation", desc: "Pure bead movement on units & tens without friend formulas" },
+    { title: "Small Friend Rule", desc: "Base-5 addition & subtraction rules (+4..+1 and -4..-1)" },
+    { title: "Big Friend Rule", desc: "Base-10 complementary rules (+10 - friend and -10 + friend)" },
+    { title: "1-Digit 5 & 7-Row", desc: "Consecutive single-digit rapid speed calculation drills" },
+  ],
+  2: [
+    { title: "1-Digit 10-Row", desc: "Continuous 10-row running addition and subtraction drills" },
+    { title: "1-Digit 12 & 15-Row", desc: "Endurance multi-row single digit calculations" },
+    { title: "2-Digit 3 & 5-Row", desc: "Coordinate two-digit columns across 3 and 5 rows" },
+    { title: "2-Digit 8-Row Championship", desc: "Championship-level multi-row continuous arithmetic" },
+  ],
+  3: [
+    { title: "1-Digit 20 & 25-Row", desc: "High-speed rapid single-digit marathon calculations" },
+    { title: "2-Digit 10 & 12-Row", desc: "Multi-row 2-digit concentration drills" },
+    { title: "3-Digit 3-Row", desc: "Hundreds, Tens, and Units 3-digit column arithmetic" },
+    { title: "3-Digit 5-Row", desc: "5-row continuous 3-digit addition and subtraction" },
+  ],
+  4: [
+    { title: "1-Digit 30-Row", desc: "30-row continuous concentration and speed marathon" },
+    { title: "2-Digit 15 & 20-Row", desc: "15-20 rows of two-digit continuous calculations" },
+    { title: "3-Digit 7 & 10-Row", desc: "Multi-row 3-digit advanced bead manipulation" },
+    { title: "4-Digit 3 & 5-Row", desc: "Thousands rod alignment and multi-digit operations" },
+  ],
+  5: [
+    { title: "2-Digit 25-Row", desc: "Extended 2-digit endurance calculations" },
+    { title: "3-Digit 12 & 15-Row", desc: "Continuous 3-digit multi-row calculations" },
+    { title: "4-Digit 7 & 10-Row", desc: "Thousands columns multi-row addition and subtraction" },
+    { title: "Multiplication (2D × 1D)", desc: "Soroban multiplicand indexing and partial products accumulation" },
+  ],
+  6: [
+    { title: "Multiplication (3D×1D, 4D×1D, 2D×2D)", desc: "Multi-digit cross-rod multiplication algorithms" },
+    { title: "Division (2D ÷ 1D)", desc: "Soroban division and remainder reductions" },
+    { title: "2-Digit 30-Row & 3-Digit 20-Row", desc: "Supreme multi-row rapid arithmetic" },
+    { title: "5-Digit 3 & 5-Row", desc: "Ten-thousands rod coordination drills" },
+  ],
+  7: [
+    { title: "Multiplication (3D×2D, 3D×3D)", desc: "Master-level multi-digit multiplication on the beam" },
+    { title: "Division (3D ÷ 1D & 3D ÷ 2D)", desc: "Complex multi-digit divisor division and quotient placement" },
+    { title: "3-Digit 25-Row", desc: "Continuous 3-digit speed endurance" },
+    { title: "4-Digit 15-Row & 5-Digit 10-Row", desc: "Championship multi-row calculation stamina" },
+  ],
+  8: [
+    { title: "Flash Anzan", desc: "Lightning mental abacus visualization of flashing numbers" },
+    { title: "Multi-Row Mental Arithmetic", desc: "Solving multi-row sequences without physical abacus" },
+    { title: "Competition Speed Mental", desc: "National championship mental multiplication & division" },
+    { title: "Grand Master Capstone", desc: "Complete integration of mental calculation arts" },
+  ],
+};
 
 interface ExamQuestion {
   id: string;
@@ -86,6 +149,20 @@ interface ExamEvaluationResult {
 export default function MockExamPage() {
   const router = useRouter();
   const { user } = useAuth();
+
+  const studentLevel = React.useMemo(() => {
+    const raw = user?.selectedLevel || user?.abacusLevel || (user as any)?.currentLevel || "";
+    const m = String(raw).match(/Level\s*(\d+)/i) || String(raw).match(/^(\d+)$/);
+    return m ? parseInt(m[1], 10) : 1;
+  }, [user]);
+
+  const [activeLevelTab, setActiveLevelTab] = useState<number>(studentLevel || 1);
+
+  useEffect(() => {
+    if (studentLevel) {
+      setActiveLevelTab(studentLevel);
+    }
+  }, [studentLevel]);
 
   // View state: "catalog" | "session" | "result"
   const [viewState, setViewState] = useState<"catalog" | "session" | "result">("catalog");
@@ -397,24 +474,87 @@ export default function MockExamPage() {
             </div>
           )}
 
-          {/* Single Mock Exam Hub Card (Unified Button & Scope) */}
+          {/* Syllabus Level Ribbon */}
+          <div className="bg-white rounded-3xl p-3 sm:p-4 border-2 border-orange-200/90 shadow-sm space-y-2 mb-6">
+            <div className="flex items-center justify-between gap-2 px-1">
+              <span className="text-xs font-black uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+                <span>⏱️</span> Select Level Mock Exam:
+              </span>
+              <span className="text-[11px] font-bold text-orange-900 bg-orange-100/90 px-2.5 py-0.5 rounded-full border border-orange-300/80">
+                Enrolled Student Level: <strong className="font-black">Level {studentLevel}</strong>
+              </span>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2">
+              {MOCK_LEVELS.map((lvl) => {
+                const isActive = activeLevelTab === lvl.level;
+                const isUserLevel = studentLevel === lvl.level;
+                const examForLevel = exams.find(
+                  (e) => (e as any).levelOrder === lvl.level || e.title.includes(`Level ${lvl.level}`)
+                );
+
+                return (
+                  <button
+                    key={lvl.level}
+                    type="button"
+                    onClick={() => setActiveLevelTab(lvl.level)}
+                    className={`p-2.5 rounded-2xl text-left transition-all duration-200 relative cursor-pointer border ${
+                      isActive
+                        ? "bg-gradient-to-br from-[#F4A261] to-[#E76F51] text-white border-orange-400 shadow-md scale-[1.02]"
+                        : "bg-[#FFFBF0] hover:bg-orange-50 text-slate-700 border-orange-200/70"
+                    }`}
+                  >
+                    {isUserLevel && (
+                      <span
+                        className={`absolute -top-1.5 -right-1.5 text-[9px] font-black px-1.5 py-0.5 rounded-full uppercase tracking-tighter ${
+                          isActive ? "bg-white text-slate-900" : "bg-orange-600 text-white"
+                        }`}
+                      >
+                        Current
+                      </span>
+                    )}
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-base">{lvl.icon}</span>
+                      <span className={`text-xs font-black ${isActive ? "text-white" : "text-[#1D3557]"}`}>
+                        Level {lvl.level}
+                      </span>
+                    </div>
+                    <div
+                      className={`text-[10px] font-bold truncate mt-0.5 ${
+                        isActive ? "text-orange-100" : "text-slate-500"
+                      }`}
+                    >
+                      {examForLevel?.attemptsCount ? `${examForLevel.attemptsCount} attempts` : "Official Exam"}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Selected Level Mock Exam Hub Card */}
           {!loading && !error && (() => {
-            const singleExam: MockExamCard = exams[0] || {
-              id: "67b100000000000000000001",
-              title: "Level 1: Official Practice Mock Exam",
-              description:
-                "Comprehensive timed mock exam testing Direct Calculations, Small Friend Rules, Big Friend Rules, and 1-Digit 5-Row Calculations under realistic competition conditions.",
-              levelName: "Level 1",
-              duration: 10,
-              totalQuestions: 10,
-              totalMarks: 100,
-              passingMarks: 60,
-              attemptsCount: 0,
-              bestScore: 0,
-              latestScore: null,
-              latestPercentage: null,
-              isPassed: false,
-            };
+            const singleExam: MockExamCard =
+              exams.find(
+                (e) => (e as any).levelOrder === activeLevelTab || e.title.includes(`Level ${activeLevelTab}`)
+              ) ||
+              exams[0] || {
+                id: "67b100000000000000000001",
+                title: `Level ${activeLevelTab}: Official Practice Mock Exam`,
+                description: `Official Practice Mock Exam for Level ${activeLevelTab} syllabus.`,
+                levelName: `Level ${activeLevelTab}`,
+                duration: 10,
+                totalQuestions: 10,
+                totalMarks: 100,
+                passingMarks: 60,
+                attemptsCount: 0,
+                bestScore: 0,
+                latestScore: null,
+                latestPercentage: null,
+                isPassed: false,
+              };
+
+            const levelTopics =
+              LEVEL_TOPICS_SUMMARY[activeLevelTab] || LEVEL_TOPICS_SUMMARY[1];
 
             return (
               <div className="max-w-4xl mx-auto">
@@ -423,7 +563,7 @@ export default function MockExamPage() {
                     {/* Top Status Badges */}
                     <div className="flex items-center justify-between gap-2 mb-4">
                       <span className="text-xs font-extrabold px-3 py-1 rounded-full bg-orange-100 text-orange-800">
-                        {singleExam.levelName || "Level 1"} • Official Practice Simulation
+                        {singleExam.levelName || `Level ${activeLevelTab}`} • Official Practice Simulation
                       </span>
                       {singleExam.attemptsCount > 0 ? (
                         <span
@@ -449,51 +589,26 @@ export default function MockExamPage() {
                       {singleExam.description}
                     </p>
 
-                    {/* 4 Tested Categories Callout */}
+                    {/* Tested Categories Callout */}
                     <div className="mb-8">
                       <div className="text-xs font-extrabold text-slate-500 uppercase tracking-wider mb-3">
-                        Included Exam Topics (All In One Mock Challenge):
+                        Included Exam Topics (Level {activeLevelTab} Syllabus):
                       </div>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div className="bg-[#FFFDF7] p-3.5 rounded-2xl border-2 border-amber-200/70 flex items-start gap-3">
-                          <span className="w-7 h-7 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-black text-xs flex-shrink-0">
-                            1
-                          </span>
-                          <div>
-                            <div className="text-sm font-extrabold text-[#1D3557]">Direct Calculation</div>
-                            <div className="text-xs text-slate-500">Pure bead manipulation on units & tens without friend formulas</div>
+                        {levelTopics.map((topic, idx) => (
+                          <div
+                            key={idx}
+                            className="bg-[#FFFDF7] p-3.5 rounded-2xl border-2 border-amber-200/70 flex items-start gap-3"
+                          >
+                            <span className="w-7 h-7 rounded-xl bg-orange-100 text-orange-700 flex items-center justify-center font-black text-xs flex-shrink-0">
+                              {idx + 1}
+                            </span>
+                            <div>
+                              <div className="text-sm font-extrabold text-[#1D3557]">{topic.title}</div>
+                              <div className="text-xs text-slate-500">{topic.desc}</div>
+                            </div>
                           </div>
-                        </div>
-
-                        <div className="bg-[#FFFDF7] p-3.5 rounded-2xl border-2 border-amber-200/70 flex items-start gap-3">
-                          <span className="w-7 h-7 rounded-xl bg-sky-100 text-sky-700 flex items-center justify-center font-black text-xs flex-shrink-0">
-                            2
-                          </span>
-                          <div>
-                            <div className="text-sm font-extrabold text-[#1D3557]">Small Friend Rule</div>
-                            <div className="text-xs text-slate-500">Base-5 addition & subtraction rules (+4..+1 and -4..-1)</div>
-                          </div>
-                        </div>
-
-                        <div className="bg-[#FFFDF7] p-3.5 rounded-2xl border-2 border-amber-200/70 flex items-start gap-3">
-                          <span className="w-7 h-7 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center font-black text-xs flex-shrink-0">
-                            3
-                          </span>
-                          <div>
-                            <div className="text-sm font-extrabold text-[#1D3557]">Big Friend Rule</div>
-                            <div className="text-xs text-slate-500">Base-10 complementary rules (+10 - friend and -10 + friend)</div>
-                          </div>
-                        </div>
-
-                        <div className="bg-[#FFFDF7] p-3.5 rounded-2xl border-2 border-amber-200/70 flex items-start gap-3">
-                          <span className="w-7 h-7 rounded-xl bg-orange-100 text-orange-700 flex items-center justify-center font-black text-xs flex-shrink-0">
-                            4
-                          </span>
-                          <div>
-                            <div className="text-sm font-extrabold text-[#1D3557]">1-Digit 5-Row Calculation</div>
-                            <div className="text-xs text-slate-500">5 consecutive single-digit rapid speed calculation drills</div>
-                          </div>
-                        </div>
+                        ))}
                       </div>
                     </div>
 

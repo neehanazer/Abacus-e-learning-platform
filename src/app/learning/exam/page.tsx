@@ -86,9 +86,88 @@ interface ExamEvaluationResult {
   }[];
 }
 
+const LEVEL_FINAL_EXAM_MAP: Record<number, { id: string; title: string; description: string }> = {
+  1: {
+    id: "67b100000000000000000003",
+    title: "Level 1: Official Level Certification Final Exam",
+    description:
+      "Formal Level 1 Certification Exam (10 min max). Requires meeting readiness criteria before unlocking. Monitored with live camera & microphone AI proctoring.",
+  },
+  2: {
+    id: "67b100000000000000000012",
+    title: "Level 2: Official Level Certification Final Exam",
+    description:
+      "Formal Level 2 Certification Exam testing 1-Digit 10-15 rows and 2-Digit 3-8 rows multi-row stamina. AI camera & microphone proctored.",
+  },
+  3: {
+    id: "67b100000000000000000013",
+    title: "Level 3: Official Level Certification Final Exam",
+    description:
+      "Formal Level 3 Certification Exam covering 1-Digit 20-25 rows, 2-Digit 10-12 rows, and 3-Digit calculations. Monitored with live AI proctoring.",
+  },
+  4: {
+    id: "67b100000000000000000014",
+    title: "Level 4: Official Level Certification Final Exam",
+    description:
+      "Formal Level 4 Certification Exam testing 4-Digit multi-row, 3-Digit 10-row, and 2-Digit 20-row calculations. AI proctored.",
+  },
+  5: {
+    id: "67b100000000000000000015",
+    title: "Level 5: Official Level Certification Final Exam",
+    description:
+      "Formal Level 5 Certification Exam testing 2D × 1D Multiplication, 4-Digit 7-10 rows, and 3-Digit multi-row continuous drills. AI proctored.",
+  },
+  6: {
+    id: "67b100000000000000000016",
+    title: "Level 6: Official Level Certification Final Exam",
+    description:
+      "Formal Level 6 Certification Exam covering Advanced Multi-Digit Multiplication, Division, and 5-Digit rows. AI proctored.",
+  },
+  7: {
+    id: "67b100000000000000000017",
+    title: "Level 7: Official Level Certification Final Exam",
+    description:
+      "Formal Level 7 Certification Exam testing 3D×2D & 3D×3D Multiplication, 3D÷2D Division, and Multi-Row accuracy. AI proctored.",
+  },
+  8: {
+    id: "67b100000000000000000018",
+    title: "Level 8: Grand Master Mental Certification Final Exam",
+    description:
+      "Capstone Grand Master Certification Exam testing Anzan Mental Abacus mastery, Competition Flash Drills, and Rapid Multi-Row Mental Arithmetic. Fully proctored.",
+  },
+};
+
+const CERTIFICATION_LEVELS = [
+  { level: 1, name: "Foundations", icon: "🌱" },
+  { level: 2, name: "Explorer", icon: "🚀" },
+  { level: 3, name: "Intermediate", icon: "⭐" },
+  { level: 4, name: "Advanced", icon: "⚡" },
+  { level: 5, name: "Senior Expert", icon: "🔥" },
+  { level: 6, name: "Master", icon: "🏆" },
+  { level: 7, name: "Champion", icon: "👑" },
+  { level: 8, name: "Grand Master", icon: "🧙‍♂️" },
+];
+
 export default function FinalExamPage() {
   const router = useRouter();
   const { user } = useAuth();
+
+  const studentLevel = React.useMemo(() => {
+    const raw = user?.selectedLevel || user?.abacusLevel || (user as any)?.currentLevel || "";
+    const m = String(raw).match(/Level\s*(\d+)/i) || String(raw).match(/^(\d+)$/);
+    return m ? parseInt(m[1], 10) : 1;
+  }, [user]);
+
+  const [activeLevelTab, setActiveLevelTab] = useState<number>(studentLevel || 1);
+
+  useEffect(() => {
+    if (studentLevel) {
+      setActiveLevelTab(studentLevel);
+    }
+  }, [studentLevel]);
+
+  const currentFinalDef = LEVEL_FINAL_EXAM_MAP[activeLevelTab] || LEVEL_FINAL_EXAM_MAP[1];
+  const finalExamId = currentFinalDef.id;
 
   // State: "overview" | "session" | "result"
   const [viewState, setViewState] = useState<"overview" | "session" | "result">("overview");
@@ -120,10 +199,9 @@ export default function FinalExamPage() {
   const [isShutOff, setIsShutOff] = useState<boolean>(false);
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
-  const finalExamId = "67b100000000000000000003";
 
   // Fetch Readiness & Final Exam Info
-  const fetchExamOverview = useCallback(async () => {
+  const fetchExamOverview = useCallback(async (targetExamId: string = finalExamId) => {
     try {
       setLoading(true);
       setError(null);
@@ -136,18 +214,18 @@ export default function FinalExamPage() {
       }
 
       // 2. Fetch Final Exam Details
-      const examRes = await fetch(`/api/exams/${finalExamId}`);
+      const examRes = await fetch(`/api/exams/${targetExamId}`);
       const examJson = await examRes.json();
       if (examJson.success) {
         setExamData(examJson.data);
       } else {
-        // Fallback default structure
+        // Fallback default structure for selected level
+        const currentDef = LEVEL_FINAL_EXAM_MAP[activeLevelTab] || LEVEL_FINAL_EXAM_MAP[1];
         setExamData({
-          id: finalExamId,
-          title: "Level 1: Official Level Certification Final Exam",
-          description:
-            "Formal Level 1 Certification Exam (10 min max). Requires meeting readiness criteria before unlocking. Monitored with live camera & microphone AI proctoring.",
-          levelName: "Level 1",
+          id: targetExamId,
+          title: currentDef.title,
+          description: currentDef.description,
+          levelName: `Level ${activeLevelTab}`,
           duration: 10,
           totalQuestions: 10,
           totalMarks: 100,
@@ -161,11 +239,11 @@ export default function FinalExamPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [finalExamId, activeLevelTab]);
 
   useEffect(() => {
-    fetchExamOverview();
-  }, [fetchExamOverview]);
+    fetchExamOverview(finalExamId);
+  }, [fetchExamOverview, finalExamId]);
 
   // Log proctoring anomaly event
   const logProctoringEvent = useCallback(
@@ -441,13 +519,67 @@ export default function FinalExamPage() {
                 <span className="text-sm font-semibold">{error}</span>
               </div>
               <button
-                onClick={fetchExamOverview}
+                onClick={() => fetchExamOverview(finalExamId)}
                 className="px-4 py-1.5 bg-rose-600 text-white rounded-xl text-xs font-bold hover:bg-rose-700 transition"
               >
                 Retry
               </button>
             </div>
           )}
+
+          {/* Syllabus Level Ribbon */}
+          <div className="bg-white rounded-3xl p-3 sm:p-4 border-2 border-indigo-200/90 shadow-sm space-y-2 mb-8">
+            <div className="flex items-center justify-between gap-2 px-1">
+              <span className="text-xs font-black uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+                <span>🎓</span> Select Certification Level Exam:
+              </span>
+              <span className="text-[11px] font-bold text-indigo-900 bg-indigo-100/90 px-2.5 py-0.5 rounded-full border border-indigo-300/80">
+                Enrolled Student Level: <strong className="font-black">Level {studentLevel}</strong>
+              </span>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2">
+              {CERTIFICATION_LEVELS.map((lvl) => {
+                const isActive = activeLevelTab === lvl.level;
+                const isUserLevel = studentLevel === lvl.level;
+
+                return (
+                  <button
+                    key={lvl.level}
+                    type="button"
+                    onClick={() => setActiveLevelTab(lvl.level)}
+                    className={`p-2.5 rounded-2xl text-left transition-all duration-200 relative cursor-pointer border ${
+                      isActive
+                        ? "bg-gradient-to-br from-indigo-700 to-purple-800 text-white border-indigo-500 shadow-md scale-[1.02]"
+                        : "bg-[#FFFBF0] hover:bg-indigo-50 text-slate-700 border-indigo-200/70"
+                    }`}
+                  >
+                    {isUserLevel && (
+                      <span
+                        className={`absolute -top-1.5 -right-1.5 text-[9px] font-black px-1.5 py-0.5 rounded-full uppercase tracking-tighter ${
+                          isActive ? "bg-amber-400 text-slate-900" : "bg-indigo-600 text-white"
+                        }`}
+                      >
+                        Current
+                      </span>
+                    )}
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-base">{lvl.icon}</span>
+                      <span className={`text-xs font-black ${isActive ? "text-white" : "text-[#1D3557]"}`}>
+                        Level {lvl.level}
+                      </span>
+                    </div>
+                    <div
+                      className={`text-[10px] font-bold truncate mt-0.5 ${
+                        isActive ? "text-indigo-200" : "text-slate-500"
+                      }`}
+                    >
+                      {lvl.name}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
 
           {/* Camera & Microphone Device Option & Pre-Check */}
           <ExamProctoringMedia mode="precheck" onIncident={logProctoringEvent} />
@@ -620,7 +752,7 @@ export default function FinalExamPage() {
             <div className="bg-white rounded-3xl p-4 sm:p-6 border-2 border-indigo-200 shadow-md mb-6 flex flex-wrap items-center justify-between gap-4">
               <div>
                 <div className="text-xs font-bold text-indigo-500 uppercase tracking-wider mb-1">
-                  Official Level 1 Certification Exam
+                  {examData?.title || `Official Level ${activeLevelTab} Certification Exam`}
                 </div>
                 <h2 className="text-xl sm:text-2xl font-extrabold text-[#1D3557] font-heading">
                   Question {currentQuestionIndex + 1} of {questions.length}
@@ -681,7 +813,7 @@ export default function FinalExamPage() {
           {/* Question Card */}
           <div className="bg-white rounded-3xl p-6 sm:p-10 border-2 border-indigo-200 shadow-xl mb-6 text-center">
             <span className="text-xs font-extrabold px-3 py-1 rounded-full bg-indigo-100 text-indigo-800 inline-block mb-6">
-              {currentQ.ruleType || "Official Level 1 Evaluation Problem"}
+              {currentQ.ruleType || `Official Level ${activeLevelTab} Evaluation Problem`}
             </span>
 
             <h3 className="text-4xl sm:text-6xl font-black font-heading text-[#1D3557] tracking-wider mb-6">
@@ -814,7 +946,7 @@ export default function FinalExamPage() {
           >
             <div className="relative z-10 max-w-xl">
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-xs font-black uppercase tracking-wider mb-3">
-                {evalResult.isPassed ? "🎓 Level 1 Certified!" : "📚 Certification Re-attempt Needed"}
+                {evalResult.isPassed ? `🎓 Level ${activeLevelTab} Certified!` : "📚 Certification Re-attempt Needed"}
               </span>
 
               <h2 className="text-3xl sm:text-5xl font-black font-heading mb-2">
@@ -823,7 +955,7 @@ export default function FinalExamPage() {
               <p className="text-white/90 text-sm font-medium mb-6">
                 {evalResult.isPassed
                   ? `Outstanding! You achieved ${evalResult.percentage}%, successfully passing the 70% certification requirement.`
-                  : `You achieved ${evalResult.percentage}%. You need 70% to earn your official Level 1 graduation certificate.`}
+                  : `You achieved ${evalResult.percentage}%. You need 70% to earn your official Level ${activeLevelTab} graduation certificate.`}
               </p>
 
               <div className="grid grid-cols-3 gap-3 bg-black/20 rounded-2xl p-3 text-center text-xs font-bold">

@@ -52,7 +52,7 @@ interface HomeworkContextType {
 
 const HomeworkContext = createContext<HomeworkContextType | undefined>(undefined);
 
-const STORAGE_KEY = "abacus_homework_state_v1";
+const STORAGE_KEY = "abacus_homework_state_v2";
 const ATTEMPTS_KEY = "abacus_homework_attempts_v1";
 
 export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -71,14 +71,42 @@ export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [attemptHistory, setAttemptHistory] = useState<HomeworkAttempt[]>([]);
   const [latestAttempt, setLatestAttempt] = useState<HomeworkAttempt | null>(null);
 
-  // Load from localStorage
+  // Load from localStorage with v1 -> v2 migration
   useEffect(() => {
     try {
-      const savedTasks = localStorage.getItem(STORAGE_KEY);
-      if (savedTasks) {
-        const parsed = JSON.parse(savedTasks);
+      const savedTasksV2 = localStorage.getItem(STORAGE_KEY);
+      if (savedTasksV2) {
+        const parsed = JSON.parse(savedTasksV2);
         if (Array.isArray(parsed) && parsed.length > 0) {
           setHomeworkList(parsed);
+        }
+      } else {
+        // Check for v1 tasks to migrate past submissions
+        const savedTasksV1 = localStorage.getItem("abacus_homework_state_v1");
+        if (savedTasksV1) {
+          try {
+            const parsedV1 = JSON.parse(savedTasksV1);
+            if (Array.isArray(parsedV1)) {
+              const completedV1Ids = new Set(
+                parsedV1.filter((t: any) => t.status === "evaluated" || t.status === "submitted").map((t: any) => t.id)
+              );
+              const merged = INITIAL_HOMEWORK_LIST.map((t) => {
+                if (completedV1Ids.has(t.id)) {
+                  const match = parsedV1.find((p: any) => p.id === t.id);
+                  return match || t;
+                }
+                return t;
+              });
+              setHomeworkList(merged);
+              localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+            }
+          } catch {
+            setHomeworkList(INITIAL_HOMEWORK_LIST);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(INITIAL_HOMEWORK_LIST));
+          }
+        } else {
+          setHomeworkList(INITIAL_HOMEWORK_LIST);
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(INITIAL_HOMEWORK_LIST));
         }
       }
 

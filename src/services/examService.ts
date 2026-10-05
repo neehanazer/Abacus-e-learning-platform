@@ -115,8 +115,9 @@ export class ExamService {
     try {
       if (mongoose.connection?.readyState === 1) {
         const mockCount = await Exam.countDocuments({ type: "mock", status: "active" });
+        const finalCount = await Exam.countDocuments({ type: "final", status: "active" });
         const totalCount = await Exam.countDocuments();
-        if (totalCount === 0 || mockCount !== 1) {
+        if (totalCount === 0 || mockCount < 8 || finalCount < 8) {
           const { seedExams } = await import("@/lib/examSeedData");
           await seedExams();
         }
@@ -146,10 +147,20 @@ export class ExamService {
 
         const mockExams = await Exam.find({ type: "mock", status: "active" })
           .populate("levelId", "levelName order")
-          .sort({ createdAt: 1 })
           .lean();
 
         if (mockExams.length > 0) {
+          // Sort by levelOrder ascending
+          mockExams.sort((a: any, b: any) => {
+            const orderA =
+              a.levelId?.order ||
+              (a.title.match(/Level\s*(\d+)/i) ? parseInt(a.title.match(/Level\s*(\d+)/i)[1], 10) : 1);
+            const orderB =
+              b.levelId?.order ||
+              (b.title.match(/Level\s*(\d+)/i) ? parseInt(b.title.match(/Level\s*(\d+)/i)[1], 10) : 1);
+            return orderA - orderB;
+          });
+
           const result = await Promise.all(
             mockExams.map(async (exam: any) => {
               let attemptsCount = 0;
@@ -172,11 +183,16 @@ export class ExamService {
                 }
               }
 
+              const levelOrder =
+                exam.levelId?.order ||
+                (exam.title.match(/Level\s*(\d+)/i) ? parseInt(exam.title.match(/Level\s*(\d+)/i)[1], 10) : 1);
+
               return {
                 id: exam._id.toString(),
                 title: exam.title,
                 description: exam.description || "",
-                levelName: exam.levelId?.levelName || "Level 1",
+                levelName: exam.levelId?.levelName || `Level ${levelOrder}`,
+                levelOrder,
                 type: "mock",
                 duration: exam.duration,
                 totalQuestions: exam.totalQuestions,
@@ -212,7 +228,8 @@ export class ExamService {
         id: e._id,
         title: e.title,
         description: e.description,
-        levelName: "Level 1",
+        levelName: `Level ${e.levelOrder}`,
+        levelOrder: e.levelOrder,
         type: "mock",
         duration: Math.min(e.duration || 10, 10),
         totalQuestions: e.totalQuestions,
@@ -269,7 +286,7 @@ export class ExamService {
           _id: found._id,
           title: found.title,
           description: found.description,
-          levelId: { levelName: "Level 1", order: found.levelOrder },
+          levelId: { levelName: `Level ${found.levelOrder}`, order: found.levelOrder },
           type: found.type,
           duration: found.duration,
           totalQuestions: found.totalQuestions,
@@ -310,11 +327,17 @@ export class ExamService {
       }
     }
 
+    const detectedLevelName =
+      examDoc.levelId?.levelName ||
+      (examDoc.title.match(/Level\s*(\d+)/i)
+        ? `Level ${examDoc.title.match(/Level\s*(\d+)/i)[1]}`
+        : "Level 1");
+
     return {
       id: examDoc._id.toString(),
       title: examDoc.title,
       description: examDoc.description || "",
-      levelName: examDoc.levelId?.levelName || "Level 1",
+      levelName: detectedLevelName,
       type: examDoc.type as "mock" | "final",
       duration: Math.min(examDoc.duration || 10, 10),
       totalQuestions: examDoc.totalQuestions,

@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useHomework } from "@/context/HomeworkContext";
 import { HomeworkTask } from "@/data/homeworkData";
@@ -52,9 +52,35 @@ export function isDueDateOver(dueDateStr?: string): boolean {
   return false;
 }
 
+const HOMEWORK_LEVELS = [
+  { level: 1, name: "Foundations", icon: "🌱" },
+  { level: 2, name: "Explorer", icon: "🚀" },
+  { level: 3, name: "Intermediate", icon: "⭐" },
+  { level: 4, name: "Advanced", icon: "⚡" },
+  { level: 5, name: "Senior Expert", icon: "🔥" },
+  { level: 6, name: "Master", icon: "🏆" },
+  { level: 7, name: "Champion", icon: "👑" },
+  { level: 8, name: "Grand Master", icon: "🧙‍♂️" },
+];
+
 export const HomeworkDashboard: React.FC = () => {
   const { user } = useAuth();
-  const isLevel2 = (user?.selectedLevel?.includes("2") || user?.abacusLevel?.includes("2")) ?? false;
+
+  const studentLevel = React.useMemo(() => {
+    const raw = user?.selectedLevel || user?.abacusLevel || (user as any)?.currentLevel || "";
+    const m = String(raw).match(/Level\s*(\d+)/i) || String(raw).match(/^(\d+)$/);
+    return m ? parseInt(m[1], 10) : 1;
+  }, [user]);
+
+  const [activeLevelTab, setActiveLevelTab] = useState<number>(studentLevel || 1);
+
+  useEffect(() => {
+    if (studentLevel) {
+      setActiveLevelTab(studentLevel);
+    }
+  }, [studentLevel]);
+
+  const isLevel2OrHigher = studentLevel >= 2;
 
   const {
     homeworkList,
@@ -88,10 +114,13 @@ export const HomeworkDashboard: React.FC = () => {
     (t) => t.status === "submitted" || t.status === "evaluated"
   );
 
-  // Completed homeworks are never visible in the tasks grid
-  const displayedTasks = pendingTasks;
+  // Filter pending tasks by selected syllabus level tab
+  const displayedTasks = pendingTasks.filter((t) => t.level === activeLevelTab);
 
-  // Calculate high-level stats
+  // Calculate high-level stats for active level
+  const activeLevelPending = pendingTasks.filter((t) => t.level === activeLevelTab).length;
+  const activeLevelCompleted = completedTasks.filter((t) => t.level === activeLevelTab).length;
+
   const totalCompleted = completedTasks.length;
   const totalPending = pendingTasks.length;
   const avgScore =
@@ -113,14 +142,14 @@ export const HomeworkDashboard: React.FC = () => {
           <div className="space-y-2 max-w-xl">
             <div className="inline-flex items-center gap-2 px-3.5 py-1 bg-amber-100 text-amber-900 border-2 border-amber-300 rounded-full text-xs font-black uppercase tracking-wider">
               <Sparkles className="w-3.5 h-3.5 text-amber-600" />
-              {isLevel2 ? "Level 2 — Explorer • Homework Section 🚀" : "Module 2 • Homework Section"}
+              {`Level ${studentLevel} Enrolled • Homework Hub 🚀`}
             </div>
             <h1 className="text-2xl sm:text-4xl font-black text-[#1D3557] font-heading">
-              {isLevel2 ? "Level 2 Homework Hub 📝" : "Abacus Homework Hub"}
+              {`Level ${activeLevelTab} Homework Hub 📝`}
             </h1>
             <p className="text-stone-600 text-sm sm:text-base font-medium">
-              {isLevel2
-                ? "Congratulations on completing Level 1! Your homework tasks are now upgraded to Level 2 (Two-Digit calculations & Small Friends rules). Complete assignments for instant evaluation!"
+              {studentLevel >= 2
+                ? `You have graduated to Level ${studentLevel}! Your homework tasks are upgraded with active due dates. Complete assignments for instant AI evaluation!`
                 : "Reinforce what you learned in video lessons with targeted homework worksheets. Complete assignments, get instant evaluation, and track your accuracy."}
             </p>
           </div>
@@ -128,17 +157,17 @@ export const HomeworkDashboard: React.FC = () => {
           {/* Quick Metrics */}
           <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
             <div className="flex-1 min-w-[110px] bg-white p-3.5 rounded-2xl border-2 border-amber-200 text-center shadow-sm">
-              <div className="text-xs font-bold text-stone-500 uppercase">Pending</div>
-              <div className="text-2xl font-black text-amber-600">{totalPending}</div>
+              <div className="text-xs font-bold text-stone-500 uppercase">Level {activeLevelTab} Pending</div>
+              <div className="text-2xl font-black text-amber-600">{activeLevelPending}</div>
             </div>
 
             <div className="flex-1 min-w-[110px] bg-white p-3.5 rounded-2xl border-2 border-amber-200 text-center shadow-sm">
-              <div className="text-xs font-bold text-stone-500 uppercase">Completed</div>
-              <div className="text-2xl font-black text-emerald-600">{totalCompleted}</div>
+              <div className="text-xs font-bold text-stone-500 uppercase">Level {activeLevelTab} Done</div>
+              <div className="text-2xl font-black text-emerald-600">{activeLevelCompleted}</div>
             </div>
 
             <div className="flex-1 min-w-[110px] bg-white p-3.5 rounded-2xl border-2 border-amber-200 text-center shadow-sm">
-              <div className="text-xs font-bold text-stone-500 uppercase">Avg. Accuracy</div>
+              <div className="text-xs font-bold text-stone-500 uppercase">Overall Accuracy</div>
               <div className="text-2xl font-black text-indigo-600">
                 {avgScore > 0 ? `${avgScore}%` : "—"}
               </div>
@@ -148,7 +177,67 @@ export const HomeworkDashboard: React.FC = () => {
       </div>
 
       {/* ============================================================ */}
-      {/* 2. LEARNING FLOW STEPPER BANNER */}
+      {/* 2. SYLLABUS LEVEL NAVIGATOR RIBBON */}
+      {/* ============================================================ */}
+      <div className="bg-white rounded-3xl p-3 sm:p-4 border-2 border-amber-200/90 shadow-sm space-y-2">
+        <div className="flex items-center justify-between gap-2 px-1">
+          <span className="text-xs font-black uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+            <span>📚</span> Syllabus Level Navigator:
+          </span>
+          <span className="text-[11px] font-bold text-amber-900 bg-amber-100/90 px-2.5 py-0.5 rounded-full border border-amber-300/80">
+            Enrolled Student Level: <strong className="font-black">Level {studentLevel}</strong>
+          </span>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2">
+          {HOMEWORK_LEVELS.map((lvl) => {
+            const isActive = activeLevelTab === lvl.level;
+            const isUserLevel = studentLevel === lvl.level;
+            const levelPendingCount = pendingTasks.filter((t) => t.level === lvl.level).length;
+
+            return (
+              <button
+                key={lvl.level}
+                type="button"
+                onClick={() => {
+                  setActiveLevelTab(lvl.level);
+                  setActiveTab("pending");
+                }}
+                className={`p-2.5 rounded-2xl text-left transition-all duration-200 relative cursor-pointer border ${
+                  isActive
+                    ? "bg-gradient-to-br from-amber-500 to-orange-600 text-white border-orange-400 shadow-md scale-[1.02]"
+                    : "bg-[#FFFBF0] hover:bg-amber-50 text-slate-700 border-amber-200/70"
+                }`}
+              >
+                {isUserLevel && (
+                  <span
+                    className={`absolute -top-1.5 -right-1.5 text-[9px] font-black px-1.5 py-0.5 rounded-full uppercase tracking-tighter ${
+                      isActive ? "bg-white text-slate-900" : "bg-amber-600 text-white"
+                    }`}
+                  >
+                    Current
+                  </span>
+                )}
+                <div className="flex items-center gap-1.5">
+                  <span className="text-base">{lvl.icon}</span>
+                  <span className={`text-xs font-black ${isActive ? "text-white" : "text-[#1D3557]"}`}>
+                    Level {lvl.level}
+                  </span>
+                </div>
+                <div
+                  className={`text-[10px] font-bold truncate mt-0.5 ${
+                    isActive ? "text-amber-100" : "text-slate-500"
+                  }`}
+                >
+                  {levelPendingCount} Pending
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* ============================================================ */}
+      {/* 3. LEARNING FLOW STEPPER BANNER */}
       {/* ============================================================ */}
       <div className="bg-white rounded-2xl p-4 border-2 border-stone-200 shadow-sm">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
@@ -187,7 +276,7 @@ export const HomeworkDashboard: React.FC = () => {
       </div>
 
       {/* ============================================================ */}
-      {/* 3. TABS & FILTER BAR */}
+      {/* 4. TABS & FILTER BAR */}
       {/* ============================================================ */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2 bg-stone-100 p-1.5 rounded-2xl border border-stone-200">
@@ -200,7 +289,7 @@ export const HomeworkDashboard: React.FC = () => {
             }`}
           >
             <span className="w-2 h-2 rounded-full bg-amber-500" />
-            {isLevel2 ? `Level 2 Assigned Homework (${pendingTasks.length})` : `Assigned Homework (${pendingTasks.length})`}
+            {`Level ${activeLevelTab} Assigned Homework (${displayedTasks.length})`}
           </button>
           <button
             onClick={() => setActiveTab("attempts")}
@@ -217,7 +306,7 @@ export const HomeworkDashboard: React.FC = () => {
       </div>
 
       {/* ============================================================ */}
-      {/* 4. HOMEWORK TASKS GRID OR ATTEMPTS LIST */}
+      {/* 5. HOMEWORK TASKS GRID OR ATTEMPTS LIST */}
       {/* ============================================================ */}
       {activeTab === "attempts" ? (
         /* Attempts History List */

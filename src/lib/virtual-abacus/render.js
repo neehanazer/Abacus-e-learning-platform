@@ -705,9 +705,9 @@ class AbacusRenderer {
                         elem.digitCell.classList.remove('has-value');
 
                         // Dynamic live LCD roll-down count as hand clears each rod
-                        if (this.callbacks.onValueChange) {
-                            const liveVal = this.model.calculateTotal();
-                            this.callbacks.onValueChange(liveVal, this.model.formatTotalDisplay(liveVal));
+                        if (this.options && this.options.onValueChange) {
+                            const liveVal = this.model.getTotalValue();
+                            this.options.onValueChange(liveVal, this.model.getFormattedValue());
                         }
 
                         if (hadValue && window.abacusAudio) {
@@ -752,8 +752,8 @@ class AbacusRenderer {
         const frameRect = this.frame.getBoundingClientRect();
 
         // Part 1: Outer Frame (Top-left hardwood corner)
-        const pFrameTarget = { x: 25, y: 35 };
-        const pFrameLabel = { x: 18, y: -45 };
+        const pFrameTarget = { x: 28, y: 26 };
+        const pFrameLabel = { x: 16, y: 56 };
 
         // Part 2: Upper Beads (Heaven bead on Rod 4)
         const rodUpperIdx = Math.min(4, this.model.rodCount - 1);
@@ -805,7 +805,7 @@ class AbacusRenderer {
                 color: '#f59e0b',
                 target: pFrameTarget,
                 label: pFrameLabel,
-                arrowStart: { x: pFrameLabel.x + 40, y: pFrameLabel.y + 36 },
+                arrowStart: { x: pFrameLabel.x + 35, y: pFrameLabel.y },
                 highlight: 'frame'
             },
             {

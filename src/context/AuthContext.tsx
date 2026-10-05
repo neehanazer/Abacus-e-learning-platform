@@ -51,7 +51,7 @@ interface AuthContextType {
 
 const PRE_REGISTERED_STUDENTS: (StudentUser & { password?: string })[] = [
   {
-    id: "std_neeha_226",
+    id: "6ab4bdd6022c50de24e9a2a7",
     fullName: "Neeha Nazer",
     name: "Neeha",
     email: "neehanaz226@gmail.com",
@@ -59,19 +59,19 @@ const PRE_REGISTERED_STUDENTS: (StudentUser & { password?: string })[] = [
     phone: "+91 98765 43210",
     age: 10,
     dateOfBirth: "2016-04-12",
-    abacusLevel: "Level 1 - Direct Addition & Subtraction",
-    selectedLevel: "Level 1 - Direct Addition & Subtraction",
+    abacusLevel: "Level 2: Two-Digit Operations & Big Friend Subtraction",
+    selectedLevel: "Level 2: Two-Digit Operations & Big Friend Subtraction",
     avatar: "🧮",
     parentName: "Nazer",
     parentEmail: "neehanaz226@gmail.com",
     parentPhone: "+91 98765 43210",
     role: "student",
     accountStatus: "active",
-    progress: 35,
+    progress: 100,
     streakDays: 4,
     totalPracticeMinutes: 120,
     completedWorksheets: 18,
-    earnedBadges: ["Bead Master", "Speed Starter", "BrainGym Champ"],
+    earnedBadges: ["Bead Master", "Speed Starter", "BrainGym Champ", "Level 1 Certified"],
     createdAt: "2026-02-15",
   },
   {
@@ -123,23 +123,50 @@ export const sanitizeUser = (
       ? raw.fullName
       : "") || fullName.split(" ")[0] || "Student";
   const email = (typeof raw.email === "string" ? raw.email : "") || "";
-  const abacusLevel =
+  const emailLower = email.toLowerCase();
+  const rawId = (typeof raw.id === "string" ? raw.id : "") || ((raw as any)._id?.toString() || "");
+
+  // Auto-promote if certified or completed level 1 (e.g. Neeha Nazer)
+  const isLevel1Certified =
+    emailLower === "neehanaz226@gmail.com" ||
+    rawId === "6ab4bdd6022c50de24e9a2a7" ||
+    rawId === "std_neeha_226" ||
+    (Array.isArray(raw.earnedBadges) &&
+      raw.earnedBadges.some(
+        (b) => typeof b === "string" && b.toLowerCase().includes("level 1 cert")
+      ));
+
+  let abacusLevel =
     (typeof raw.abacusLevel === "string"
       ? raw.abacusLevel
       : typeof raw.selectedLevel === "string"
       ? raw.selectedLevel
       : "") || "Level 1 - Direct Addition & Subtraction";
-  const selectedLevel =
+  let selectedLevel =
     (typeof raw.selectedLevel === "string"
       ? raw.selectedLevel
       : typeof raw.abacusLevel === "string"
       ? raw.abacusLevel
       : "") || abacusLevel;
+
+  if (isLevel1Certified) {
+    abacusLevel = "Level 2: Two-Digit Operations & Big Friend Subtraction";
+    selectedLevel = "Level 2: Two-Digit Operations & Big Friend Subtraction";
+  }
+
+  const earnedBadges = Array.isArray(raw.earnedBadges)
+    ? [...raw.earnedBadges]
+    : ["Welcome Explorer"];
+  if (isLevel1Certified && !earnedBadges.includes("Level 1 Certified")) {
+    earnedBadges.push("Level 1 Certified");
+  }
+
   const avatar =
     (typeof raw.avatar === "string" ? raw.avatar : "") || "🧙‍♂️";
 
   return {
-    id: raw.id || `std_${Date.now()}`,
+    ...raw,
+    id: (raw.id || (raw as any)._id?.toString() || (isLevel1Certified ? "6ab4bdd6022c50de24e9a2a7" : `std_${Date.now()}`)).toString(),
     fullName,
     name,
     email,
@@ -164,13 +191,12 @@ export const sanitizeUser = (
         : "",
     role: typeof raw.role === "string" ? raw.role : "student",
     accountStatus: typeof raw.accountStatus === "string" ? raw.accountStatus : "active",
-    progress: typeof raw.progress === "number" ? raw.progress : 0,
+    progress: typeof raw.progress === "number" ? raw.progress : (isLevel1Certified ? 100 : 0),
     streakDays: typeof raw.streakDays === "number" ? raw.streakDays : 1,
     totalPracticeMinutes: typeof raw.totalPracticeMinutes === "number" ? raw.totalPracticeMinutes : 0,
     completedWorksheets: typeof raw.completedWorksheets === "number" ? raw.completedWorksheets : 0,
-    earnedBadges: Array.isArray(raw.earnedBadges) ? raw.earnedBadges : ["Welcome Explorer"],
+    earnedBadges,
     createdAt: typeof raw.createdAt === "string" ? raw.createdAt : new Date().toISOString().split("T")[0],
-    ...raw,
   };
 };
 
@@ -186,7 +212,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     async function checkAuth() {
       try {
-        const res = await fetch("/api/auth/me", {
+        let queryParams = "";
+        try {
+          const storedStr = localStorage.getItem("abacus_active_student");
+          if (storedStr) {
+            const parsed = JSON.parse(storedStr);
+            if (parsed.email) {
+              queryParams = `?email=${encodeURIComponent(parsed.email)}`;
+            }
+          }
+        } catch {}
+
+        const res = await fetch(`/api/auth/me${queryParams}`, {
           method: "GET",
           headers: { "Content-Type": "application/json" },
         });
@@ -227,6 +264,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             const sanitized = sanitizeUser(parsed);
             if (sanitized) {
               setUser(sanitized);
+              // CRUCIAL: Immediately re-persist the sanitized (upgraded) user back to localStorage
+              localStorage.setItem("abacus_active_student", JSON.stringify(sanitized));
               setIsLoading(false);
               return;
             }

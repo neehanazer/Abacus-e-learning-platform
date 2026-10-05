@@ -144,7 +144,7 @@ export const PracticeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       );
       if (userLvl && userLvl !== selectedLevel) {
         setSelectedLevelState(userLvl);
-        setStudentMaxLevel(Math.max(studentMaxLevel, userLvl));
+        setStudentMaxLevel((prev) => Math.max(prev, userLvl));
         const cat = PRACTICE_CATEGORIES.find((c) => c.level === userLvl) || PRACTICE_CATEGORIES[0];
         setActiveCategory(cat);
         setActiveFilter({
@@ -160,7 +160,7 @@ export const PracticeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         setQuestions(generateComprehensivePracticeQuestions(20, userLvl));
       }
     }
-  }, [user]);
+  }, [user, user?.selectedLevel, user?.abacusLevel, selectedLevel]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(0);
   const [userAnswers, setUserAnswers] = useState<Record<string, number | null>>({});
   const [isSubmitted, setIsSubmitted] = useState<Record<string, boolean>>({});

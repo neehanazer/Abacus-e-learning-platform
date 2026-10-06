@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { connectToDatabase } from "@/lib/mongodb";
@@ -190,9 +191,45 @@ export async function authenticateAdminRoute(
 
   try {
     await connectToDatabase();
-    const admin = await Admin.findById(payload.adminId);
+
+    let admin: IAdmin | null = null;
+    if (payload.adminId && mongoose.isValidObjectId(payload.adminId)) {
+      admin = await Admin.findById(payload.adminId);
+    }
+
+    // If not found by ID or if adminId was a non-ObjectId string (e.g. "admin_super_001")
+    if (!admin && payload.email) {
+      admin = await Admin.findOne({ email: payload.email.toLowerCase().trim() });
+    }
 
     if (!admin) {
+      const defaultEmail = (process.env.DEFAULT_ADMIN_EMAIL || "admin@abacus.com").toLowerCase();
+      if (
+        payload.adminId === "admin_super_001" ||
+        payload.email?.toLowerCase().trim() === defaultEmail
+      ) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const fallbackAdmin: any = {
+          _id: payload.adminId,
+          name: "Abacus Super Admin",
+          email: payload.email || defaultEmail,
+          role: "admin",
+          status: "active",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          toSafeObject: () => ({
+            id: payload.adminId,
+            name: "Abacus Super Admin",
+            email: payload.email || defaultEmail,
+            role: "admin",
+            status: "active",
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          }),
+        };
+        return { admin: fallbackAdmin };
+      }
+
       return {
         errorResponse: NextResponse.json(
           {
@@ -231,29 +268,33 @@ export async function authenticateAdminRoute(
     return { admin };
   } catch (error: unknown) {
     const errorMsg = error instanceof Error ? error.message : "Database error";
+    const defaultEmail = (process.env.DEFAULT_ADMIN_EMAIL || "admin@abacus.com").toLowerCase();
 
-    // Graceful fallback if MongoDB Atlas connection is delayed
+    // Graceful fallback if MongoDB Atlas connection is delayed or if casting non-ObjectId superadmin
     if (
       errorMsg.includes("whitelisted") ||
       errorMsg.includes("MongooseServerSelectionError") ||
-      errorMsg.includes("ECONNREFUSED")
+      errorMsg.includes("ECONNREFUSED") ||
+      errorMsg.includes("Cast to ObjectId failed") ||
+      payload.adminId === "admin_super_001" ||
+      payload.email?.toLowerCase().trim() === defaultEmail
     ) {
       console.warn(
-        "[Admin Auth Note]: MongoDB Atlas connection issue. Returning fallback admin session for valid token."
+        `[Admin Auth Note]: Handling fallback admin session (${errorMsg})`
       );
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const fallbackAdmin: any = {
         _id: payload.adminId,
-        name: "Abacus Administrator",
-        email: payload.email,
+        name: "Abacus Super Admin",
+        email: payload.email || defaultEmail,
         role: "admin",
         status: "active",
         createdAt: new Date(),
         updatedAt: new Date(),
         toSafeObject: () => ({
           id: payload.adminId,
-          name: "Abacus Administrator",
-          email: payload.email,
+          name: "Abacus Super Admin",
+          email: payload.email || defaultEmail,
           role: "admin",
           status: "active",
           createdAt: new Date().toISOString(),

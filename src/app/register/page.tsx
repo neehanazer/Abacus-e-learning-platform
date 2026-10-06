@@ -30,6 +30,37 @@ const AVATAR_OPTIONS = [
 
 const DEFAULT_LEVEL = "Level 1 - Direct Addition & Subtraction";
 
+const calculateAge = (dobString: string): number | null => {
+  if (!dobString) return null;
+  const parts = dobString.split("-");
+  if (parts.length !== 3) return null;
+  const year = parseInt(parts[0], 10);
+  const month = parseInt(parts[1], 10) - 1;
+  const day = parseInt(parts[2], 10);
+  if (isNaN(year) || isNaN(month) || isNaN(day)) return null;
+
+  const dob = new Date(year, month, day);
+  const today = new Date();
+  let age = today.getFullYear() - dob.getFullYear();
+  const m = today.getMonth() - dob.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) {
+    age--;
+  }
+  return age;
+};
+
+interface FieldErrors {
+  fullName?: string;
+  email?: string;
+  password?: string;
+  age?: string;
+  dateOfBirth?: string;
+  parentName?: string;
+  parentPhone?: string;
+  parentEmail?: string;
+  general?: string;
+}
+
 export default function RegisterPage() {
   const router = useRouter();
   const { register, isLoading, isAuthenticated } = useAuth();
@@ -38,15 +69,49 @@ export default function RegisterPage() {
     fullName: "",
     email: "",
     password: "",
-    age: "8",
-    dateOfBirth: "2018-05-14",
+    age: "",
+    dateOfBirth: "",
     avatar: "🧙‍♂️",
     parentName: "",
     parentEmail: "",
     parentPhone: "",
   });
 
-  const [errorMsg, setErrorMsg] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+
+  const handleInputChange = (field: keyof typeof formData, value: string) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+    if (field === "age" || field === "dateOfBirth") {
+      setFieldErrors((prev) => ({
+        ...prev,
+        age: undefined,
+        dateOfBirth: undefined,
+      }));
+    } else if (fieldErrors[field as keyof FieldErrors]) {
+      setFieldErrors((prev) => ({ ...prev, [field]: undefined }));
+    }
+  };
+
+  const handleAgeOrDobBlur = () => {
+    if (formData.age.trim() && formData.dateOfBirth) {
+      const enteredAge = parseInt(formData.age, 10);
+      const calcAge = calculateAge(formData.dateOfBirth);
+      if (!isNaN(enteredAge) && calcAge !== null) {
+        if (calcAge < 0) {
+          setFieldErrors((prev) => ({
+            ...prev,
+            dateOfBirth: "Date of birth cannot be in the future.",
+          }));
+        } else if (calcAge !== enteredAge) {
+          setFieldErrors((prev) => ({
+            ...prev,
+            age: `Age (${enteredAge}) does not match Date of Birth (${calcAge} years old).`,
+            dateOfBirth: `Date of birth does not match student age (${enteredAge} years old, but DOB indicates ${calcAge} years old).`,
+          }));
+        }
+      }
+    }
+  };
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -54,51 +119,84 @@ export default function RegisterPage() {
     }
   }, [isAuthenticated, router]);
 
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const params = new URLSearchParams(window.location.search);
-      const emailParam = params.get("email");
-      if (emailParam) {
-        setFormData((prev) => ({ ...prev, email: emailParam }));
-      }
-    }
-  }, []);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setErrorMsg("");
+    const errors: FieldErrors = {};
 
-    // 1. Required fields check
-    if (
-      !formData.fullName.trim() ||
-      !formData.email.trim() ||
-      !formData.password.trim() ||
-      !formData.parentName.trim() ||
-      !formData.parentPhone.trim()
-    ) {
-      setErrorMsg("Please fill out all required student and guardian fields.");
-      return;
+    // 1. Full name validation
+    if (!formData.fullName.trim()) {
+      errors.fullName = "Student full name is required.";
+    } else if (formData.fullName.trim().length < 2) {
+      errors.fullName = "Full name must be at least 2 characters.";
     }
 
     // 2. Email validation: MUST be @gmail.com
     const gmailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/i;
-    if (!gmailRegex.test(formData.email.trim())) {
-      setErrorMsg("Student email must be a valid @gmail.com address (e.g. student@gmail.com).");
-      return;
+    if (!formData.email.trim()) {
+      errors.email = "Student email is required.";
+    } else if (!gmailRegex.test(formData.email.trim())) {
+      errors.email = "Student email must be a valid @gmail.com address (e.g. student@gmail.com).";
     }
 
     // 3. Password length check
-    if (formData.password.length < 6) {
-      setErrorMsg("Password must be at least 6 characters long.");
+    if (!formData.password) {
+      errors.password = "Password is required.";
+    } else if (formData.password.length < 6) {
+      errors.password = "Password must be at least 6 characters long.";
+    }
+
+    // 4. Age validation
+    const ageNum = parseInt(formData.age, 10);
+    if (!formData.age.trim()) {
+      errors.age = "Student age is required.";
+    } else if (isNaN(ageNum) || ageNum < 3 || ageNum > 100) {
+      errors.age = "Student age must be between 3 and 100.";
+    }
+
+    // 5. Date of Birth and Age match validation
+    if (!formData.dateOfBirth) {
+      errors.dateOfBirth = "Date of birth is required.";
+    } else {
+      const calcAge = calculateAge(formData.dateOfBirth);
+      if (calcAge === null || isNaN(calcAge)) {
+        errors.dateOfBirth = "Please select a valid date of birth.";
+      } else if (calcAge < 0) {
+        errors.dateOfBirth = "Date of birth cannot be today or in the future.";
+      } else if (!errors.age && !isNaN(ageNum)) {
+        if (calcAge !== ageNum) {
+          errors.dateOfBirth = `Date of birth does not match student age (entered: ${ageNum}, but DOB indicates ${calcAge} years old).`;
+          errors.age = `Age (${ageNum}) does not match Date of Birth (${calcAge} years old).`;
+        }
+      }
+    }
+
+    // 6. Guardian Name validation
+    if (!formData.parentName.trim()) {
+      errors.parentName = "Guardian name is required.";
+    }
+
+    // 7. Phone number validation
+    const phoneDigits = formData.parentPhone.replace(/\D/g, "");
+    if (!formData.parentPhone.trim()) {
+      errors.parentPhone = "Guardian phone number is required.";
+    } else if (phoneDigits.length < 10 || phoneDigits.length > 15) {
+      errors.parentPhone = "Guardian phone must be a valid 10-15 digit number (e.g. 9876543210).";
+    }
+
+    // 8. Guardian Email validation (optional, but if provided, must be valid)
+    if (formData.parentEmail.trim()) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.parentEmail.trim())) {
+        errors.parentEmail = "Please enter a valid email address.";
+      }
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
       return;
     }
 
-    // 4. Phone number validation
-    const phoneDigits = formData.parentPhone.replace(/\D/g, "");
-    if (phoneDigits.length < 10 || phoneDigits.length > 15) {
-      setErrorMsg("Guardian phone number must be a valid 10-15 digit phone number (e.g. 9876543210).");
-      return;
-    }
+    setFieldErrors({});
 
     const res = await register({
       fullName: formData.fullName,
@@ -116,7 +214,21 @@ export default function RegisterPage() {
     if (res.success) {
       router.push("/dashboard");
     } else {
-      setErrorMsg(res.error || "Registration failed. Please try again.");
+      const err = res.error || "Registration failed. Please try again.";
+      const lower = err.toLowerCase();
+      if (lower.includes("email") || lower.includes("account with this email")) {
+        setFieldErrors({ email: err });
+      } else if (lower.includes("password")) {
+        setFieldErrors({ password: err });
+      } else if (lower.includes("phone")) {
+        setFieldErrors({ parentPhone: err });
+      } else if (lower.includes("name")) {
+        setFieldErrors({ fullName: err });
+      } else if (lower.includes("age")) {
+        setFieldErrors({ age: err });
+      } else {
+        setFieldErrors({ general: err });
+      }
     }
   };
 
@@ -147,19 +259,19 @@ export default function RegisterPage() {
           </p>
         </div>
 
-        {/* Error Alert */}
-        {errorMsg && (
+        {/* General Error Alert (Only if server error not bound to specific input) */}
+        {fieldErrors.general && (
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             className="mb-8 p-4 rounded-2xl bg-rose-50 border border-rose-200 flex items-center gap-3 text-rose-700 text-xs sm:text-sm font-semibold"
           >
             <AlertCircle className="w-5 h-5 shrink-0 text-rose-500" />
-            <span>{errorMsg}</span>
+            <span>{fieldErrors.general}</span>
           </motion.div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-8">
+        <form noValidate onSubmit={handleSubmit} className="space-y-8" autoComplete="off">
           {/* SECTION 1: AVATAR SELECTION */}
           <div>
             <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-3">
@@ -201,12 +313,21 @@ export default function RegisterPage() {
                 </label>
                 <input
                   type="text"
-                  required
                   placeholder="e.g. Alex Parker"
                   value={formData.fullName}
-                  onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                  className="w-full px-4 py-3 rounded-2xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/50 text-sm bg-slate-50/50 font-medium"
+                  onChange={(e) => handleInputChange("fullName", e.target.value)}
+                  className={`w-full px-4 py-3 rounded-2xl border transition text-sm font-medium focus:outline-none focus:ring-2 ${
+                    fieldErrors.fullName
+                      ? "border-rose-400 bg-rose-50/30 text-slate-900 focus:ring-rose-400/50"
+                      : "border-slate-200 bg-slate-50/50 focus:ring-purple-500/50"
+                  }`}
                 />
+                {fieldErrors.fullName && (
+                  <p className="text-xs text-rose-600 font-semibold flex items-center gap-1.5 mt-1.5">
+                    <AlertCircle className="w-3.5 h-3.5 shrink-0 text-rose-500" />
+                    <span>{fieldErrors.fullName}</span>
+                  </p>
+                )}
               </div>
 
               <div className="space-y-1.5">
@@ -215,12 +336,22 @@ export default function RegisterPage() {
                 </label>
                 <input
                   type="email"
-                  required
-                  placeholder="student@gmail.com"
+                  placeholder="e.g. student@gmail.com"
+                  autoComplete="off"
                   value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full px-4 py-3 rounded-2xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/50 text-sm bg-slate-50/50 font-medium"
+                  onChange={(e) => handleInputChange("email", e.target.value)}
+                  className={`w-full px-4 py-3 rounded-2xl border transition text-sm font-medium focus:outline-none focus:ring-2 ${
+                    fieldErrors.email
+                      ? "border-rose-400 bg-rose-50/30 text-slate-900 focus:ring-rose-400/50"
+                      : "border-slate-200 bg-slate-50/50 focus:ring-purple-500/50"
+                  }`}
                 />
+                {fieldErrors.email && (
+                  <p className="text-xs text-rose-600 font-semibold flex items-center gap-1.5 mt-1.5">
+                    <AlertCircle className="w-3.5 h-3.5 shrink-0 text-rose-500" />
+                    <span>{fieldErrors.email}</span>
+                  </p>
+                )}
               </div>
             </div>
 
@@ -231,12 +362,22 @@ export default function RegisterPage() {
                 </label>
                 <input
                   type="password"
-                  required
-                  placeholder="Min 6 characters"
+                  placeholder="Enter password (min 6 characters)"
+                  autoComplete="new-password"
                   value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  className="w-full px-4 py-3 rounded-2xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/50 text-sm bg-slate-50/50 font-medium"
+                  onChange={(e) => handleInputChange("password", e.target.value)}
+                  className={`w-full px-4 py-3 rounded-2xl border transition text-sm font-medium focus:outline-none focus:ring-2 ${
+                    fieldErrors.password
+                      ? "border-rose-400 bg-rose-50/30 text-slate-900 focus:ring-rose-400/50"
+                      : "border-slate-200 bg-slate-50/50 focus:ring-purple-500/50"
+                  }`}
                 />
+                {fieldErrors.password && (
+                  <p className="text-xs text-rose-600 font-semibold flex items-center gap-1.5 mt-1.5">
+                    <AlertCircle className="w-3.5 h-3.5 shrink-0 text-rose-500" />
+                    <span>{fieldErrors.password}</span>
+                  </p>
+                )}
               </div>
 
               <div className="space-y-1.5">
@@ -247,23 +388,46 @@ export default function RegisterPage() {
                   type="number"
                   min="3"
                   max="100"
-                  required
+                  placeholder="e.g. 8"
                   value={formData.age}
-                  onChange={(e) => setFormData({ ...formData, age: e.target.value })}
-                  className="w-full px-4 py-3 rounded-2xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/50 text-sm bg-slate-50/50 font-medium"
+                  onChange={(e) => handleInputChange("age", e.target.value)}
+                  onBlur={handleAgeOrDobBlur}
+                  className={`w-full px-4 py-3 rounded-2xl border transition text-sm font-medium focus:outline-none focus:ring-2 ${
+                    fieldErrors.age
+                      ? "border-rose-400 bg-rose-50/30 text-slate-900 focus:ring-rose-400/50"
+                      : "border-slate-200 bg-slate-50/50 focus:ring-purple-500/50"
+                  }`}
                 />
+                {fieldErrors.age && (
+                  <p className="text-xs text-rose-600 font-semibold flex items-center gap-1.5 mt-1.5">
+                    <AlertCircle className="w-3.5 h-3.5 shrink-0 text-rose-500" />
+                    <span>{fieldErrors.age}</span>
+                  </p>
+                )}
               </div>
 
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-slate-700 block">
-                  Date of Birth
+                  Date of Birth *
                 </label>
                 <input
                   type="date"
+                  max={new Date().toISOString().split("T")[0]}
                   value={formData.dateOfBirth}
-                  onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
-                  className="w-full px-4 py-3 rounded-2xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/50 text-sm bg-slate-50/50 font-medium"
+                  onChange={(e) => handleInputChange("dateOfBirth", e.target.value)}
+                  onBlur={handleAgeOrDobBlur}
+                  className={`w-full px-4 py-3 rounded-2xl border transition text-sm font-medium focus:outline-none focus:ring-2 ${
+                    fieldErrors.dateOfBirth
+                      ? "border-rose-400 bg-rose-50/30 text-slate-900 focus:ring-rose-400/50"
+                      : "border-slate-200 bg-slate-50/50 focus:ring-purple-500/50"
+                  }`}
                 />
+                {fieldErrors.dateOfBirth && (
+                  <p className="text-xs text-rose-600 font-semibold flex items-center gap-1.5 mt-1.5">
+                    <AlertCircle className="w-3.5 h-3.5 shrink-0 text-rose-500" />
+                    <span>{fieldErrors.dateOfBirth}</span>
+                  </p>
+                )}
               </div>
             </div>
           </div>
@@ -282,12 +446,21 @@ export default function RegisterPage() {
                 </label>
                 <input
                   type="text"
-                  required
                   placeholder="e.g. Emma Parker"
                   value={formData.parentName}
-                  onChange={(e) => setFormData({ ...formData, parentName: e.target.value })}
-                  className="w-full px-4 py-3 rounded-2xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/50 text-sm bg-slate-50/50 font-medium"
+                  onChange={(e) => handleInputChange("parentName", e.target.value)}
+                  className={`w-full px-4 py-3 rounded-2xl border transition text-sm font-medium focus:outline-none focus:ring-2 ${
+                    fieldErrors.parentName
+                      ? "border-rose-400 bg-rose-50/30 text-slate-900 focus:ring-rose-400/50"
+                      : "border-slate-200 bg-slate-50/50 focus:ring-purple-500/50"
+                  }`}
                 />
+                {fieldErrors.parentName && (
+                  <p className="text-xs text-rose-600 font-semibold flex items-center gap-1.5 mt-1.5">
+                    <AlertCircle className="w-3.5 h-3.5 shrink-0 text-rose-500" />
+                    <span>{fieldErrors.parentName}</span>
+                  </p>
+                )}
               </div>
 
               <div className="space-y-1.5">
@@ -296,25 +469,44 @@ export default function RegisterPage() {
                 </label>
                 <input
                   type="tel"
-                  required
                   placeholder="e.g. 9876543210"
                   value={formData.parentPhone}
-                  onChange={(e) => setFormData({ ...formData, parentPhone: e.target.value })}
-                  className="w-full px-4 py-3 rounded-2xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/50 text-sm bg-slate-50/50 font-medium"
+                  onChange={(e) => handleInputChange("parentPhone", e.target.value)}
+                  className={`w-full px-4 py-3 rounded-2xl border transition text-sm font-medium focus:outline-none focus:ring-2 ${
+                    fieldErrors.parentPhone
+                      ? "border-rose-400 bg-rose-50/30 text-slate-900 focus:ring-rose-400/50"
+                      : "border-slate-200 bg-slate-50/50 focus:ring-purple-500/50"
+                  }`}
                 />
+                {fieldErrors.parentPhone && (
+                  <p className="text-xs text-rose-600 font-semibold flex items-center gap-1.5 mt-1.5">
+                    <AlertCircle className="w-3.5 h-3.5 shrink-0 text-rose-500" />
+                    <span>{fieldErrors.parentPhone}</span>
+                  </p>
+                )}
               </div>
 
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-slate-700 block">
-                  Guardian Email
+                  Guardian Email (Optional)
                 </label>
                 <input
                   type="email"
                   placeholder="parent@example.com"
                   value={formData.parentEmail}
-                  onChange={(e) => setFormData({ ...formData, parentEmail: e.target.value })}
-                  className="w-full px-4 py-3 rounded-2xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/50 text-sm bg-slate-50/50 font-medium"
+                  onChange={(e) => handleInputChange("parentEmail", e.target.value)}
+                  className={`w-full px-4 py-3 rounded-2xl border transition text-sm font-medium focus:outline-none focus:ring-2 ${
+                    fieldErrors.parentEmail
+                      ? "border-rose-400 bg-rose-50/30 text-slate-900 focus:ring-rose-400/50"
+                      : "border-slate-200 bg-slate-50/50 focus:ring-purple-500/50"
+                  }`}
                 />
+                {fieldErrors.parentEmail && (
+                  <p className="text-xs text-rose-600 font-semibold flex items-center gap-1.5 mt-1.5">
+                    <AlertCircle className="w-3.5 h-3.5 shrink-0 text-rose-500" />
+                    <span>{fieldErrors.parentEmail}</span>
+                  </p>
+                )}
               </div>
             </div>
           </div>

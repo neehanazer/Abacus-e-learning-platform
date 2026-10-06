@@ -89,15 +89,24 @@ export async function POST(req: NextRequest) {
     const defaultPassword = process.env.DEFAULT_ADMIN_PASSWORD || "admin123";
 
     if (normalizedEmail === defaultEmail && password === defaultPassword) {
-      const mockAdminId = "admin_super_001";
+      let resolvedAdminId = "admin_super_001";
+      try {
+        const existingAdmin = await Admin.findOne({ email: defaultEmail });
+        if (existingAdmin) {
+          resolvedAdminId = String(existingAdmin._id);
+        }
+      } catch {
+        // Fall back to mockAdminId if DB is inaccessible
+      }
+
       const token = signAdminToken({
-        adminId: mockAdminId,
+        adminId: resolvedAdminId,
         email: defaultEmail,
         role: "admin",
       });
 
       const safeAdmin = {
-        id: mockAdminId,
+        id: resolvedAdminId,
         name: "Abacus Super Admin",
         email: defaultEmail,
         role: "admin" as const,

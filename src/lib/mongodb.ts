@@ -106,7 +106,22 @@ export async function connectToDatabase(): Promise<typeof mongoose> {
           const directUri =
             "mongodb://neehanaz226_db_user:M0bnysbrqibx6KMk@ac-cjammo3-shard-00-00.ivsxywu.mongodb.net:27017,ac-cjammo3-shard-00-01.ivsxywu.mongodb.net:27017,ac-cjammo3-shard-00-02.ivsxywu.mongodb.net:27017/abacus?ssl=true&replicaSet=atlas-c3ceos-shard-0&authSource=admin&retryWrites=true&w=majority";
           console.warn("[MongoDB]: SRV lookup failed on Windows, falling back to direct replica set connection...");
-          return await mongoose.connect(directUri, opts);
+          try {
+            return await mongoose.connect(directUri, opts);
+          } catch (fallbackErr: any) {
+            const fMsg = String(fallbackErr?.message || fallbackErr);
+            if (
+              fMsg.includes("alert number 80") ||
+              fMsg.includes("tlsv1 alert internal error") ||
+              fMsg.includes("SSL routines")
+            ) {
+              const friendlyError = new Error(
+                "MongoDB Atlas connection rejected: Your current IP address is not whitelisted in the MongoDB Atlas Network Access list."
+              );
+              throw friendlyError;
+            }
+            throw fallbackErr;
+          }
         }
         throw err;
       }
@@ -118,6 +133,17 @@ export async function connectToDatabase(): Promise<typeof mongoose> {
       })
       .catch((err) => {
         cached.promise = null;
+        const msg = String(err?.message || err);
+        if (
+          msg.includes("alert number 80") ||
+          msg.includes("tlsv1 alert internal error") ||
+          msg.includes("SSL routines")
+        ) {
+          const friendlyError = new Error(
+            "MongoDB Atlas connection rejected: Your current IP address is not whitelisted in the MongoDB Atlas Network Access list."
+          );
+          throw friendlyError;
+        }
         throw err;
       });
   }

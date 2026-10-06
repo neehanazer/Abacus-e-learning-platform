@@ -91,7 +91,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 4. Age validation
+    // 4. Age and Date of Birth validation
     const age = Number(rawAge);
     if (isNaN(age) || !Number.isInteger(age) || age < 3 || age > 100) {
       return NextResponse.json(
@@ -101,6 +101,42 @@ export async function POST(req: NextRequest) {
         },
         { status: 400 }
       );
+    }
+
+    if (dateOfBirth) {
+      const parts = String(dateOfBirth).split("-");
+      if (parts.length === 3) {
+        const y = parseInt(parts[0], 10);
+        const m = parseInt(parts[1], 10) - 1;
+        const d = parseInt(parts[2], 10);
+        if (!isNaN(y) && !isNaN(m) && !isNaN(d)) {
+          const dobDate = new Date(y, m, d);
+          const now = new Date();
+          let calcAge = now.getFullYear() - dobDate.getFullYear();
+          const monthDiff = now.getMonth() - dobDate.getMonth();
+          if (monthDiff < 0 || (monthDiff === 0 && now.getDate() < dobDate.getDate())) {
+            calcAge--;
+          }
+          if (calcAge < 0) {
+            return NextResponse.json(
+              {
+                success: false,
+                error: "Date of birth cannot be in the future.",
+              },
+              { status: 400 }
+            );
+          }
+          if (calcAge !== age) {
+            return NextResponse.json(
+              {
+                success: false,
+                error: `Student age (${age}) does not match Date of Birth (${calcAge} years old).`,
+              },
+              { status: 400 }
+            );
+          }
+        }
+      }
     }
 
     // 5. Weak password validation

@@ -12,6 +12,7 @@ import {
   XCircle,
   AlertTriangle,
   Timer,
+  Clock,
   ShieldCheck,
   ShieldAlert,
   Camera,
@@ -27,6 +28,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { ExamProctoringMedia } from "@/components/exam/ExamProctoringMedia";
+import { isDueDateToday } from "@/data/homeworkData";
 
 interface ReadinessCriterion {
   name: string;
@@ -180,6 +182,120 @@ export default function FinalExamPage() {
 
   // Active exam session state
   const [attemptId, setAttemptId] = useState<string>("");
+
+  // Homework progress metrics (Compulsory 70% completion to attend exam)
+  const [homeworkStats, setHomeworkStats] = useState<{
+    total: number;
+    completed: number;
+    percentage: number;
+    isEligible: boolean;
+    dueTodayTasks: { id: string; title: string; dueDate: string }[];
+  }>({
+    total: 0,
+    completed: 0,
+    percentage: 100,
+    isEligible: true,
+    dueTodayTasks: [],
+  });
+
+  // 24-hour Re-Examination Cooldown for failed attempts
+  const [cooldownSeconds, setCooldownSeconds] = useState<number>(0);
+  const [cooldownExpiry, setCooldownExpiry] = useState<string | null>(null);
+  const [hasPreviousFailedAttempt, setHasPreviousFailedAttempt] = useState<boolean>(false);
+
+  // 24-Hour Cooldown ticker
+  useEffect(() => {
+    if (cooldownSeconds <= 0) return;
+    const ticker = setInterval(() => {
+      setCooldownSeconds((prev) => {
+        if (prev <= 1) {
+          clearInterval(ticker);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(ticker);
+  }, [cooldownSeconds]);
+
+  const studentKey = React.useMemo(() => {
+    return user?.id || user?.email ? String(user.id || user.email).replace(/[^a-zA-Z0-9_-]/g, "_") : "guest";
+  }, [user]);
+
+  // Compute student homework progress from storage
+  useEffect(() => {
+    try {
+      const savedTasks = localStorage.getItem(`abacus_homework_state_v3_${studentKey}`);
+      let tasks: any[] = [];
+      if (savedTasks) {
+        const parsed = JSON.parse(savedTasks);
+        if (Array.isArray(parsed) && parsed.length > 0) tasks = parsed;
+      }
+      if (tasks.length === 0) {
+        const { INITIAL_HOMEWORK_LIST } = require("@/data/homeworkData");
+        tasks = INITIAL_HOMEWORK_LIST;
+      }
+
+      const currentLvlTasks = tasks.filter((t: any) => t.level === studentLevel);
+      const completed = currentLvlTasks.filter(
+        (t: any) =>
+          t.status === "completed" ||
+          t.status === "submitted" ||
+          t.status === "evaluated" ||
+          (t.attemptsCount > 0 && t.lastAttemptDate)
+      );
+      const pending = currentLvlTasks.filter(
+        (t: any) =>
+          t.status !== "completed" &&
+          t.status !== "submitted" &&
+          t.status !== "evaluated"
+      );
+
+      const dueToday = pending
+        .filter((t: any) => isDueDateToday(t.dueDate))
+        .map((t: any) => ({
+          id: t.id,
+          title: t.title,
+          dueDate: t.dueDate,
+        }));
+
+      const total = currentLvlTasks.length;
+      const pct = total > 0 ? Math.round((completed.length / total) * 100) : 100;
+      const eligible = total === 0 || pct >= 70;
+
+      setHomeworkStats({
+        total,
+        completed: completed.length,
+        percentage: pct,
+        isEligible: eligible,
+        dueTodayTasks: dueToday,
+      });
+    } catch {}
+  }, [studentKey, studentLevel]);
+
+  // Sync with API metrics from readiness if provided
+  useEffect(() => {
+    if (readiness && (readiness as any).homeworkMetrics) {
+      const hw = (readiness as any).homeworkMetrics;
+      if (hw.total > 0) {
+        setHomeworkStats((prev) => ({
+          ...prev,
+          total: hw.total,
+          completed: hw.completed,
+          percentage: hw.completionRate,
+          isEligible: hw.isEligible,
+          dueTodayTasks:
+            hw.dueTodayTitles && hw.dueTodayTitles.length > 0
+              ? hw.dueTodayTitles.map((title: string, i: number) => ({
+                  id: `due-api-${i}`,
+                  title,
+                  dueDate: "Today",
+                }))
+              : prev.dueTodayTasks,
+        }));
+      }
+    }
+  }, [readiness]);
   const [questions, setQuestions] = useState<ExamQuestion[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(0);
   const [answers, setAnswers] = useState<Record<string, string | number>>({});
@@ -233,6 +349,44 @@ export default function FinalExamPage() {
           isLocked: readinessJson.data?.readinessScore < 70,
         });
       }
+
+      // 3. Check 24-hour Re-Examination Cooldown (Only allow re-exam after 24h if failed)
+      try {
+        const reExamRes = await fetch(
+          `/api/exams/re-exam-status?examId=${targetExamId}&studentId=${encodeURIComponent(user?.id || studentKey)}`
+        );
+        const reExamJson = await reExamRes.json();
+        if (reExamJson.success && reExamJson.data) {
+          const st = reExamJson.data;
+          if (st.hasAttempted && !st.isPassed) {
+            setHasPreviousFailedAttempt(true);
+            if (!st.canReEnroll && st.cooldown?.eligibleAt) {
+              const eligibleTime = new Date(st.cooldown.eligibleAt).getTime();
+              const remaining = Math.max(0, Math.floor((eligibleTime - Date.now()) / 1000));
+              setCooldownSeconds(remaining);
+              setCooldownExpiry(st.cooldown.eligibleAt);
+            } else {
+              setCooldownSeconds(0);
+            }
+          }
+        }
+      } catch {}
+
+      // Fallback check from local storage cooldown
+      try {
+        const localCooldown = localStorage.getItem(`abacus_exam_cooldown_${targetExamId}_${studentKey}`);
+        if (localCooldown) {
+          const eligibleTime = new Date(localCooldown).getTime();
+          const remaining = Math.max(0, Math.floor((eligibleTime - Date.now()) / 1000));
+          if (remaining > 0) {
+            setHasPreviousFailedAttempt(true);
+            setCooldownSeconds((prev) => Math.max(prev, remaining));
+            setCooldownExpiry(localCooldown);
+          } else {
+            localStorage.removeItem(`abacus_exam_cooldown_${targetExamId}_${studentKey}`);
+          }
+        }
+      } catch {}
     } catch (err: any) {
       console.error("Error loading final exam:", err);
       setError(err.message || "Failed to load exam information");
@@ -297,6 +451,21 @@ export default function FinalExamPage() {
     try {
       setLoading(true);
       setError(null);
+
+      if (cooldownSeconds > 0) {
+        const hours = Math.floor(cooldownSeconds / 3600);
+        const mins = Math.floor((cooldownSeconds % 3600) / 60);
+        const secs = cooldownSeconds % 60;
+        throw new Error(
+          `Re-examination Cooldown Active: Under official rules, students who fail can only reappear for this examination after 24 hours. Please wait ${hours}h ${mins}m ${secs}s.`
+        );
+      }
+
+      if (homeworkStats.total > 0 && !homeworkStats.isEligible) {
+        throw new Error(
+          `Final Exam Locked: You have completed ${homeworkStats.percentage}% (${homeworkStats.completed}/${homeworkStats.total}) of your Level ${studentLevel} homework assignments. At least 70% homework completion is strictly compulsory to attend the final exam.`
+        );
+      }
 
       const res = await fetch(`/api/exams/${finalExamId}/start`, {
         method: "POST",
@@ -388,6 +557,14 @@ export default function FinalExamPage() {
           completionDate: new Date().toISOString(),
         });
       } else {
+        const failureDate = new Date();
+        const eligibleAt = new Date(failureDate.getTime() + 24 * 60 * 60 * 1000).toISOString();
+        try {
+          localStorage.setItem(`abacus_exam_cooldown_${finalExamId}_${studentKey}`, eligibleAt);
+        } catch {}
+        setCooldownSeconds(24 * 3600);
+        setCooldownExpiry(eligibleAt);
+        setHasPreviousFailedAttempt(true);
         updateProfile({
           finalExamStatus: "FAIL",
           finalExamScore: data.data.score,
@@ -489,7 +666,21 @@ export default function FinalExamPage() {
     return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
 
-  const isLocked = examData?.isLocked ?? (readiness ? readiness.readinessScore < 70 : false);
+  const formatCooldownTime = (totalSeconds: number) => {
+    const hours = Math.floor(totalSeconds / 3600);
+    const mins = Math.floor((totalSeconds % 3600) / 60);
+    const secs = totalSeconds % 60;
+    return `${hours.toString().padStart(2, "0")}:${mins
+      .toString()
+      .padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+  };
+
+  const isCooldownActive = cooldownSeconds > 0;
+  const isHomeworkLocked = homeworkStats.total > 0 && !homeworkStats.isEligible;
+  const isLocked =
+    isCooldownActive ||
+    isHomeworkLocked ||
+    (examData?.isLocked ?? (readiness ? readiness.readinessScore < 70 : false));
   const currentQ = questions[currentQuestionIndex];
   const answeredCount = Object.keys(answers).length;
 
@@ -500,6 +691,111 @@ export default function FinalExamPage() {
       {/* ============================================================== */}
       {viewState === "overview" && (
         <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-6 sm:pt-10">
+          {/* URGENT DUE DATE TODAY NOTIFICATION BANNER */}
+          {homeworkStats.dueTodayTasks.length > 0 && (
+            <div className="bg-gradient-to-r from-amber-500/15 via-rose-500/15 to-orange-500/15 border-2 border-amber-500/50 rounded-3xl p-5 mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-lg backdrop-blur-sm animate-pulse">
+              <div className="flex items-start gap-3.5">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500 to-rose-500 text-white flex items-center justify-center flex-shrink-0 shadow-md text-xl">
+                  🔔
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-[11px] font-black uppercase tracking-wider text-rose-700 bg-rose-100 px-2.5 py-0.5 rounded-full border border-rose-200">
+                      ⚠️ Urgent: Homework Due Today!
+                    </span>
+                    <span className="text-xs font-bold text-slate-600">
+                      {homeworkStats.dueTodayTasks.length} assignment{homeworkStats.dueTodayTasks.length > 1 ? "s" : ""} pending
+                    </span>
+                  </div>
+                  <h3 className="text-base sm:text-lg font-black text-[#1D3557]">
+                    Today is the due date for your assigned homework!
+                  </h3>
+                  <p className="text-xs sm:text-sm text-slate-600 mt-0.5 font-medium">
+                    {homeworkStats.dueTodayTasks.map((t) => `"${t.title}"`).join(", ")} — At least 70% homework completion is strictly compulsory to attend the Official Final Exam. Complete it before midnight!
+                  </p>
+                </div>
+              </div>
+              <Link
+                href="/learning/homework"
+                className="px-5 py-2.5 bg-gradient-to-r from-amber-600 to-rose-600 hover:from-amber-700 hover:to-rose-700 text-white font-black text-xs rounded-2xl shadow-md transition-all hover:scale-105 active:scale-95 flex items-center gap-2 flex-shrink-0"
+              >
+                <span>Submit Homework Now</span>
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+          )}
+
+          {/* COMPULSORY 70% HOMEWORK LOCK STATUS BANNER */}
+          {isHomeworkLocked && (
+            <div className="bg-rose-50 border-2 border-rose-300 rounded-3xl p-5 mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-md">
+              <div className="flex items-start gap-3.5">
+                <div className="w-10 h-10 rounded-2xl bg-rose-600 text-white flex items-center justify-center flex-shrink-0 font-black text-lg">
+                  🔒
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-[10px] font-black uppercase tracking-wider text-rose-800 bg-rose-200 px-2 py-0.5 rounded-full">
+                      Exam Attendance Blocked
+                    </span>
+                    <span className="text-xs font-bold text-rose-700">
+                      Compulsory: 70% Homework Completion Required
+                    </span>
+                  </div>
+                  <h4 className="text-base font-extrabold text-rose-950">
+                    You have completed {homeworkStats.percentage}% ({homeworkStats.completed}/{homeworkStats.total}) of Level {studentLevel} homework assignments.
+                  </h4>
+                  <p className="text-xs text-rose-800 mt-0.5">
+                    You must complete at least {Math.ceil(homeworkStats.total * 0.7) - homeworkStats.completed} more homework assignment(s) before you are permitted to start this official certification exam.
+                  </p>
+                </div>
+              </div>
+              <Link
+                href="/learning/homework"
+                className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-xs rounded-xl transition shadow flex items-center gap-1.5 flex-shrink-0"
+              >
+                Go to Homework Hub
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+          )}
+
+          {/* 24-HOUR RE-EXAMINATION COOLDOWN BANNER */}
+          {isCooldownActive && (
+            <div className="bg-gradient-to-r from-rose-950 via-purple-950 to-[#1D3557] rounded-3xl p-6 sm:p-8 text-white shadow-2xl mb-8 border-2 border-rose-400/50 relative overflow-hidden">
+              <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+                <div className="space-y-2 max-w-xl">
+                  <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-rose-500/20 text-rose-300 text-xs font-black uppercase tracking-wider border border-rose-400/40">
+                    <Timer className="w-3.5 h-3.5 text-rose-300" />
+                    Official Re-Examination Policy • 24-Hour Cooldown Active
+                  </div>
+                  <h3 className="text-2xl sm:text-3xl font-black font-heading text-rose-100">
+                    Reappearance Available In:
+                  </h3>
+                  <p className="text-white/80 text-xs sm:text-sm font-medium leading-relaxed">
+                    Under official certification regulations, once a student does not achieve passing marks (≥70%), they are compulsory required to wait <strong>24 hours</strong> before reappearing for the exam. This interval ensures focused worksheet review and prevents cognitive fatigue.
+                  </p>
+                </div>
+
+                {/* Cooldown Digital Countdown Clock */}
+                <div className="bg-black/50 border-2 border-rose-400/60 rounded-2xl p-5 text-center min-w-[220px] backdrop-blur-md shadow-inner">
+                  <div className="text-[10px] font-bold text-rose-300 uppercase tracking-widest mb-1">
+                    Time Until Reappearance
+                  </div>
+                  <div className="text-3xl sm:text-4xl font-black font-mono text-amber-300 tracking-wider">
+                    {formatCooldownTime(cooldownSeconds)}
+                  </div>
+                  <div className="text-[10px] text-white/60 mt-1 font-semibold">
+                    Hours : Minutes : Seconds
+                  </div>
+                </div>
+              </div>
+
+              <div className="absolute -right-6 -bottom-6 opacity-10 text-[160px] pointer-events-none select-none">
+                ⏱️
+              </div>
+            </div>
+          )}
+
           {/* Header Banner */}
           <div className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-r from-indigo-900 via-purple-900 to-[#1D3557] p-6 sm:p-10 text-white shadow-2xl mb-8">
             <div className="relative z-10 max-w-2xl">
@@ -666,7 +962,30 @@ export default function FinalExamPage() {
               </div>
 
               {/* Recommended Next Actions if locked */}
-              {isLocked ? (
+              {cooldownSeconds > 0 ? (
+                <div className="bg-rose-50 rounded-2xl p-5 border-2 border-rose-300 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-rose-800 bg-rose-200 px-2.5 py-0.5 rounded-full">
+                        24-Hour Cooldown Active
+                      </span>
+                      <span className="text-xs font-bold text-rose-700">
+                        {formatCooldownTime(cooldownSeconds)} remaining
+                      </span>
+                    </div>
+                    <div className="text-xs text-rose-900 font-medium">
+                      Under official policy, students who failed must observe a 24-hour preparation interval before reappearing. You can reappear once the countdown expires.
+                    </div>
+                  </div>
+                  <button
+                    disabled
+                    className="py-3 px-6 rounded-xl bg-slate-200 text-slate-500 font-extrabold text-xs cursor-not-allowed flex items-center gap-2 flex-shrink-0"
+                  >
+                    <Timer className="w-4 h-4" />
+                    <span>Reappear in {formatCooldownTime(cooldownSeconds)}</span>
+                  </button>
+                </div>
+              ) : isLocked ? (
                 <div className="bg-[#FFFBF0] rounded-2xl p-4 border border-yellow-200 flex flex-wrap items-center justify-between gap-4">
                   <div className="text-xs text-slate-600 font-medium">
                     Complete your daily practice drills and homework assignments to unlock this official examination.
@@ -698,8 +1017,17 @@ export default function FinalExamPage() {
                     onClick={handleStartFinalExam}
                     className="py-4 px-8 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-black text-base shadow-xl shadow-emerald-200 hover:scale-[1.02] active:scale-98 transition cursor-pointer flex items-center gap-3"
                   >
-                    <Award className="w-5 h-5 text-amber-300" />
-                    <span>Begin Official Final Exam</span>
+                    {hasPreviousFailedAttempt ? (
+                      <>
+                        <RotateCcw className="w-5 h-5 text-amber-300" />
+                        <span>Reappear for Final Certification Exam</span>
+                      </>
+                    ) : (
+                      <>
+                        <Award className="w-5 h-5 text-amber-300" />
+                        <span>Begin Official Final Exam</span>
+                      </>
+                    )}
                     <ArrowRight className="w-5 h-5" />
                   </button>
                 </div>
@@ -1017,6 +1345,22 @@ export default function FinalExamPage() {
 
               <p className="text-xs text-slate-500 font-medium">
                 Note: In Phase 7, passing students will have their official certificates generated and signed after automated review.
+              </p>
+            </div>
+          )}
+
+          {/* 24-Hour Cooldown Notice if Failed */}
+          {!evalResult.isPassed && (
+            <div className="bg-rose-50 border-2 border-rose-300 rounded-3xl p-6 mb-8 text-center max-w-2xl mx-auto shadow-sm">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-200 text-rose-900 text-xs font-black uppercase mb-2">
+                <Timer className="w-4 h-4 text-rose-700" />
+                24-Hour Re-Examination Cooldown Initiated
+              </div>
+              <h4 className="text-lg font-black text-rose-950 mb-1">
+                Reappearance Option Locked for 24 Hours
+              </h4>
+              <p className="text-xs sm:text-sm text-rose-800 leading-relaxed font-medium">
+                Per official examination regulations, if a student does not achieve passing marks (≥70%), the option to reappear is strictly locked for 24 hours. The reappearance option will automatically unlock once the cooldown expires.
               </p>
             </div>
           )}

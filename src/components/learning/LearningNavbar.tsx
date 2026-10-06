@@ -25,6 +25,7 @@ import {
   ChevronDown,
   Clock,
   Calculator,
+  LayoutDashboard,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useLearning } from "@/context/LearningContext";
@@ -46,7 +47,6 @@ export default function LearningNavbar() {
   const { user } = useAuth();
   const {
     bonusStars,
-    overallProgress,
     completedCount,
     totalLessons,
     lessons,
@@ -184,19 +184,32 @@ export default function LearningNavbar() {
   return (
     <>
       <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b-2 border-yellow-200 shadow-sm transition-all">
-        <div className="w-full max-w-[1600px] mx-auto px-3 sm:px-6">
+        <div className="w-full max-w-[1600px] mx-auto px-2 sm:px-4 lg:pl-3 lg:pr-6">
           {/* Top Bar on Mobile & Desktop */}
           <div className="flex items-center justify-between h-16 sm:h-20 gap-2 sm:gap-4">
             {/* Logo & Back to Dashboard */}
             <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-              <Link
-                href="/dashboard"
-                className="flex items-center gap-1 sm:gap-1.5 px-3 py-1.5 rounded-full bg-yellow-50 hover:bg-yellow-100 border border-yellow-200 text-[#1D3557] font-bold text-xs sm:text-sm transition-all hover:scale-105 shrink-0"
-                title="Back to Dashboard"
-              >
-                <ArrowLeft className="w-4 h-4 text-[#F4A261]" />
-                <span className="hidden sm:inline">Dashboard</span>
-              </Link>
+              {/* Back Button (Symbol Only) & Dashboard Link */}
+              <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => router.back()}
+                  className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-yellow-50 hover:bg-yellow-100 active:scale-95 border border-yellow-200 text-[#1D3557] flex items-center justify-center transition-all hover:scale-105 shrink-0 shadow-xs cursor-pointer"
+                  title="Go Back"
+                  aria-label="Go Back"
+                >
+                  <ArrowLeft className="w-4 h-4 text-[#F4A261]" />
+                </button>
+
+                <Link
+                  href="/dashboard"
+                  className="flex items-center gap-1 sm:gap-1.5 px-3 py-1.5 rounded-full bg-yellow-50 hover:bg-yellow-100 border border-yellow-200 text-[#1D3557] font-bold text-xs sm:text-sm transition-all hover:scale-105 shrink-0 shadow-xs"
+                  title="Go to Dashboard"
+                >
+                  <LayoutDashboard className="w-4 h-4 text-[#F4A261]" />
+                  <span className="hidden sm:inline">Dashboard</span>
+                </Link>
+              </div>
 
               <div className="h-6 w-px bg-yellow-200 hidden sm:block" />
 
@@ -219,8 +232,8 @@ export default function LearningNavbar() {
               </Link>
             </div>
 
-            {/* Middle Nav Links (Desktop) */}
-            <nav className="hidden lg:flex items-center gap-0.5 sm:gap-1 bg-[#FFF9ED] p-1.5 rounded-full border border-yellow-200 shadow-inner shrink-0">
+            {/* Middle Nav Links (Desktop shifted a little to the left) */}
+            <nav className="hidden lg:flex items-center gap-0.5 sm:gap-1 bg-[#FFF9ED] p-1.5 rounded-full border border-yellow-200 shadow-inner shrink-0 lg:-ml-6 xl:-ml-12">
               {navItems.map((item) => {
                 const isActive = item.isActive;
                 const isVideosTab = item.id === "learning";
@@ -367,13 +380,6 @@ export default function LearningNavbar() {
 
             {/* Right Side Stats & Profile */}
             <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
-              {/* Level Progress Indicator Badge */}
-              <div className="hidden xl:flex items-center gap-2 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-full shrink-0 whitespace-nowrap">
-                <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                <span className="text-xs font-extrabold text-emerald-800">
-                  {completedCount}/{totalLessons} Lessons ({overallProgress}%)
-                </span>
-              </div>
 
               {/* Star Points Badge */}
               <div className="flex items-center gap-1.5 bg-yellow-100/90 border border-yellow-300 px-2.5 sm:px-3 py-1.5 rounded-full shadow-sm shrink-0 whitespace-nowrap">

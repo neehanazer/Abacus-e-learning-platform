@@ -110,6 +110,27 @@ export async function GET(req: NextRequest) {
   } catch (error: unknown) {
     console.error("[Admin Students Error]:", error);
     const message = error instanceof Error ? error.message : "Failed to retrieve students.";
+    const isDbConnectionIssue =
+      message.includes("alert number 80") ||
+      message.includes("SSL routines") ||
+      message.includes("whitelisted") ||
+      message.includes("ECONNREFUSED") ||
+      message.includes("MongooseServerSelectionError") ||
+      message.includes("MongoNetworkError");
+
+    if (isDbConnectionIssue) {
+      return NextResponse.json({
+        success: true,
+        databaseConnected: false,
+        warning: "MongoDB Atlas is currently unreachable (check IP whitelist in Atlas Network Access).",
+        total: 0,
+        page: 1,
+        limit: 20,
+        totalPages: 0,
+        students: [],
+      });
+    }
+
     return NextResponse.json(
       {
         success: false,

@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, User, ArrowRight, Calculator, LogOut, LayoutDashboard, Sparkles } from "lucide-react";
+import { Menu, X, User, ArrowRight, ArrowLeft, Calculator, LogOut, LayoutDashboard, Sparkles } from "lucide-react";
 import Button from "../ui/Button";
 import { useAuth } from "@/context/AuthContext";
 
@@ -65,8 +65,8 @@ export default function Navbar() {
             </div>
           </Link>
 
-          {/* Desktop Navigation Links */}
-          <nav className="hidden md:flex items-center gap-1 bg-purple-50/60 p-1.5 rounded-2xl border border-purple-100/80">
+          {/* Desktop Navigation Links (shifted a little to the left) */}
+          <nav className="hidden md:flex items-center gap-1 bg-purple-50/60 p-1.5 rounded-2xl border border-purple-100/80 md:-ml-8 lg:-ml-12">
             {navLinks.map((link) => {
               const isActive = pathname === link.href;
               return (
@@ -96,6 +96,15 @@ export default function Navbar() {
           <div className="hidden md:flex items-center gap-3">
             {isAuthenticated && user ? (
               <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => router.back()}
+                  className="w-8 h-8 rounded-xl bg-purple-100 hover:bg-purple-200 text-purple-800 border border-purple-200 flex items-center justify-center transition shadow-xs cursor-pointer active:scale-95"
+                  title="Go Back"
+                  aria-label="Go Back"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                </button>
                 <Link
                   href="/dashboard"
                   className="px-3.5 py-1.5 rounded-xl text-xs font-extrabold text-purple-800 bg-purple-100 hover:bg-purple-200 transition shadow-sm"

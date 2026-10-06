@@ -10,18 +10,56 @@ import {
   BookOpen, 
   Gamepad2, 
   ArrowRight, 
+  ArrowLeft,
   Rocket,
   UserCheck
 } from "lucide-react";
 import Button from "@/components/ui/Button";
 import { useAuth } from "@/context/AuthContext";
 import InteractiveModuleModal from "@/components/dashboard/InteractiveModuleModals";
+import { isDueDateToday } from "@/data/homeworkData";
 
 export default function AbacusWorldDashboard() {
   const router = useRouter();
   const { user, isAuthenticated, isLoading, logout } = useAuth();
   const [activeModal, setActiveModal] = useState<"learning" | "braingym" | null>(null);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+  const [dueTodayHomework, setDueTodayHomework] = useState<{ id: string; title: string }[]>([]);
+
+  React.useEffect(() => {
+    try {
+      if (!user) return;
+      const studentKey =
+        user?.id || user?.email
+          ? String(user.id || user.email).replace(/[^a-zA-Z0-9_-]/g, "_")
+          : "guest";
+      const savedTasks = localStorage.getItem(`abacus_homework_state_v3_${studentKey}`);
+      let tasks: any[] = [];
+      if (savedTasks) {
+        const parsed = JSON.parse(savedTasks);
+        if (Array.isArray(parsed) && parsed.length > 0) tasks = parsed;
+      }
+      if (tasks.length === 0) {
+        const { INITIAL_HOMEWORK_LIST } = require("@/data/homeworkData");
+        tasks = INITIAL_HOMEWORK_LIST;
+      }
+
+      const raw = user?.selectedLevel || user?.abacusLevel || (user as any)?.currentLevel || "";
+      const m = String(raw).match(/Level\s*(\d+)/i) || String(raw).match(/^(\d+)$/);
+      const studentLvl = m ? parseInt(m[1], 10) : 1;
+
+      const pendingCurrentLevel = tasks.filter(
+        (t: any) =>
+          t.level === studentLvl &&
+          t.status !== "completed" &&
+          t.status !== "submitted" &&
+          t.status !== "evaluated" &&
+          isDueDateToday(t.dueDate)
+      );
+
+      setDueTodayHomework(pendingCurrentLevel.map((t: any) => ({ id: t.id, title: t.title })));
+    } catch {}
+  }, [user]);
 
   if (isLoading) {
     return (
@@ -60,8 +98,19 @@ export default function AbacusWorldDashboard() {
       
       {/* Header */}
       <header className="relative z-20 flex items-center justify-between px-6 py-4 max-w-7xl mx-auto">
-        {/* Logo */}
-        <Link href="/" className="flex items-center gap-3 group">
+        {/* Left Section: Back Button + Logo */}
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => router.back()}
+            className="w-9 h-9 rounded-full bg-white hover:bg-yellow-50 text-[#1D3557] border border-yellow-200 flex items-center justify-center transition shadow-xs cursor-pointer active:scale-95"
+            title="Go Back"
+            aria-label="Go Back"
+          >
+            <ArrowLeft className="w-4 h-4 text-[#F4A261]" />
+          </button>
+          {/* Logo */}
+          <Link href="/" className="flex items-center gap-3 group">
           <div className="w-10 h-10 relative group-hover:scale-105 transition-transform">
             <svg viewBox="0 0 40 40" className="w-full h-full drop-shadow-sm">
               <rect x="4" y="8" width="32" height="24" rx="4" fill="#F4A261" />
@@ -82,6 +131,7 @@ export default function AbacusWorldDashboard() {
             <span className="text-[#1D3557] ml-1">World</span>
           </div>
         </Link>
+        </div>
 
         {/* Right Side */}
         <div className="flex items-center gap-4 relative">
@@ -149,6 +199,40 @@ export default function AbacusWorldDashboard() {
 
       {/* Main Content */}
       <main className="relative z-10 max-w-6xl mx-auto px-6 pt-8 pb-20">
+        {/* URGENT NOTIFICATION BANNER: Homework Due Date Today */}
+        {dueTodayHomework.length > 0 && (
+          <div className="mb-8 bg-gradient-to-r from-amber-500/15 via-rose-500/15 to-orange-500/15 border-2 border-amber-500/60 rounded-3xl p-5 shadow-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-pulse">
+            <div className="flex items-start gap-3.5">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500 to-rose-500 text-white flex items-center justify-center flex-shrink-0 shadow-md text-xl">
+                🔔
+              </div>
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-[11px] font-black uppercase tracking-wider text-rose-700 bg-rose-100 px-2.5 py-0.5 rounded-full border border-rose-200">
+                    ⚠️ Urgent: Homework Due Today!
+                  </span>
+                  <span className="text-xs font-bold text-slate-600">
+                    {dueTodayHomework.length} assignment{dueTodayHomework.length > 1 ? "s" : ""} pending
+                  </span>
+                </div>
+                <h3 className="text-base sm:text-lg font-black text-[#1D3557]">
+                  Today is the official due date for your homework!
+                </h3>
+                <p className="text-xs sm:text-sm text-slate-600 mt-0.5 font-medium">
+                  {dueTodayHomework.map((t) => `"${t.title}"`).join(", ")} — 70% homework completion is strictly compulsory to attend the Official Certification Exam. Complete and submit today!
+                </p>
+              </div>
+            </div>
+            <Link
+              href="/learning/homework"
+              className="px-5 py-2.5 bg-gradient-to-r from-amber-600 to-rose-600 hover:from-amber-700 hover:to-rose-700 text-white font-black text-xs rounded-2xl shadow-md transition-all hover:scale-105 active:scale-95 flex items-center gap-2 flex-shrink-0"
+            >
+              <span>Submit Homework Now</span>
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+        )}
+
         {/* Hero Section */}
         <section className="text-center mb-12 relative">
           {/* Decorative Characters */}

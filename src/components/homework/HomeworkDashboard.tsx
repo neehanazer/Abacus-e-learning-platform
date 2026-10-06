@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useHomework } from "@/context/HomeworkContext";
-import { HomeworkTask } from "@/data/homeworkData";
+import { HomeworkTask, isDueDateToday } from "@/data/homeworkData";
 import {
   BookOpen,
   CheckCircle2,
@@ -114,9 +114,16 @@ export const HomeworkDashboard: React.FC = () => {
   // Homework Access Rule: Show ONLY currentLevel homework!
   const displayedTasks = pendingTasks.filter((t) => t.level === studentLevel);
 
+  // Pending tasks due today for the student's level
+  const dueTodayTasks = displayedTasks.filter((t) => isDueDateToday(t.dueDate));
+
   // Calculate high-level stats for student's current level
   const activeLevelPending = displayedTasks.length;
   const activeLevelCompleted = completedTasks.filter((t) => t.level === studentLevel).length;
+  const totalLevelTasks = activeLevelPending + activeLevelCompleted;
+  const homeworkCompletionRate =
+    totalLevelTasks > 0 ? Math.round((activeLevelCompleted / totalLevelTasks) * 100) : 100;
+  const isExamEligible = totalLevelTasks === 0 || homeworkCompletionRate >= 70;
 
   const totalCompleted = completedTasks.length;
   const totalPending = pendingTasks.length;
@@ -131,6 +138,91 @@ export const HomeworkDashboard: React.FC = () => {
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
+      {/* ============================================================ */}
+      {/* URGENT DUE DATE TODAY NOTIFICATION BANNER */}
+      {/* ============================================================ */}
+      {dueTodayTasks.length > 0 && (
+        <div className="bg-gradient-to-r from-amber-500/15 via-rose-500/15 to-orange-500/15 border-2 border-amber-500/60 rounded-3xl p-5 shadow-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-pulse">
+          <div className="flex items-start gap-3.5">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500 to-rose-500 text-white flex items-center justify-center flex-shrink-0 shadow-md text-xl">
+              🔔
+            </div>
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-[11px] font-black uppercase tracking-wider text-rose-700 bg-rose-100 px-2.5 py-0.5 rounded-full border border-rose-200">
+                  ⚠️ Urgent Due Date Notice
+                </span>
+                <span className="text-xs font-bold text-slate-600">
+                  {dueTodayTasks.length} assignment{dueTodayTasks.length > 1 ? "s" : ""} due today
+                </span>
+              </div>
+              <h3 className="text-base sm:text-lg font-black text-[#1D3557]">
+                Today is the official due date for your homework!
+              </h3>
+              <p className="text-xs sm:text-sm text-slate-600 mt-0.5 font-medium">
+                {dueTodayTasks.map((t) => `"${t.title}"`).join(", ")} — 70% homework completion is strictly compulsory to attend the Official Certification Exam. Complete and submit today!
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => {
+              if (dueTodayTasks[0]) openHomeworkIntro(dueTodayTasks[0]);
+            }}
+            className="px-5 py-2.5 bg-gradient-to-r from-amber-600 to-rose-600 hover:from-amber-700 hover:to-rose-700 text-white font-black text-xs rounded-2xl shadow-md transition-all hover:scale-105 active:scale-95 flex items-center gap-2 flex-shrink-0 cursor-pointer"
+          >
+            <span>Start Due Homework</span>
+            <ArrowRight className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
+      {/* ============================================================ */}
+      {/* COMPULSORY 70% EXAM ELIGIBILITY PROGRESS BAR */}
+      {/* ============================================================ */}
+      <div
+        className={`rounded-3xl p-5 border-2 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 ${
+          isExamEligible
+            ? "bg-emerald-50/80 border-emerald-300"
+            : "bg-amber-50/90 border-amber-300"
+        }`}
+      >
+        <div className="space-y-1.5 flex-1">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span
+              className={`text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full ${
+                isExamEligible ? "bg-emerald-200 text-emerald-800" : "bg-amber-200 text-amber-900"
+              }`}
+            >
+              Compulsory Exam Requirement (≥70%)
+            </span>
+            <span className="text-xs font-bold text-slate-600">
+              Level {studentLevel} Progress: {activeLevelCompleted}/{totalLevelTasks} ({homeworkCompletionRate}%)
+            </span>
+          </div>
+          <div className="text-sm font-extrabold text-[#1D3557]">
+            {isExamEligible ? (
+              <span className="text-emerald-700 flex items-center gap-1.5">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                Exam Prerequisite Met: You are eligible to attend the Official Level {studentLevel} Certification Exam!
+              </span>
+            ) : (
+              <span className="text-amber-800 flex items-center gap-1.5">
+                <AlertCircle className="w-4 h-4 text-amber-600" />
+                Exam Attendance Locked: Complete at least {Math.max(1, Math.ceil(totalLevelTasks * 0.7) - activeLevelCompleted)} more assignment(s) to reach the compulsory 70% threshold.
+              </span>
+            )}
+          </div>
+          <div className="w-full bg-slate-200 rounded-full h-2.5 overflow-hidden max-w-md">
+            <div
+              className={`h-full rounded-full transition-all duration-500 ${
+                isExamEligible ? "bg-emerald-500" : "bg-amber-500"
+              }`}
+              style={{ width: `${Math.min(100, homeworkCompletionRate)}%` }}
+            />
+          </div>
+        </div>
+      </div>
+
       {/* ============================================================ */}
       {/* 1. HERO & METRICS BANNER */}
       {/* ============================================================ */}

@@ -955,56 +955,6 @@ export default function MockExamPage() {
             </div>
           </div>
 
-          {/* AI Proctoring Integrity Assessment Card */}
-          {evalResult.proctoringSummary && (
-            <div className="bg-white rounded-3xl p-6 border-2 border-yellow-200 shadow-md mb-8">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <ShieldCheck className="w-5 h-5 text-emerald-500" />
-                  <h4 className="text-base font-extrabold text-[#1D3557]">
-                    AI Proctoring Integrity Assessment
-                  </h4>
-                </div>
-                <span
-                  className={`text-xs font-extrabold px-3 py-1 rounded-full ${
-                    evalResult.proctoringSummary.status === "verified"
-                      ? "bg-emerald-100 text-emerald-800"
-                      : "bg-amber-100 text-amber-800"
-                  }`}
-                >
-                  Status: {evalResult.proctoringSummary.status.toUpperCase()}
-                </span>
-              </div>
-
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center text-xs mb-3">
-                <div className="bg-slate-50 p-3 rounded-2xl border border-slate-200">
-                  <div className="text-slate-400 font-bold text-[10px] uppercase">Integrity Score</div>
-                  <div className="text-lg font-black text-emerald-600">
-                    {evalResult.proctoringSummary.integrityScore}/100
-                  </div>
-                </div>
-                <div className="bg-slate-50 p-3 rounded-2xl border border-slate-200">
-                  <div className="text-slate-400 font-bold text-[10px] uppercase">Total Incidents</div>
-                  <div className="text-lg font-black text-[#1D3557]">
-                    {evalResult.proctoringSummary.totalEvents}
-                  </div>
-                </div>
-                <div className="bg-slate-50 p-3 rounded-2xl border border-slate-200">
-                  <div className="text-slate-400 font-bold text-[10px] uppercase">Camera Checks</div>
-                  <div className="text-lg font-black text-emerald-600">Pass</div>
-                </div>
-                <div className="bg-slate-50 p-3 rounded-2xl border border-slate-200">
-                  <div className="text-slate-400 font-bold text-[10px] uppercase">Session Verifier</div>
-                  <div className="text-lg font-black text-[#1D3557]">Rule-Based v1</div>
-                </div>
-              </div>
-
-              <p className="text-xs text-slate-500 font-medium">
-                Note: Mock exam proctoring events are saved for assessment and help familiarize you with final certification exam rules.
-              </p>
-            </div>
-          )}
-
           {/* Detailed Question Review */}
           <div className="bg-white rounded-3xl p-6 sm:p-8 border-2 border-yellow-200 shadow-md mb-8">
             <h4 className="text-xl font-extrabold text-[#1D3557] font-heading mb-6 flex items-center gap-2">

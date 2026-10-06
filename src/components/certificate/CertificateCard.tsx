@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Award,
   CheckCircle2,
@@ -8,9 +8,10 @@ import {
   Copy,
   Check,
   ShieldCheck,
+  ShieldAlert,
   Share2,
   Sparkles,
-  ExternalLink,
+  Lock,
 } from "lucide-react";
 import confetti from "canvas-confetti";
 
@@ -44,6 +45,8 @@ export default function CertificateCard({
 }: CertificateCardProps) {
   const [copiedCode, setCopiedCode] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
+  const [screenshotBlocked, setScreenshotBlocked] = useState(false);
+  const [isShieldActive, setIsShieldActive] = useState(false);
 
   const formattedDate = new Date(certificate.issueDate || Date.now()).toLocaleDateString(
     "en-US",
@@ -54,8 +57,96 @@ export default function CertificateCard({
     }
   );
 
+  // Anti-Screenshot & Screen-Capture / Camera DRM Protection for Sample Preview
+  useEffect(() => {
+    if (!isSample) return;
+
+    const triggerScreenshotDenial = () => {
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(
+            "SCREENSHOT DENIED: Specimen preview is security-protected against capture, copying, or camera recording."
+          );
+        }
+      } catch {}
+      setScreenshotBlocked(true);
+      setTimeout(() => setScreenshotBlocked(false), 3500);
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // 1. PrintScreen key
+      if (e.key === "PrintScreen" || e.keyCode === 44) {
+        e.preventDefault();
+        e.stopPropagation();
+        triggerScreenshotDenial();
+        return false;
+      }
+      // 2. Windows Snipping Tool (Win + Shift + S) or Mac (Cmd + Shift + 3/4/5)
+      if (
+        (e.shiftKey && (e.metaKey || (e as any).ctrlKey)) ||
+        (e.shiftKey && e.key && e.key.toLowerCase() === "s")
+      ) {
+        e.preventDefault();
+        e.stopPropagation();
+        triggerScreenshotDenial();
+        return false;
+      }
+      // 3. Print dialog shortcut (Ctrl + P / Cmd + P)
+      if ((e.ctrlKey || e.metaKey) && e.key && e.key.toLowerCase() === "p") {
+        e.preventDefault();
+        e.stopPropagation();
+        triggerScreenshotDenial();
+        return false;
+      }
+      // 4. Save Page shortcut (Ctrl + S / Cmd + S)
+      if ((e.ctrlKey || e.metaKey) && e.key && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        e.stopPropagation();
+        triggerScreenshotDenial();
+        return false;
+      }
+    };
+
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.key === "PrintScreen" || e.keyCode === 44) {
+        e.preventDefault();
+        e.stopPropagation();
+        triggerScreenshotDenial();
+      }
+    };
+
+    // Prevent screen recorder, snip tool, camera app, or unfocused window from capturing
+    const handleBlur = () => {
+      setIsShieldActive(true);
+    };
+    const handleFocus = () => {
+      setIsShieldActive(false);
+    };
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        setIsShieldActive(true);
+      } else {
+        setIsShieldActive(false);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown, true);
+    window.addEventListener("keyup", handleKeyUp, true);
+    window.addEventListener("blur", handleBlur);
+    window.addEventListener("focus", handleFocus);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown, true);
+      window.removeEventListener("keyup", handleKeyUp, true);
+      window.removeEventListener("blur", handleBlur);
+      window.removeEventListener("focus", handleFocus);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [isSample]);
+
   const handlePrint = () => {
-    // Trigger confetti celebration on print
+    if (isSample) return;
     try {
       confetti({
         particleCount: 50,
@@ -67,6 +158,7 @@ export default function CertificateCard({
   };
 
   const handleCopyCode = async () => {
+    if (isSample) return;
     try {
       await navigator.clipboard.writeText(certificate.verificationCode);
       setCopiedCode(true);
@@ -75,6 +167,7 @@ export default function CertificateCard({
   };
 
   const handleCopyLink = async () => {
+    if (isSample) return;
     try {
       const url = `${window.location.origin}/api/certificates/verify/${certificate.verificationCode}`;
       await navigator.clipboard.writeText(url);
@@ -84,59 +177,143 @@ export default function CertificateCard({
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto space-y-4">
-      {/* Top Action Toolbar (Hidden during print) */}
-      <div className="print:hidden flex flex-wrap items-center justify-between gap-3 bg-white/90 backdrop-blur-md px-5 py-3 rounded-2xl border-2 border-yellow-200 shadow-sm">
-        <div className="flex items-center gap-2">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-black uppercase tracking-wider">
-            <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-            {isSample ? "Official Preview Specimen" : "Cryptographically Verified"}
-          </span>
-          <span className="text-xs text-slate-500 font-semibold hidden sm:inline">
-            ID: <code className="text-[#1D3557] font-bold">{certificate.certificateId}</code>
+    <div
+      className={`w-full max-w-4xl mx-auto space-y-4 ${
+        isSample ? "select-none" : ""
+      }`}
+      onContextMenu={(e) => {
+        if (isSample) e.preventDefault();
+      }}
+      onDragStart={(e) => {
+        if (isSample) e.preventDefault();
+      }}
+    >
+      {/* Floating Screenshot Denied Notification */}
+      {isSample && screenshotBlocked && (
+        <div className="fixed top-8 right-8 z-[99999] bg-gradient-to-r from-rose-600 to-red-700 text-white p-4 sm:p-5 rounded-2xl shadow-2xl border-2 border-white flex items-center gap-3 animate-bounce max-w-md">
+          <ShieldAlert className="w-8 h-8 text-yellow-300 shrink-0" />
+          <div>
+            <div className="font-black text-sm uppercase tracking-wide">
+              Screenshot Denied 🚫
+            </div>
+            <div className="text-xs text-rose-100 font-medium mt-0.5">
+              Specimen certificates are protected against screenshots, recording, and digital capture.
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Top Action Toolbar: Rendered ONLY for real issued certificates. REMOVED for preview sample certificate */}
+      {!isSample ? (
+        <div className="print:hidden flex flex-wrap items-center justify-between gap-3 bg-white/90 backdrop-blur-md px-5 py-3 rounded-2xl border-2 border-yellow-200 shadow-sm">
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-black uppercase tracking-wider">
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+              Cryptographically Verified
+            </span>
+            <span className="text-xs text-slate-500 font-semibold hidden sm:inline">
+              ID: <code className="text-[#1D3557] font-bold">{certificate.certificateId}</code>
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleCopyCode}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-yellow-50 hover:bg-yellow-100 text-slate-700 text-xs font-bold transition border border-yellow-200 cursor-pointer"
+              title="Copy unique verification code"
+            >
+              {copiedCode ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5 text-amber-600" />}
+              <span>{copiedCode ? "Code Copied!" : "Copy Code"}</span>
+            </button>
+
+            <button
+              onClick={handleCopyLink}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold transition border border-blue-200 cursor-pointer"
+              title="Copy public verification link"
+            >
+              {copiedLink ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Share2 className="w-3.5 h-3.5" />}
+              <span>{copiedLink ? "Link Copied!" : "Share Link"}</span>
+            </button>
+
+            <button
+              onClick={handlePrint}
+              className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white text-xs font-black shadow-md transition hover:scale-105 active:scale-95 cursor-pointer"
+              title="Print or Save as PDF"
+            >
+              <Printer className="w-3.5 h-3.5" />
+              <span>Print / PDF</span>
+            </button>
+          </div>
+        </div>
+      ) : (
+        /* Sample Preview Security Header (No Print, No Copy, No Share) */
+        <div className="flex flex-wrap items-center justify-between gap-3 bg-amber-50/90 backdrop-blur-md px-5 py-3 rounded-2xl border-2 border-amber-300 shadow-sm print:hidden">
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-200 text-amber-900 text-xs font-black uppercase tracking-wider">
+              <Lock className="w-3.5 h-3.5 text-amber-800" />
+              Specimen Preview Only
+            </span>
+            <span className="text-xs text-amber-900 font-bold">
+              Protected by Anti-Screenshot & Camera DRM Security Shield
+            </span>
+          </div>
+          <span className="text-[11px] text-amber-800 font-bold bg-amber-100 px-2.5 py-1 rounded-xl border border-amber-200">
+            🔒 Capture & Print Options Disabled
           </span>
         </div>
-
-        <div className="flex items-center gap-2">
-          <button
-            onClick={handleCopyCode}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-yellow-50 hover:bg-yellow-100 text-slate-700 text-xs font-bold transition border border-yellow-200 cursor-pointer"
-            title="Copy unique verification code"
-          >
-            {copiedCode ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5 text-amber-600" />}
-            <span>{copiedCode ? "Code Copied!" : "Copy Code"}</span>
-          </button>
-
-          <button
-            onClick={handleCopyLink}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold transition border border-blue-200 cursor-pointer"
-            title="Copy public verification link"
-          >
-            {copiedLink ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Share2 className="w-3.5 h-3.5" />}
-            <span>{copiedLink ? "Link Copied!" : "Share Link"}</span>
-          </button>
-
-          <button
-            onClick={handlePrint}
-            className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white text-xs font-black shadow-md transition hover:scale-105 active:scale-95 cursor-pointer"
-            title="Print or Save as PDF"
-          >
-            <Printer className="w-3.5 h-3.5" />
-            <span>Print / PDF</span>
-          </button>
-        </div>
-      </div>
+      )}
 
       {/* ============================================================== */}
       {/* PRINTABLE / OFFICIAL CERTIFICATE CANVAS */}
       {/* ============================================================== */}
       <div
         id="certificate-print-area"
-        className="certificate-canvas relative bg-gradient-to-br from-[#FFFDF9] via-[#FAF6EE] to-[#FFF9EE] rounded-[2rem] p-6 sm:p-12 border-8 border-[#D4AF37] shadow-2xl overflow-hidden print:border-4 print:shadow-none print:m-0 print:p-8"
+        className={`certificate-canvas relative bg-gradient-to-br from-[#FFFDF9] via-[#FAF6EE] to-[#FFF9EE] rounded-[2rem] p-6 sm:p-12 border-8 border-[#D4AF37] shadow-2xl overflow-hidden ${
+          isSample ? "print:hidden select-none" : "print:border-4 print:shadow-none print:m-0 print:p-8"
+        }`}
         style={{
           boxShadow: "0 25px 50px -12px rgba(212, 175, 55, 0.25)",
         }}
       >
+        {/* Anti-Camera & External Capture Blackout Shield (When window loses focus or screen recording tool opens) */}
+        {isSample && isShieldActive && (
+          <div className="absolute inset-0 z-50 bg-slate-950/98 backdrop-blur-xl flex flex-col items-center justify-center p-6 sm:p-10 text-center text-white select-none">
+            <div className="w-16 h-16 rounded-2xl bg-rose-500/20 border-2 border-rose-500 flex items-center justify-center text-3xl mb-3 animate-pulse">
+              🛡️
+            </div>
+            <h3 className="text-xl sm:text-2xl font-black text-rose-400 font-heading tracking-wide">
+              ANTI-CAMERA & CAPTURE SHIELD ACTIVE
+            </h3>
+            <p className="text-xs sm:text-sm text-slate-300 max-w-md mt-2 leading-relaxed">
+              Certificate display is securely masked while external capture tools, screen recorders, camera overlays, or inactive windows are detected. Click back into this active window to view.
+            </p>
+          </div>
+        )}
+
+        {/* Anti-Photo Optical Moiré Interference Mesh Pattern (Prevents clean capture by camera lenses) */}
+        {isSample && (
+          <div
+            className="absolute inset-0 z-20 pointer-events-none opacity-[0.05] select-none"
+            style={{
+              backgroundImage:
+                "repeating-linear-gradient(45deg, #000 0, #000 1px, transparent 0, transparent 3px), repeating-linear-gradient(-45deg, #000 0, #000 1px, transparent 0, transparent 3px)",
+            }}
+          />
+        )}
+
+        {/* Security Watermark for Specimen Preview */}
+        {isSample && (
+          <div className="absolute inset-0 z-30 pointer-events-none select-none overflow-hidden opacity-[0.12]">
+            <div className="w-[180%] h-[180%] -rotate-25 flex flex-wrap content-center justify-center gap-12 font-black text-xs sm:text-sm text-red-950 uppercase tracking-widest">
+              {Array.from({ length: 40 }).map((_, i) => (
+                <span key={i} className="whitespace-nowrap">
+                  🔒 OFFICIAL SPECIMEN • DO NOT PHOTOGRAPH • UNAUTHORIZED CAPTURE BLOCKED
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Subtle Watermark Abacus Icon */}
         <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] pointer-events-none select-none">
           <span className="text-[280px]">🧮</span>
@@ -169,54 +346,49 @@ export default function CertificateCard({
               </span>
             </div>
 
-            <h1 className="text-2xl sm:text-4xl lg:text-5xl print:text-3xl font-extrabold text-[#1D3557] font-serif tracking-tight uppercase drop-shadow-sm">
-              Certificate of Excellence
+            <h1 className="text-2xl sm:text-4xl md:text-5xl font-serif font-black tracking-wide text-[#1D3557] uppercase drop-shadow-xs print:text-3xl">
+              Certificate of Mastery
             </h1>
 
-            <p className="text-xs sm:text-sm font-bold text-[#8B6508] uppercase tracking-[0.18em] print:text-[11px]">
-              Soroban Abacus & Mental Arithmetic Accreditation
+            <p className="text-xs sm:text-sm text-[#8B6508] font-serif italic tracking-wider print:text-xs">
+              Official Soroban Abacus Mental Arithmetic Accreditation
             </p>
-
-            <div className="w-32 h-1 bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent mx-auto mt-2 print:mt-1" />
           </div>
 
-          {/* Recipient Presentation */}
-          <div className="text-center my-6 print:my-2 space-y-3 print:space-y-1">
-            <p className="text-xs sm:text-sm font-medium text-slate-500 italic print:text-xs">
-              This is to officially and proudly certify that
+          {/* Presentation Statement */}
+          <div className="text-center my-6 sm:my-8 print:my-3 space-y-3">
+            <p className="text-xs uppercase tracking-widest text-slate-500 font-sans font-bold">
+              This is to formally certify that
             </p>
 
             {/* Student Name */}
-            <div className="py-2 print:py-1">
-              <h2 className="text-3xl sm:text-5xl print:text-3xl font-black text-[#1D3557] font-serif tracking-normal border-b-2 border-[#D4AF37]/40 pb-2 print:pb-1 inline-block px-8 min-w-[280px]">
-                {certificate.studentName || "Abacus Master Student"}
+            <div className="inline-block border-b-2 border-[#D4AF37] pb-2 px-6 sm:px-12">
+              <h2 className="text-2xl sm:text-4xl md:text-5xl font-serif font-black text-[#1D3557] italic tracking-tight">
+                {certificate.studentName}
               </h2>
             </div>
 
-            <p className="text-xs sm:text-sm text-slate-600 max-w-xl mx-auto leading-relaxed pt-1 print:pt-0 print:text-xs">
-              has successfully fulfilled all rigorous pedagogical criteria, timed mental arithmetic evaluations, and AI-proctored examination requirements for:
+            <p className="text-xs sm:text-sm text-slate-600 max-w-xl mx-auto leading-relaxed pt-2">
+              has successfully achieved mastery through rigorous continuous practice, demonstration of mental soroban computation, and passing the formal AI-proctored examination for:
             </p>
 
-            {/* Exam / Level Title Badge */}
-            <div className="inline-block bg-gradient-to-r from-amber-50 via-yellow-100 to-amber-50 border-2 border-[#D4AF37] rounded-2xl px-6 py-2 print:py-1 shadow-sm my-2 print:my-1">
-              <span className="text-sm sm:text-lg print:text-base font-black text-[#1D3557] tracking-wide">
-                {certificate.levelName || "Level 1: Basic Foundations & Direct Bead Movement"}
-              </span>
-              <span className="block text-xs font-bold text-amber-900 mt-0.5 print:text-[11px]">
-                {certificate.examTitle || "Final Comprehensive Level Certification Exam"}
+            {/* Level & Topic Name */}
+            <div className="inline-block bg-[#FFF9EE] border-2 border-[#D4AF37]/60 rounded-2xl px-5 py-2 mt-2">
+              <span className="text-sm sm:text-lg font-black text-[#8B6508] font-sans">
+                {certificate.levelName || "Level 1: Basic Foundations"}
               </span>
             </div>
           </div>
 
-          {/* Score & Honors Grade Row */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 print:gap-2 max-w-2xl mx-auto my-6 print:my-2 text-center text-xs font-bold">
+          {/* Academic Assessment Details Grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 my-6 sm:my-8 print:my-3 text-center text-xs">
             <div className="bg-white/90 p-2.5 print:p-1.5 rounded-xl border border-yellow-200 shadow-sm">
-              <span className="text-[10px] uppercase text-slate-400 block font-sans">Final Score</span>
-              <span className="text-base sm:text-lg print:text-base font-black text-emerald-600">{certificate.score}/100</span>
+              <span className="text-[10px] uppercase text-slate-400 block font-sans">Exam Score</span>
+              <span className="text-base sm:text-lg print:text-base font-black text-emerald-700">{certificate.score}%</span>
             </div>
 
             <div className="bg-white/90 p-2.5 print:p-1.5 rounded-xl border border-yellow-200 shadow-sm">
-              <span className="text-[10px] uppercase text-slate-400 block font-sans">Honors Grade</span>
+              <span className="text-[10px] uppercase text-slate-400 block font-sans">Grade</span>
               <span className="text-base sm:text-lg print:text-base font-black text-amber-600">{certificate.grade || "Distinction"}</span>
             </div>
 
@@ -282,7 +454,7 @@ export default function CertificateCard({
               <code className="bg-amber-100 text-amber-900 font-mono font-bold px-2 py-0.5 rounded-md border border-amber-300">
                 {certificate.verificationCode}
               </code>
-              {onVerifyClick && (
+              {!isSample && onVerifyClick && (
                 <button
                   onClick={() => onVerifyClick(certificate.verificationCode)}
                   className="text-xs text-blue-600 hover:text-blue-800 underline font-bold print:hidden cursor-pointer"

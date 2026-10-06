@@ -516,12 +516,94 @@ export class PerformanceService {
       },
     ];
 
+    // Compute student's level homework completion rate (Compulsory 70% threshold for exam attendance)
+    let totalHomeworkCount = 0;
+    let completedHomeworkCount = 0;
+    let homeworkCompletionRate = 0;
+    let homeworkDueTodayCount = 0;
+    let homeworkDueTodayTitles: string[] = [];
+
+    try {
+      let currentLevelOrder = 1;
+      let studentObjectId: mongoose.Types.ObjectId | null = null;
+      if (mongoose.Types.ObjectId.isValid(studentId)) {
+        studentObjectId = new mongoose.Types.ObjectId(studentId);
+        const Student = (await import("@/models/Student")).default;
+        const studentDoc = await Student.findById(studentObjectId).lean();
+        if (studentDoc) {
+          if (typeof (studentDoc as any).currentLevel === "number" && (studentDoc as any).currentLevel >= 1) {
+            currentLevelOrder = (studentDoc as any).currentLevel;
+          } else {
+            const match = String((studentDoc as any).selectedLevel || (studentDoc as any).abacusLevel || "").match(/Level\s*(\d+)/i);
+            currentLevelOrder = match ? parseInt(match[1], 10) : 1;
+          }
+        }
+      }
+
+      const Level = (await import("@/models/Level")).default;
+      const Homework = (await import("@/models/Homework")).default;
+      const HomeworkAttempt = (await import("@/models/HomeworkAttempt")).default;
+
+      const levelDoc = await Level.findOne({ order: currentLevelOrder }).lean();
+      if (levelDoc) {
+        const hwList = await Homework.find({ levelId: levelDoc._id }).lean();
+        totalHomeworkCount = hwList.length;
+
+        if (totalHomeworkCount > 0 && studentObjectId) {
+          const attempts = await HomeworkAttempt.find({
+            studentId: studentObjectId,
+            status: { $in: ["submitted", "evaluated"] },
+          }).lean();
+
+          const completedHwIds = new Set(attempts.map((a: any) => a.homeworkId?.toString()));
+          completedHomeworkCount = hwList.filter((h: any) => completedHwIds.has(h._id.toString())).length;
+          homeworkCompletionRate = Math.round((completedHomeworkCount / totalHomeworkCount) * 100);
+
+          const now = new Date();
+          const todayYear = now.getFullYear();
+          const todayMonth = now.getMonth();
+          const todayDate = now.getDate();
+
+          hwList.forEach((h: any) => {
+            if (!completedHwIds.has(h._id.toString()) && h.dueDate) {
+              const d = new Date(h.dueDate);
+              if (!isNaN(d.getTime()) && d.getFullYear() === todayYear && d.getMonth() === todayMonth && d.getDate() === todayDate) {
+                homeworkDueTodayCount++;
+                homeworkDueTodayTitles.push(h.title);
+              }
+            }
+          });
+        }
+      }
+    } catch (err) {
+      console.warn("[PerformanceService]: Could not compute DB homework metrics:", err);
+    }
+
+    // Add compulsory 70% homework completion criterion
+    if (totalHomeworkCount > 0) {
+      criteria.unshift({
+        name: "Homework Completion (≥70% Required for Exam)",
+        target: "70%",
+        current: `${homeworkCompletionRate}% (${completedHomeworkCount}/${totalHomeworkCount} done)`,
+        passed: homeworkCompletionRate >= 70,
+        weight: 35,
+      });
+    }
+
     return {
       readinessScore,
       readinessStatus,
       summary,
       weakAreas,
       criteria,
+      homeworkMetrics: {
+        total: totalHomeworkCount,
+        completed: completedHomeworkCount,
+        completionRate: homeworkCompletionRate,
+        isEligible: totalHomeworkCount === 0 || homeworkCompletionRate >= 70,
+        dueTodayCount: homeworkDueTodayCount,
+        dueTodayTitles: homeworkDueTodayTitles,
+      },
     };
   }
 

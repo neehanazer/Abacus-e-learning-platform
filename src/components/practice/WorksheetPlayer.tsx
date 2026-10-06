@@ -39,6 +39,7 @@ export default function WorksheetPlayer() {
     totalQuestions,
     answerQuestion,
     submitCurrentQuestion,
+    unsubmitQuestion,
     nextQuestion,
     prevQuestion,
     goToQuestion,
@@ -87,30 +88,28 @@ export default function WorksheetPlayer() {
     if (!currentQuestion || inputVal.length >= 8) return;
     const nextVal = inputVal + numStr;
     setInputVal(nextVal);
-    const parsed = parseInt(nextVal, 10);
-    if (!isNaN(parsed)) {
-      answerQuestion(currentQuestion.id, parsed);
+    // If this question was already submitted, hide the old feedback while the user types new input
+    if (isSubmitted[currentQuestion.id]) {
+      unsubmitQuestion(currentQuestion.id);
     }
-  }, [currentQuestion, inputVal, answerQuestion]);
+  }, [currentQuestion, inputVal, isSubmitted, unsubmitQuestion]);
 
   const handleBackspace = React.useCallback(() => {
     if (!currentQuestion) return;
     const nextVal = inputVal.slice(0, -1);
     setInputVal(nextVal);
-    if (nextVal === "") {
-      answerQuestion(currentQuestion.id, null);
-    } else {
-      const parsed = parseInt(nextVal, 10);
-      if (!isNaN(parsed)) {
-        answerQuestion(currentQuestion.id, parsed);
-      }
+    if (isSubmitted[currentQuestion.id]) {
+      unsubmitQuestion(currentQuestion.id);
     }
-  }, [currentQuestion, inputVal, answerQuestion]);
+  }, [currentQuestion, inputVal, isSubmitted, unsubmitQuestion]);
 
   const handleClear = () => {
     if (!currentQuestion) return;
     setInputVal("");
     answerQuestion(currentQuestion.id, null);
+    if (isSubmitted[currentQuestion.id]) {
+      unsubmitQuestion(currentQuestion.id);
+    }
   };
 
   const handleSubmitAnswer = React.useCallback(() => {
@@ -147,8 +146,10 @@ export default function WorksheetPlayer() {
   if (!currentQuestion) return null;
 
   const currentAnswer = userAnswers[currentQuestion.id];
-  const hasSubmitted = isSubmitted[currentQuestion.id] || (currentAnswer !== null && currentAnswer !== undefined);
-  const isCorrect = currentAnswer !== null && currentAnswer !== undefined ? currentAnswer === currentQuestion.targetAnswer : false;
+  const hasSubmitted = Boolean(isSubmitted[currentQuestion.id]);
+  const isCorrect = hasSubmitted && currentAnswer !== null && currentAnswer !== undefined
+    ? currentAnswer === currentQuestion.targetAnswer
+    : false;
 
   const progressPercent = Math.round(((currentQuestionIndex + 1) / totalQuestions) * 100);
 
@@ -194,113 +195,21 @@ export default function WorksheetPlayer() {
           </div>
         </div>
 
-        {/* Middle: Timer & Mode Display (Without Timer vs With Timer) */}
-        <div className="flex flex-wrap items-center gap-2">
-          {practiceMode === "untimed" ? (
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-2 bg-emerald-50 px-3.5 py-1.5 rounded-2xl border border-emerald-200 shadow-sm">
-                <span className="text-sm">🌱</span>
-                <span className="text-xs font-black text-emerald-800">
-                  Practice Without Timer
-                </span>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setPracticeMode("timed");
-                  resetTimer();
-                }}
-                className="px-2.5 py-1.5 rounded-xl bg-orange-50 hover:bg-orange-100 border border-orange-200 text-orange-800 text-[11px] font-extrabold transition flex items-center gap-1 cursor-pointer"
-                title="Switch to Timed Practice Mode"
-              >
-                <Clock className="w-3.5 h-3.5 text-orange-600" />
-                <span>Switch to Timed ({targetMinutes}m)</span>
-              </button>
+        {/* Middle: Practice Mode Indicator */}
+        <div className="flex items-center gap-2">
+          {practiceMode === "timed" ? (
+            <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-2xl bg-orange-50 border border-orange-200 shadow-xs">
+              <Clock className="w-4 h-4 text-orange-600" />
+              <span className="text-xs font-black text-orange-800">
+                Practice With Timer ({targetMinutes}m)
+              </span>
             </div>
           ) : (
-            <div className="flex items-center gap-2">
-              <div className="relative">
-                <div
-                  className={`flex items-center gap-2 px-3.5 py-1.5 rounded-2xl border-2 font-mono text-base font-black transition-colors shadow-sm ${
-                    timeRemaining <= 30
-                      ? "bg-rose-50 border-rose-300 text-rose-600 animate-pulse"
-                      : timeRemaining <= 60
-                      ? "bg-amber-50 border-amber-300 text-amber-900"
-                      : "bg-[#FFFBF0] border-orange-200 text-[#1D3557]"
-                  }`}
-                >
-                  <Clock className="w-4 h-4 text-orange-600" />
-                  <span>{formatTime(timeRemaining)}</span>
-                  <button
-                    type="button"
-                    onClick={() => setShowTimerPicker(!showTimerPicker)}
-                    className="text-[10px] font-sans font-bold text-orange-800 bg-orange-100 hover:bg-orange-200 px-1.5 py-0.5 rounded-md uppercase cursor-pointer transition flex items-center gap-0.5"
-                    title="Change timer duration inside"
-                  >
-                    <span>{targetMinutes}m</span>
-                    <span className="text-[8px]">▾</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={toggleTimer}
-                    className="p-1 rounded-xl bg-orange-100 hover:bg-orange-200 text-[#1D3557] transition-colors ml-0.5 cursor-pointer"
-                    title={isTimerRunning ? "Pause Countdown" : "Resume Countdown"}
-                  >
-                    {isTimerRunning ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3" />}
-                  </button>
-                </div>
-
-                {/* Popover to choose/change time inside */}
-                {showTimerPicker && (
-                  <div className="absolute top-full mt-2 left-0 bg-white rounded-2xl p-3 border-2 border-orange-200 shadow-xl z-50 min-w-[210px] space-y-2 animate-in fade-in">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                        Choose Duration:
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => setShowTimerPicker(false)}
-                        className="text-xs font-bold text-slate-400 hover:text-slate-600"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                    <div className="grid grid-cols-3 gap-1.5">
-                      {[1, 2, 3, 5, 10, 15].map((m) => (
-                        <button
-                          key={m}
-                          type="button"
-                          onClick={() => {
-                            setTargetMinutes(m);
-                            setTimeRemaining(m * 60);
-                            setShowTimerPicker(false);
-                          }}
-                          className={`py-1.5 px-2 rounded-xl text-xs font-black transition cursor-pointer ${
-                            targetMinutes === m
-                              ? "bg-[#E76F51] text-white shadow-xs"
-                              : "bg-orange-50 text-slate-700 hover:bg-orange-100"
-                          }`}
-                        >
-                          {m}m
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setPracticeMode("untimed");
-                  resetTimer();
-                }}
-                className="px-2.5 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-800 text-[11px] font-extrabold transition flex items-center gap-1 cursor-pointer"
-                title="Switch to Untimed Practice Mode"
-              >
-                <span>🌱 Switch to Untimed</span>
-              </button>
+            <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-2xl bg-emerald-50 border border-emerald-200 shadow-xs">
+              <span className="text-sm">🌱</span>
+              <span className="text-xs font-black text-emerald-800">
+                Practice Without Timer
+              </span>
             </div>
           )}
         </div>
@@ -360,8 +269,8 @@ export default function WorksheetPlayer() {
         transition={{ duration: 0.25 }}
         className="bg-white rounded-[2.5rem] p-6 sm:p-8 border-4 border-yellow-200 shadow-xl relative overflow-hidden"
       >
-        {/* Question Header & Rule Tag */}
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-yellow-100 pb-4 mb-6">
+        {/* Question Header & Rule Tag + Timer */}
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-yellow-100 pb-4 mb-6">
           <div className="flex items-center gap-2">
             <span className="text-xs font-extrabold px-3 py-1 rounded-full bg-yellow-100 text-yellow-900 border border-yellow-200 uppercase tracking-wider">
               {currentQuestion.category}
@@ -371,15 +280,103 @@ export default function WorksheetPlayer() {
             </span>
           </div>
 
-          {currentQuestion.ruleHint && (
-            <button
-              onClick={() => setShowRuleTip((prev) => !prev)}
-              className="inline-flex items-center gap-1 text-xs font-extrabold text-orange-600 hover:text-orange-700 bg-orange-50 hover:bg-orange-100 px-3 py-1 rounded-full border border-orange-200 transition-colors"
-            >
-              <Lightbulb className="w-3.5 h-3.5 text-amber-500 fill-amber-400" />
-              <span>{showRuleTip ? "Hide Rule Tip" : "Show Rule Tip 💡"}</span>
-            </button>
-          )}
+          {/* Right: Timer and Rule Tip side-by-side */}
+          <div className="flex flex-wrap items-center gap-2.5">
+            {practiceMode === "timed" ? (
+              <div className="relative">
+                <div
+                  className={`flex items-center gap-2 px-3.5 py-1.5 rounded-2xl border-2 font-mono text-base font-black transition-colors shadow-sm ${
+                    timeRemaining <= 30
+                      ? "bg-rose-50 border-rose-300 text-rose-600 animate-pulse"
+                      : timeRemaining <= 60
+                      ? "bg-amber-50 border-amber-300 text-amber-900"
+                      : "bg-[#FFFBF0] border-orange-200 text-[#1D3557]"
+                  }`}
+                >
+                  <Clock className="w-4 h-4 text-orange-600" />
+                  <span>{formatTime(timeRemaining)}</span>
+                  <button
+                    type="button"
+                    onClick={() => setShowTimerPicker(!showTimerPicker)}
+                    className="text-[10px] font-sans font-bold text-orange-800 bg-orange-100 hover:bg-orange-200 px-1.5 py-0.5 rounded-md uppercase cursor-pointer transition flex items-center gap-0.5"
+                    title="Change timer duration"
+                  >
+                    <span>{targetMinutes}m</span>
+                    <span className="text-[8px]">▾</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={toggleTimer}
+                    className="p-1 rounded-xl bg-orange-100 hover:bg-orange-200 text-[#1D3557] transition-colors ml-0.5 cursor-pointer"
+                    title={isTimerRunning ? "Pause Countdown" : "Resume Countdown"}
+                  >
+                    {isTimerRunning ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3" />}
+                  </button>
+                </div>
+
+                {/* Popover to choose/change time inside */}
+                {showTimerPicker && (
+                  <div className="absolute top-full mt-2 right-0 bg-white rounded-2xl p-3 border-2 border-orange-200 shadow-xl z-50 min-w-[210px] space-y-2 animate-in fade-in">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                        Choose Duration:
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setShowTimerPicker(false)}
+                        className="text-xs font-bold text-slate-400 hover:text-slate-600 cursor-pointer"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-3 gap-1.5">
+                      {[1, 2, 3, 5, 10, 15].map((m) => (
+                        <button
+                          key={m}
+                          type="button"
+                          onClick={() => {
+                            setTargetMinutes(m);
+                            setTimeRemaining(m * 60);
+                            setShowTimerPicker(false);
+                          }}
+                          className={`py-1.5 px-2 rounded-xl text-xs font-black transition cursor-pointer ${
+                            targetMinutes === m
+                              ? "bg-[#E76F51] text-white shadow-xs"
+                              : "bg-orange-50 text-slate-700 hover:bg-orange-100"
+                          }`}
+                        >
+                          {m}m
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => {
+                  setPracticeMode("timed");
+                  resetTimer();
+                }}
+                className="px-2.5 py-1.5 rounded-xl bg-orange-50 hover:bg-orange-100 border border-orange-200 text-orange-800 text-[11px] font-extrabold transition flex items-center gap-1 cursor-pointer"
+                title="Switch to Timed Practice Mode"
+              >
+                <Clock className="w-3.5 h-3.5 text-orange-600" />
+                <span>Timer ({targetMinutes}m)</span>
+              </button>
+            )}
+
+            {currentQuestion.ruleHint && (
+              <button
+                onClick={() => setShowRuleTip((prev) => !prev)}
+                className="inline-flex items-center gap-1 text-xs font-extrabold text-orange-600 hover:text-orange-700 bg-orange-50 hover:bg-orange-100 px-3 py-1.5 rounded-full border border-orange-200 transition-colors cursor-pointer"
+              >
+                <Lightbulb className="w-3.5 h-3.5 text-amber-500 fill-amber-400" />
+                <span>{showRuleTip ? "Hide Rule Tip" : "Show Rule Tip 💡"}</span>
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Expandable Rule Tip Banner */}
@@ -447,7 +444,13 @@ export default function WorksheetPlayer() {
                 </div>
 
                 <div className="pt-2 flex justify-center">
-                  <div className="min-w-[120px] h-14 bg-white rounded-2xl border-2 border-yellow-300 shadow-sm px-4 flex items-center justify-center font-mono text-3xl font-black text-[#1D3557]">
+                  <div className={`min-w-[120px] h-14 rounded-2xl border-2 shadow-sm px-4 flex items-center justify-center font-mono text-3xl font-black transition-colors ${
+                    hasSubmitted
+                      ? isCorrect
+                        ? "bg-emerald-50 border-emerald-400 text-emerald-800"
+                        : "bg-rose-50 border-rose-400 text-rose-800"
+                      : "bg-white border-yellow-300 text-[#1D3557]"
+                  }`}>
                     {inputVal ? (
                       inputVal
                     ) : (
@@ -499,7 +502,13 @@ export default function WorksheetPlayer() {
 
                 {/* Input Answer Display Box in column */}
                 <div className="text-right pr-4">
-                  <div className="inline-block min-w-[90px] h-12 sm:h-14 bg-white rounded-2xl border-2 border-yellow-300 shadow-sm px-3 flex items-center justify-end font-mono text-2xl sm:text-3xl font-black text-[#1D3557]">
+                  <div className={`inline-block min-w-[90px] h-12 sm:h-14 rounded-2xl border-2 shadow-sm px-3 flex items-center justify-end font-mono text-2xl sm:text-3xl font-black transition-colors ${
+                    hasSubmitted
+                      ? isCorrect
+                        ? "bg-emerald-50 border-emerald-400 text-emerald-800"
+                        : "bg-rose-50 border-rose-400 text-rose-800"
+                      : "bg-white border-yellow-300 text-[#1D3557]"
+                  }`}>
                     {inputVal ? (
                       inputVal
                     ) : (

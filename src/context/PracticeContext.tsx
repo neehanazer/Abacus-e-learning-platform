@@ -78,6 +78,7 @@ interface PracticeContextType {
   startCustomWorksheet: (filter: WorksheetFilterOptions, title?: string) => void;
   answerQuestion: (questionId: string, answer: number | null) => void;
   submitCurrentQuestion: (questionId: string) => void;
+  unsubmitQuestion: (questionId: string) => void;
   nextQuestion: () => void;
   prevQuestion: () => void;
   goToQuestion: (index: number) => void;
@@ -361,6 +362,13 @@ export const PracticeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }));
   };
 
+  const unsubmitQuestion = (questionId: string) => {
+    setIsSubmitted((prev) => ({
+      ...prev,
+      [questionId]: false,
+    }));
+  };
+
   const nextQuestion = () => {
     if (currentQuestionIndex < questions.length - 1) {
       setCurrentQuestionIndex((prev) => prev + 1);
@@ -595,6 +603,7 @@ export const PracticeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         startCustomWorksheet,
         answerQuestion,
         submitCurrentQuestion,
+        unsubmitQuestion,
         nextQuestion,
         prevQuestion,
         goToQuestion,

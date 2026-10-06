@@ -89,6 +89,32 @@ export function isDueDateOver(dueDateStr?: string): boolean {
   return false;
 }
 
+// Check if due date is today
+export function isDueDateToday(dueDateStr?: string | Date): boolean {
+  if (!dueDateStr) return false;
+  const now = new Date();
+  const lower = typeof dueDateStr === "string" ? dueDateStr.toLowerCase().trim() : "";
+  if (lower === "today") return true;
+
+  let parsed: Date;
+  if (dueDateStr instanceof Date) {
+    parsed = dueDateStr;
+  } else {
+    parsed = new Date(dueDateStr);
+    if (isNaN(parsed.getTime())) {
+      parsed = new Date(`${dueDateStr} ${now.getFullYear()}`);
+    }
+  }
+
+  if (isNaN(parsed.getTime())) return false;
+
+  return (
+    now.getFullYear() === parsed.getFullYear() &&
+    now.getMonth() === parsed.getMonth() &&
+    now.getDate() === parsed.getDate()
+  );
+}
+
 const findCategory = (id: string): PracticeCategoryOption =>
   PRACTICE_CATEGORIES.find((c) => c.id === id) || PRACTICE_CATEGORIES[0];
 

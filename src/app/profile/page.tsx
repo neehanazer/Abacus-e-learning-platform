@@ -21,6 +21,7 @@ import {
   Edit,
   Save,
   ArrowLeft,
+  LayoutDashboard,
 } from "lucide-react";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
@@ -94,12 +95,23 @@ function ProfileContent() {
     <div className="min-h-[85vh] py-10 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto space-y-8">
       {/* Top Back Navigation Bar */}
       <div className="flex items-center justify-between">
-        <Link href="/dashboard">
-          <button className="flex items-center gap-2 text-xs font-bold text-purple-600 hover:text-purple-800 transition bg-purple-50 px-3.5 py-2 rounded-2xl border border-purple-200">
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => router.back()}
+            className="w-9 h-9 rounded-2xl bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 flex items-center justify-center transition shadow-xs cursor-pointer active:scale-95"
+            title="Go Back"
+            aria-label="Go Back"
+          >
             <ArrowLeft className="w-4 h-4" />
-            <span>Back to Dashboard</span>
           </button>
-        </Link>
+          <Link href="/dashboard">
+            <button className="flex items-center gap-2 text-xs font-bold text-purple-700 hover:text-purple-900 transition bg-purple-50 hover:bg-purple-100 px-3.5 py-2 rounded-2xl border border-purple-200 cursor-pointer shadow-xs">
+              <LayoutDashboard className="w-4 h-4 text-purple-600" />
+              <span>Dashboard</span>
+            </button>
+          </Link>
+        </div>
 
         {savedNotice && (
           <motion.span

@@ -27,10 +27,27 @@ interface FlashAnzanProps {
   defaultDigits?: number;
 }
 
+export type FlashOperation = "add-sub" | "multiplication" | "division" | "mixed";
+
+export interface FlashItem {
+  id: string;
+  displayText: string;
+  operator: "+" | "-" | "×" | "÷" | "";
+  number: number;
+}
+
+export interface FlashChallenge {
+  items: FlashItem[];
+  expectedAnswer: number;
+  formula: string;
+  operation: FlashOperation;
+}
+
 interface AttemptRecord {
   id: string;
-  numbers: number[];
-  sum: number;
+  operation: FlashOperation;
+  formula: string;
+  expectedAnswer: number;
   userAnswer: number;
   isCorrect: boolean;
   speedMs: number;
@@ -41,6 +58,7 @@ interface AttemptRecord {
 
 export default function FlashAnzanModule({ onBack, defaultDigits = 1 }: FlashAnzanProps) {
   // Configuration State
+  const [operation, setOperation] = useState<FlashOperation>("add-sub");
   const [digits, setDigits] = useState<number>(defaultDigits);
   const [count, setCount] = useState<number>(5);
   const [speedMs, setSpeedMs] = useState<number>(1200);
@@ -50,9 +68,10 @@ export default function FlashAnzanModule({ onBack, defaultDigits = 1 }: FlashAnz
   // Gameplay State: 'idle' | 'countdown' | 'flashing' | 'input' | 'evaluated'
   const [gameState, setGameState] = useState<"idle" | "countdown" | "flashing" | "input" | "evaluated">("idle");
   const [countdownVal, setCountdownVal] = useState<number | string>(3);
-  const [sequence, setSequence] = useState<number[]>([]);
+  const [currentChallenge, setCurrentChallenge] = useState<FlashChallenge | null>(null);
+  const [sequence, setSequence] = useState<FlashItem[]>([]);
   const [currentIndex, setCurrentIndex] = useState<number>(-1);
-  const [currentNumber, setCurrentNumber] = useState<number | null>(null);
+  const [currentStep, setCurrentStep] = useState<FlashItem | null>(null);
   const [userAnswer, setUserAnswer] = useState<string>("");
   const [lastAttempt, setLastAttempt] = useState<AttemptRecord | null>(null);
 
@@ -111,7 +130,6 @@ export default function FlashAnzanModule({ onBack, defaultDigits = 1 }: FlashAnz
           osc.start(now);
           osc.stop(now + 0.25);
         } else if (type === "success") {
-          // Cheerful major chord arpeggio
           const notes = [523.25, 659.25, 783.99, 1046.5]; // C5, E5, G5, C6
           notes.forEach((freq, idx) => {
             const o = ctx.createOscillator();
@@ -141,35 +159,176 @@ export default function FlashAnzanModule({ onBack, defaultDigits = 1 }: FlashAnz
     [soundEnabled]
   );
 
-  // Generate sequence of numbers ensuring running sum stays non-negative
-  const generateSequence = useCallback(() => {
-    const list: number[] = [];
-    let runningSum = 0;
-    const maxVal = Math.pow(10, digits) - 1;
-    const minVal = Math.pow(10, digits - 1);
-
-    for (let i = 0; i < count; i++) {
-      let n = Math.floor(Math.random() * (maxVal - minVal + 1)) + minVal;
-
-      // Decide if this should be subtraction:
-      // Subtraction only allowed after first 2 positive numbers, and runningSum must remain positive
-      if (includeNegative && i >= 2 && Math.random() > 0.6 && runningSum > n) {
-        n = -n;
+  // Generate Challenge based on selected operation
+  const generateChallenge = useCallback((): FlashChallenge => {
+    if (operation === "multiplication") {
+      let factorA = 0;
+      let factorB = 0;
+      if (digits === 1) {
+        factorA = Math.floor(Math.random() * 8) + 2; // 2 to 9
+        factorB = Math.floor(Math.random() * 8) + 2; // 2 to 9
+      } else if (digits === 2) {
+        factorA = Math.floor(Math.random() * 90) + 10; // 10 to 99
+        factorB = Math.floor(Math.random() * 8) + 2;  // 2 to 9
+      } else {
+        if (Math.random() > 0.5) {
+          factorA = Math.floor(Math.random() * 900) + 100; // 100 to 999
+          factorB = Math.floor(Math.random() * 8) + 2;   // 2 to 9
+        } else {
+          factorA = Math.floor(Math.random() * 80) + 12;  // 12 to 92
+          factorB = Math.floor(Math.random() * 80) + 12;  // 12 to 92
+        }
       }
 
-      list.push(n);
-      runningSum += n;
-    }
+      const items: FlashItem[] = [
+        { id: "1", displayText: String(factorA), operator: "", number: factorA },
+        { id: "2", displayText: `× ${factorB}`, operator: "×", number: factorB },
+      ];
 
-    return list;
-  }, [digits, count, includeNegative]);
+      // If user chose count >= 3 and 1 digit, add a 3rd factor
+      if (count >= 3 && digits === 1) {
+        const factorC = Math.floor(Math.random() * 4) + 2; // 2 to 5
+        items.push({ id: "3", displayText: `× ${factorC}`, operator: "×", number: factorC });
+        const expected = factorA * factorB * factorC;
+        return {
+          items,
+          expectedAnswer: expected,
+          formula: `${factorA} × ${factorB} × ${factorC} = ${expected}`,
+          operation: "multiplication",
+        };
+      }
+
+      const expected = factorA * factorB;
+      return {
+        items,
+        expectedAnswer: expected,
+        formula: `${factorA} × ${factorB} = ${expected}`,
+        operation: "multiplication",
+      };
+    } else if (operation === "division") {
+      let divisor = 0;
+      let quotient = 0;
+
+      if (digits === 1) {
+        divisor = Math.floor(Math.random() * 8) + 2; // 2 to 9
+        quotient = Math.floor(Math.random() * 8) + 2; // 2 to 9
+      } else if (digits === 2) {
+        divisor = Math.floor(Math.random() * 8) + 2; // 2 to 9
+        quotient = Math.floor(Math.random() * 90) + 10; // 10 to 99
+      } else {
+        divisor = Math.floor(Math.random() * 11) + 2; // 2 to 12
+        quotient = Math.floor(Math.random() * 900) + 100; // 100 to 999
+      }
+
+      const dividend = divisor * quotient;
+      const items: FlashItem[] = [
+        { id: "1", displayText: String(dividend), operator: "", number: dividend },
+        { id: "2", displayText: `÷ ${divisor}`, operator: "÷", number: divisor },
+      ];
+
+      return {
+        items,
+        expectedAnswer: quotient,
+        formula: `${dividend} ÷ ${divisor} = ${quotient}`,
+        operation: "division",
+      };
+    } else if (operation === "mixed") {
+      let currentVal = Math.floor(Math.random() * (Math.pow(10, digits) - Math.pow(10, Math.max(1, digits - 1)) + 1)) + Math.pow(10, Math.max(1, digits - 1));
+      if (digits === 1) currentVal = Math.max(5, currentVal);
+
+      const items: FlashItem[] = [
+        { id: "0", displayText: String(currentVal), operator: "", number: currentVal },
+      ];
+      let formulaParts = [String(currentVal)];
+      const effectiveCount = Math.max(3, count);
+
+      for (let i = 1; i < effectiveCount; i++) {
+        const availableOps: ("+" | "-" | "×" | "÷")[] = ["+", "-"];
+        if (currentVal <= 40) availableOps.push("×");
+        const possibleDivisors = [2, 3, 4, 5].filter((d) => currentVal % d === 0 && currentVal / d >= 2);
+        if (possibleDivisors.length > 0) availableOps.push("÷");
+
+        const chosenOp = availableOps[Math.floor(Math.random() * availableOps.length)];
+
+        if (chosenOp === "+") {
+          const addVal = Math.floor(Math.random() * Math.pow(10, digits)) + 1;
+          currentVal += addVal;
+          items.push({ id: String(i), displayText: `+${addVal}`, operator: "+", number: addVal });
+          formulaParts.push(`+ ${addVal}`);
+        } else if (chosenOp === "-") {
+          const maxSub = Math.min(currentVal - 1, Math.pow(10, digits));
+          const subVal = maxSub > 1 ? Math.floor(Math.random() * (maxSub - 1)) + 1 : 1;
+          currentVal -= subVal;
+          items.push({ id: String(i), displayText: `-${subVal}`, operator: "-", number: subVal });
+          formulaParts.push(`- ${subVal}`);
+        } else if (chosenOp === "×") {
+          const factor = Math.floor(Math.random() * 3) + 2; // 2 to 4
+          currentVal *= factor;
+          items.push({ id: String(i), displayText: `× ${factor}`, operator: "×", number: factor });
+          formulaParts.push(`× ${factor}`);
+        } else if (chosenOp === "÷") {
+          const divList = [2, 3, 4, 5].filter((d) => currentVal % d === 0);
+          const div = divList[Math.floor(Math.random() * divList.length)] || 2;
+          currentVal = Math.floor(currentVal / div);
+          items.push({ id: String(i), displayText: `÷ ${div}`, operator: "÷", number: div });
+          formulaParts.push(`÷ ${div}`);
+        }
+      }
+
+      return {
+        items,
+        expectedAnswer: currentVal,
+        formula: `${formulaParts.join(" ")} = ${currentVal}`,
+        operation: "mixed",
+      };
+    } else {
+      // Classic add-sub
+      const items: FlashItem[] = [];
+      let runningSum = 0;
+      const maxVal = Math.pow(10, digits) - 1;
+      const minVal = Math.pow(10, digits - 1);
+
+      for (let i = 0; i < count; i++) {
+        let n = Math.floor(Math.random() * (maxVal - minVal + 1)) + minVal;
+
+        if (i === 0) {
+          items.push({ id: "0", displayText: String(n), operator: "", number: n });
+          runningSum += n;
+        } else {
+          if (includeNegative && i >= 2 && Math.random() > 0.6 && runningSum > n) {
+            items.push({ id: String(i), displayText: `-${n}`, operator: "-", number: -n });
+            runningSum -= n;
+          } else {
+            items.push({ id: String(i), displayText: `+${n}`, operator: "+", number: n });
+            runningSum += n;
+          }
+        }
+      }
+
+      let formula = "";
+      items.forEach((it, idx) => {
+        if (idx === 0) formula += it.number;
+        else if (it.number >= 0) formula += ` + ${it.number}`;
+        else formula += ` - ${Math.abs(it.number)}`;
+      });
+      formula += ` = ${runningSum}`;
+
+      return {
+        items,
+        expectedAnswer: runningSum,
+        formula,
+        operation: "add-sub",
+      };
+    }
+  }, [operation, digits, count, includeNegative]);
 
   // Start Flash Session
-  const handleStartFlash = (customList?: number[]) => {
-    const numbersToPlay = customList || generateSequence();
-    setSequence(numbersToPlay);
+  const handleStartFlash = (customChallenge?: FlashChallenge) => {
+    const challengeToPlay = customChallenge || generateChallenge();
+    setCurrentChallenge(challengeToPlay);
+    setSequence(challengeToPlay.items);
     setUserAnswer("");
-    setCurrentNumber(null);
+    setCurrentStep(null);
     setCurrentIndex(-1);
     setGameState("countdown");
     setCountdownVal(3);
@@ -186,36 +345,34 @@ export default function FlashAnzanModule({ onBack, defaultDigits = 1 }: FlashAnz
         playSound("start");
       } else {
         clearInterval(interval);
-        startFlashing(numbersToPlay);
+        startFlashing(challengeToPlay.items);
       }
     }, 700);
   };
 
   // Run the Flash Sequence
-  const startFlashing = (numbersToPlay: number[]) => {
+  const startFlashing = (itemsToPlay: FlashItem[]) => {
     setGameState("flashing");
     let idx = 0;
 
     const flashNext = () => {
-      if (idx < numbersToPlay.length) {
-        const num = numbersToPlay[idx];
-        setCurrentNumber(num);
+      if (idx < itemsToPlay.length) {
+        const step = itemsToPlay[idx];
+        setCurrentStep(step);
         setCurrentIndex(idx);
         playSound("click");
 
         idx += 1;
-        // On screen for 75% of speed interval, 25% blank pulse
-        const displayTime = Math.max(120, speedMs * 0.75);
-        const blankTime = Math.max(80, speedMs * 0.25);
+        const displayTime = Math.max(140, speedMs * 0.75);
+        const blankTime = Math.max(90, speedMs * 0.25);
 
         setTimeout(() => {
-          setCurrentNumber(null);
+          setCurrentStep(null);
           setTimeout(() => {
             flashNext();
           }, blankTime);
         }, displayTime);
       } else {
-        // Sequence completed -> prompt for sum
         setGameState("input");
         setTimeout(() => {
           if (inputRef.current) {
@@ -230,22 +387,20 @@ export default function FlashAnzanModule({ onBack, defaultDigits = 1 }: FlashAnz
 
   // Submit Answer
   const handleCheckAnswer = () => {
-    if (userAnswer.trim() === "" || sequence.length === 0) return;
+    if (userAnswer.trim() === "" || !currentChallenge) return;
     const ansNum = parseInt(userAnswer.trim(), 10);
     if (isNaN(ansNum)) return;
 
-    const expectedSum = sequence.reduce((acc, curr) => acc + curr, 0);
-    const isCorrect = ansNum === expectedSum;
-
-    // Calculate score points: base 20 pts + speed multiplier + digit multiplier
+    const isCorrect = ansNum === currentChallenge.expectedAnswer;
     const speedBonus = speedMs <= 500 ? 30 : speedMs <= 800 ? 20 : speedMs <= 1200 ? 10 : 5;
     const digitBonus = digits * 10;
-    const earnedPoints = isCorrect ? 20 + speedBonus + digitBonus : 0;
+    const opBonus = operation === "multiplication" || operation === "division" ? 15 : 0;
+    const earnedPoints = isCorrect ? 20 + speedBonus + digitBonus + opBonus : 0;
 
     if (isCorrect) {
       playSound("success");
       confetti({
-        particleCount: 70,
+        particleCount: 75,
         spread: 60,
         origin: { y: 0.6 },
       });
@@ -262,13 +417,14 @@ export default function FlashAnzanModule({ onBack, defaultDigits = 1 }: FlashAnz
 
     const record: AttemptRecord = {
       id: Date.now().toString(),
-      numbers: sequence,
-      sum: expectedSum,
+      operation: currentChallenge.operation,
+      formula: currentChallenge.formula,
+      expectedAnswer: currentChallenge.expectedAnswer,
       userAnswer: ansNum,
       isCorrect,
       speedMs,
       digits,
-      count,
+      count: currentChallenge.items.length,
       timeStr: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
     };
 
@@ -276,19 +432,6 @@ export default function FlashAnzanModule({ onBack, defaultDigits = 1 }: FlashAnz
     setAttempts((prev) => [record, ...prev].slice(0, 10));
     setGameState("evaluated");
   };
-
-  // Formula string helper: 24 + 18 - 5 = 37
-  const getFormulaString = (nums: number[]) => {
-    let str = "";
-    nums.forEach((n, i) => {
-      if (i === 0) str += `${n}`;
-      else if (n >= 0) str += ` + ${n}`;
-      else str += ` - ${Math.abs(n)}`;
-    });
-    return str;
-  };
-
-  const expectedSum = sequence.reduce((acc, curr) => acc + curr, 0);
 
   return (
     <div className="w-full max-w-[1500px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-10 py-6 space-y-6">
@@ -298,24 +441,33 @@ export default function FlashAnzanModule({ onBack, defaultDigits = 1 }: FlashAnz
           <button
             onClick={onBack}
             className="p-2.5 rounded-2xl bg-amber-50 hover:bg-amber-100 text-[#1D3557] border border-amber-200 transition cursor-pointer"
-            title="Back to Practice Dashboard"
+            title="Return to Practice Hub"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div>
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 text-[10px] font-black uppercase tracking-wider mb-1">
-              <Zap className="w-3 h-3 text-amber-600 fill-amber-500" />
-              <span>Soroban Mental Calculation Arena</span>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-black uppercase tracking-wider text-orange-600 bg-orange-100 px-2 py-0.5 rounded-full">
+                ⚡ Flash Anzan • Mental Soroban
+              </span>
+              <span className="text-[10px] font-black uppercase tracking-wider text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
+                {operation === "multiplication"
+                  ? "Multiplication (×)"
+                  : operation === "division"
+                  ? "Division (÷)"
+                  : operation === "mixed"
+                  ? "Mixed Operations"
+                  : "Add / Sub"}
+              </span>
             </div>
-            <h1 className="text-xl sm:text-2xl font-black text-[#1D3557] font-heading flex items-center gap-2">
-              <span>Flash Anzan Mental Math</span>
-              <span className="text-xl">⚡</span>
+            <h1 className="text-xl sm:text-2xl font-black text-[#1D3557] font-heading mt-0.5">
+              Flash Anzan Speed Calculator
             </h1>
           </div>
         </div>
 
-        {/* Stats Pill Hub */}
-        <div className="flex items-center gap-2 sm:gap-3 shrink-0 flex-wrap">
+        {/* Right Stats & Sound Control */}
+        <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5 bg-[#FFFBF0] px-3.5 py-1.5 rounded-2xl border border-amber-200 shadow-xs">
             <Trophy className="w-4 h-4 text-amber-500" />
             <span className="text-xs font-bold text-slate-500">Score:</span>
@@ -351,12 +503,12 @@ export default function FlashAnzanModule({ onBack, defaultDigits = 1 }: FlashAnz
             <div className="w-full flex items-center justify-between text-xs font-bold text-amber-300/80 px-2">
               <span className="flex items-center gap-1.5">
                 <Eye className="w-4 h-4 text-amber-400" />
-                <span>Mental Abacus Visualization</span>
+                <span>Mental Abacus Visualization • {operation.toUpperCase()}</span>
               </span>
               <span>
                 {gameState === "flashing" && (
                   <span className="bg-amber-400/20 px-2.5 py-1 rounded-full border border-amber-400/40 text-amber-200 font-mono">
-                    Number {currentIndex + 1} of {sequence.length}
+                    Step {currentIndex + 1} of {sequence.length}
                   </span>
                 )}
                 {gameState === "input" && (
@@ -373,14 +525,17 @@ export default function FlashAnzanModule({ onBack, defaultDigits = 1 }: FlashAnz
               {gameState === "idle" && (
                 <div className="space-y-4 max-w-md">
                   <div className="w-20 h-20 rounded-3xl bg-amber-400/10 border-2 border-amber-300/30 flex items-center justify-center mx-auto text-4xl shadow-inner">
-                    ⚡
+                    {operation === "multiplication" ? "✖️" : operation === "division" ? "➗" : "⚡"}
                   </div>
                   <h2 className="text-xl sm:text-2xl font-black text-white">
-                    Ready for Flash Anzan?
+                    Ready for Flash {operation === "multiplication" ? "Multiplication" : operation === "division" ? "Division" : "Anzan"}?
                   </h2>
                   <p className="text-xs sm:text-sm text-slate-300 font-medium leading-relaxed">
-                    Numbers will flash rapidly on the screen. Mentally visualize the Soroban beads moving
-                    and calculate the total sum in your head!
+                    {operation === "multiplication"
+                      ? "Numbers and multiplication factor will flash rapidly. Mentally visualize the Soroban and compute the product!"
+                      : operation === "division"
+                      ? "Numbers and divisor will flash rapidly. Mentally visualize the beads and compute the quotient!"
+                      : "Numbers will flash rapidly on the screen. Mentally visualize the Soroban beads moving and calculate the answer!"}
                   </p>
                   <button
                     onClick={() => handleStartFlash()}
@@ -413,19 +568,23 @@ export default function FlashAnzanModule({ onBack, defaultDigits = 1 }: FlashAnz
               {/* STATE: FLASHING */}
               {gameState === "flashing" && (
                 <div className="w-full flex flex-col items-center justify-center min-h-[160px]">
-                  {currentNumber !== null ? (
+                  {currentStep !== null ? (
                     <motion.div
-                      key={`num-${currentIndex}-${currentNumber}`}
+                      key={`step-${currentIndex}-${currentStep.displayText}`}
                       initial={{ scale: 0.85, opacity: 0.4 }}
                       animate={{ scale: 1, opacity: 1 }}
                       transition={{ duration: 0.1 }}
                       className={`text-6xl sm:text-8xl md:text-9xl font-black font-heading tracking-tight ${
-                        currentNumber < 0
+                        currentStep.operator === "-"
                           ? "text-rose-400 drop-shadow-[0_0_25px_rgba(244,63,94,0.6)]"
+                          : currentStep.operator === "×"
+                          ? "text-orange-300 drop-shadow-[0_0_25px_rgba(251,146,60,0.6)]"
+                          : currentStep.operator === "÷"
+                          ? "text-sky-300 drop-shadow-[0_0_25px_rgba(56,189,248,0.6)]"
                           : "text-amber-300 drop-shadow-[0_0_25px_rgba(251,191,36,0.6)]"
                       }`}
                     >
-                      {currentNumber > 0 && currentIndex > 0 ? `+${currentNumber}` : currentNumber}
+                      {currentStep.displayText}
                     </motion.div>
                   ) : (
                     <div className="w-16 h-1 bg-amber-400/20 rounded-full animate-pulse" />
@@ -437,7 +596,11 @@ export default function FlashAnzanModule({ onBack, defaultDigits = 1 }: FlashAnz
               {gameState === "input" && (
                 <div className="space-y-5 max-w-sm w-full">
                   <div className="text-base sm:text-lg font-black text-amber-300">
-                    🤔 What is the calculated total sum?
+                    {operation === "multiplication"
+                      ? "🤔 What is the calculated product?"
+                      : operation === "division"
+                      ? "🤔 What is the calculated quotient?"
+                      : "🤔 What is the calculated total sum?"}
                   </div>
                   <div className="relative">
                     <input
@@ -448,7 +611,7 @@ export default function FlashAnzanModule({ onBack, defaultDigits = 1 }: FlashAnz
                       onKeyDown={(e) => {
                         if (e.key === "Enter") handleCheckAnswer();
                       }}
-                      placeholder="Your calculated sum..."
+                      placeholder="Your calculated answer..."
                       className="w-full px-5 py-4 rounded-2xl bg-white/10 border-2 border-amber-300 focus:border-amber-400 focus:bg-white/20 text-white font-mono text-2xl font-black text-center focus:outline-none transition-all placeholder:text-slate-400"
                     />
                   </div>
@@ -474,25 +637,25 @@ export default function FlashAnzanModule({ onBack, defaultDigits = 1 }: FlashAnz
                     ) : (
                       <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-rose-500/20 border-2 border-rose-400 text-rose-300 text-sm font-black">
                         <XCircle className="w-5 h-5 text-rose-400" />
-                        <span>Incorrect Sum! Practice makes perfect.</span>
+                        <span>Incorrect! Practice makes perfect.</span>
                       </span>
                     )}
                   </div>
 
                   {/* Calculation Details */}
                   <div className="p-4 rounded-2xl bg-white/10 border border-white/20 text-left space-y-2 font-mono">
-                    <div className="text-[11px] uppercase tracking-wider text-slate-300 font-sans font-bold">
-                      Sequence Calculation Breakdown:
+                    <div className="text-[11px] uppercase tracking-wider text-slate-300 font-sans font-bold flex items-center justify-between">
+                      <span>Equation Breakdown:</span>
+                      <span className="uppercase text-[10px] px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-300 font-black">
+                        {lastAttempt.operation.toUpperCase()}
+                      </span>
                     </div>
                     <div className="text-sm sm:text-base text-amber-200 font-bold break-words">
-                      {getFormulaString(lastAttempt.numbers)} ={" "}
-                      <span className="text-emerald-400 font-black text-lg underline">
-                        {lastAttempt.sum}
-                      </span>
+                      {lastAttempt.formula}
                     </div>
                     <div className="text-xs text-slate-300 font-sans pt-1 border-t border-white/10 flex items-center justify-between">
                       <span>Your Answer: <strong className="text-white">{lastAttempt.userAnswer}</strong></span>
-                      <span>Correct Sum: <strong className="text-emerald-300">{lastAttempt.sum}</strong></span>
+                      <span>Correct Answer: <strong className="text-emerald-300">{lastAttempt.expectedAnswer}</strong></span>
                     </div>
                   </div>
 
@@ -505,14 +668,16 @@ export default function FlashAnzanModule({ onBack, defaultDigits = 1 }: FlashAnz
                       <Zap className="w-4 h-4 fill-current" />
                       <span>Next Flash Challenge</span>
                     </button>
-                    <button
-                      onClick={() => handleStartFlash(lastAttempt.numbers)}
-                      className="py-3.5 px-4 rounded-2xl bg-white/15 hover:bg-white/25 text-white font-bold text-sm border border-white/20 transition-all cursor-pointer flex items-center justify-center gap-2"
-                      title="Try the exact same sequence again"
-                    >
-                      <RotateCcw className="w-4 h-4" />
-                      <span>Replay Same Numbers</span>
-                    </button>
+                    {currentChallenge && (
+                      <button
+                        onClick={() => handleStartFlash(currentChallenge)}
+                        className="py-3.5 px-4 rounded-2xl bg-white/15 hover:bg-white/25 text-white font-bold text-sm border border-white/20 transition-all cursor-pointer flex items-center justify-center gap-2"
+                        title="Try the exact same question again"
+                      >
+                        <RotateCcw className="w-4 h-4" />
+                        <span>Replay Same Question</span>
+                      </button>
+                    )}
                   </div>
                 </div>
               )}
@@ -546,22 +711,70 @@ export default function FlashAnzanModule({ onBack, defaultDigits = 1 }: FlashAnz
               </h3>
             </div>
 
-            {/* 1. Digits Selector */}
+            {/* 1. Operation Selector */}
             <div className="space-y-1.5">
               <label className="text-xs font-black text-stone-600 uppercase tracking-wider">
-                1. Number of Digits:
+                1. Operation Mode:
+              </label>
+              <div className="grid grid-cols-2 gap-1.5">
+                {[
+                  { op: "add-sub", label: "Add / Sub", icon: "➕➖" },
+                  { op: "multiplication", label: "Multiply (×)", icon: "✖️" },
+                  { op: "division", label: "Divide (÷)", icon: "➗" },
+                  { op: "mixed", label: "Mixed", icon: "🎲" },
+                ].map((item) => (
+                  <button
+                    key={item.op}
+                    type="button"
+                    disabled={gameState === "flashing" || gameState === "countdown"}
+                    onClick={() => {
+                      setOperation(item.op as FlashOperation);
+                      setGameState("idle");
+                    }}
+                    className={`py-2 px-2.5 rounded-xl text-left border transition cursor-pointer flex items-center gap-2 ${
+                      operation === item.op
+                        ? "bg-[#1D3557] text-white font-extrabold border-[#1D3557] shadow-xs"
+                        : "bg-[#FFFBF0] text-stone-700 hover:bg-amber-50 border-amber-200"
+                    }`}
+                  >
+                    <span className="text-xs">{item.icon}</span>
+                    <span className="text-xs font-black">{item.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* 2. Digits Selector */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-black text-stone-600 uppercase tracking-wider">
+                2. Number of Digits:
               </label>
               <div className="grid grid-cols-3 gap-1.5">
                 {[
-                  { d: 1, label: "1 Digit", sub: "1 - 9" },
-                  { d: 2, label: "2 Digits", sub: "10 - 99" },
-                  { d: 3, label: "3 Digits", sub: "100 - 999" },
+                  {
+                    d: 1,
+                    label: "1 Digit",
+                    sub: operation === "multiplication" ? "1D × 1D" : operation === "division" ? "2D ÷ 1D" : "1 - 9",
+                  },
+                  {
+                    d: 2,
+                    label: "2 Digits",
+                    sub: operation === "multiplication" ? "2D × 1D" : operation === "division" ? "3D ÷ 1D" : "10 - 99",
+                  },
+                  {
+                    d: 3,
+                    label: "3 Digits",
+                    sub: operation === "multiplication" ? "3D × 1D" : operation === "division" ? "3D ÷ 2D" : "100 - 999",
+                  },
                 ].map((item) => (
                   <button
                     key={item.d}
                     type="button"
                     disabled={gameState === "flashing" || gameState === "countdown"}
-                    onClick={() => setDigits(item.d)}
+                    onClick={() => {
+                      setDigits(item.d);
+                      setGameState("idle");
+                    }}
                     className={`p-2 rounded-xl text-center border transition cursor-pointer ${
                       digits === item.d
                         ? "bg-amber-500 text-white font-extrabold border-amber-600 shadow-xs"
@@ -575,34 +788,42 @@ export default function FlashAnzanModule({ onBack, defaultDigits = 1 }: FlashAnz
               </div>
             </div>
 
-            {/* 2. Number Count */}
+            {/* 3. Number Count (Shown for add-sub and mixed, or chain) */}
             <div className="space-y-1.5">
               <label className="text-xs font-black text-stone-600 uppercase tracking-wider">
-                2. Quantity of Numbers:
+                3. Quantity of Numbers:
               </label>
               <div className="grid grid-cols-4 gap-1.5">
-                {[3, 5, 8, 10].map((c) => (
+                {[
+                  operation === "multiplication" || operation === "division" ? 2 : 3,
+                  operation === "multiplication" || operation === "division" ? 3 : 5,
+                  8,
+                  10,
+                ].map((c) => (
                   <button
                     key={c}
                     type="button"
                     disabled={gameState === "flashing" || gameState === "countdown"}
-                    onClick={() => setCount(c)}
+                    onClick={() => {
+                      setCount(c);
+                      setGameState("idle");
+                    }}
                     className={`py-2 rounded-xl text-xs font-black border transition cursor-pointer ${
                       count === c
                         ? "bg-[#1D3557] text-white border-[#1D3557] shadow-xs"
                         : "bg-[#FFFBF0] text-stone-700 hover:bg-amber-50 border-amber-200"
                     }`}
                   >
-                    {c} Nos
+                    {c} Terms
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* 3. Flash Speed */}
+            {/* 4. Flash Speed */}
             <div className="space-y-1.5">
               <label className="text-xs font-black text-stone-600 uppercase tracking-wider">
-                3. Speed Interval (per number):
+                4. Speed Interval (per flash):
               </label>
               <div className="grid grid-cols-2 gap-1.5">
                 {[
@@ -628,20 +849,22 @@ export default function FlashAnzanModule({ onBack, defaultDigits = 1 }: FlashAnz
               </div>
             </div>
 
-            {/* 4. Subtraction Toggle */}
-            <div className="pt-2 border-t border-stone-100 flex items-center justify-between">
-              <div>
-                <span className="text-xs font-black text-[#1D3557] block">Include Subtraction (-)</span>
-                <span className="text-[10px] text-stone-400">Occasional negative numbers</span>
+            {/* 5. Subtraction Toggle (only applicable for add-sub) */}
+            {operation === "add-sub" && (
+              <div className="pt-2 border-t border-stone-100 flex items-center justify-between">
+                <div>
+                  <span className="text-xs font-black text-[#1D3557] block">Include Subtraction (-)</span>
+                  <span className="text-[10px] text-stone-400">Occasional negative numbers</span>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={includeNegative}
+                  disabled={gameState === "flashing" || gameState === "countdown"}
+                  onChange={(e) => setIncludeNegative(e.target.checked)}
+                  className="w-4 h-4 accent-amber-600 rounded cursor-pointer"
+                />
               </div>
-              <input
-                type="checkbox"
-                checked={includeNegative}
-                disabled={gameState === "flashing" || gameState === "countdown"}
-                onChange={(e) => setIncludeNegative(e.target.checked)}
-                className="w-4 h-4 accent-amber-600 rounded cursor-pointer"
-              />
-            </div>
+            )}
           </div>
 
           {/* Recent Attempts Log */}
@@ -669,15 +892,18 @@ export default function FlashAnzanModule({ onBack, defaultDigits = 1 }: FlashAnz
                     <div>
                       <div className="font-bold flex items-center gap-1.5">
                         <span>{att.isCorrect ? "✓" : "✗"}</span>
+                        <span className="uppercase text-[9px] px-1.5 py-0.2 rounded bg-amber-200/60 font-black">
+                          {att.operation === "multiplication" ? "×" : att.operation === "division" ? "÷" : att.operation}
+                        </span>
                         <span>
-                          {att.digits}D • {att.count} Nos ({att.speedMs / 1000}s)
+                          {att.digits}D ({att.speedMs / 1000}s)
                         </span>
                       </div>
-                      <div className="text-[10px] text-stone-400 mt-0.5">{att.timeStr}</div>
+                      <div className="text-[10px] text-stone-400 mt-0.5">{att.timeStr} • {att.formula}</div>
                     </div>
                     <div className="text-right font-mono font-bold">
                       <div>Ans: {att.userAnswer}</div>
-                      <div className="text-[10px] text-stone-500">Sum: {att.sum}</div>
+                      <div className="text-[10px] text-stone-500">Correct: {att.expectedAnswer}</div>
                     </div>
                   </div>
                 ))}

@@ -158,6 +158,47 @@ export async function GET(req: NextRequest) {
   } catch (error: unknown) {
     console.error("[Admin Dashboard Error]:", error);
     const message = error instanceof Error ? error.message : "Failed to load dashboard metrics.";
+    const isDbConnectionIssue =
+      message.includes("alert number 80") ||
+      message.includes("SSL routines") ||
+      message.includes("whitelisted") ||
+      message.includes("ECONNREFUSED") ||
+      message.includes("MongooseServerSelectionError") ||
+      message.includes("MongoNetworkError");
+
+    if (isDbConnectionIssue) {
+      return NextResponse.json({
+        success: true,
+        databaseConnected: false,
+        warning: "MongoDB Atlas connection is currently unreachable (check IP whitelist in Atlas Network Access). Showing safe baseline statistics.",
+        statistics: {
+          totalStudents: 0,
+          newStudents: 0,
+          newStudentsPeriod: {
+            from: new Date(Date.now() - 30 * 24 * 3600 * 1000).toISOString(),
+            to: new Date().toISOString(),
+            days: 30,
+          },
+          activeStudents: 0,
+          totalLevels: 4,
+          studentsCurrentlyLearning: 0,
+          completedLevels: 0,
+          pendingHomework: 0,
+          submittedHomework: 0,
+          totalExamsConducted: 0,
+          passedExams: 0,
+          failedExams: 0,
+          certificatesIssued: 0,
+        },
+        summary: {
+          studentMetrics: { total: 0, new: 0, active: 0, currentlyLearning: 0 },
+          academicMetrics: { totalLevels: 4, completedLevels: 0, certificatesIssued: 0 },
+          homeworkMetrics: { totalHomeworks: 0, submitted: 0, pending: 0 },
+          examMetrics: { totalConducted: 0, passed: 0, failed: 0, passRatePercentage: 0 },
+        },
+      });
+    }
+
     return NextResponse.json(
       {
         success: false,

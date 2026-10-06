@@ -470,15 +470,30 @@ export class ExamService {
     let readinessInfo: any = null;
     let isLocked = false;
     let lockReason = "";
+    let reExamCooldownInfo: any = null;
 
     if (examDoc.type === "final") {
-      const readiness = await PerformanceService.getReadiness(studentId);
-      readinessInfo = readiness;
-
-      // Final exam requires at least 70% readiness
-      if (readiness.readinessScore < 70) {
+      // 1. Check 24-hour cooldown after failure: student who failed can only reappear after 24 hours
+      const reExamStatus: any = await this.getReExamStatus(examDoc._id.toString(), studentId);
+      if (reExamStatus?.hasAttempted && !reExamStatus?.isPassed && !reExamStatus?.canReEnroll) {
+        const rem = reExamStatus.cooldown || {};
         isLocked = true;
-        lockReason = `You need a readiness score of at least 70% to unlock the Final Certification Exam. Current readiness: ${readiness.readinessScore}%. Please complete more practice worksheets and homework.`;
+        lockReason = `Re-examination cooldown active: You failed this exam previously and can only reappear after 24 hours. Please wait ${rem.hoursRemaining ?? 0}h ${rem.minutesRemaining ?? 0}m.`;
+        reExamCooldownInfo = rem;
+      } else {
+        const readiness = await PerformanceService.getReadiness(studentId);
+        readinessInfo = readiness;
+
+        const hwEligible = readiness.homeworkMetrics?.isEligible ?? true;
+
+        // Compulsory 70% homework completion required for exam attendance
+        if (!hwEligible) {
+          isLocked = true;
+          lockReason = `Final Exam Locked: You have completed ${readiness.homeworkMetrics?.completionRate ?? 0}% of your level homework assignments. At least 70% homework completion is strictly compulsory to attend the exam.`;
+        } else if (readiness.readinessScore < 70) {
+          isLocked = true;
+          lockReason = `You need a readiness score of at least 70% to unlock the Final Certification Exam. Current readiness: ${readiness.readinessScore}%. Please complete more practice worksheets and homework.`;
+        }
       }
     }
 
@@ -502,6 +517,7 @@ export class ExamService {
       isLocked,
       lockReason: isLocked ? lockReason : undefined,
       readiness: readinessInfo,
+      reExamCooldown: reExamCooldownInfo,
       questions: isLocked
         ? []
         : questionsDocs.map((q: any) => ({
@@ -559,9 +575,22 @@ export class ExamService {
       );
     }
 
-    // Explicit Final Exam Readiness Check
+    // Explicit Final Exam Readiness Check & Compulsory 70% Homework Completion
     if (examData.type === "final") {
+      const reExamStatus: any = await this.getReExamStatus(examId, studentId);
+      if (reExamStatus?.hasAttempted && !reExamStatus?.isPassed && !reExamStatus?.canReEnroll) {
+        const rem = reExamStatus.cooldown || {};
+        throw new Error(
+          `Re-examination cooldown active: You failed this exam previously and can only reappear after 24 hours. Please wait ${rem.hoursRemaining ?? 0}h ${rem.minutesRemaining ?? 0}m.`
+        );
+      }
+
       const readiness = await PerformanceService.getReadiness(studentId);
+      if (readiness.homeworkMetrics && !readiness.homeworkMetrics.isEligible && readiness.homeworkMetrics.total > 0) {
+        throw new Error(
+          `Final Exam attendance locked: You have completed ${readiness.homeworkMetrics.completionRate}% of your level homework assignments. At least 70% homework completion is strictly compulsory to attend the exam.`
+        );
+      }
       if (readiness.readinessScore < 70) {
         throw new Error(
           `Final Exam locked: Readiness requirements not met. Minimum score required: 70%, Current readiness: ${readiness.readinessScore}%. Please complete prerequisite practice worksheets and homework.`

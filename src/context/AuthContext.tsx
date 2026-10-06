@@ -237,13 +237,45 @@ export const sanitizeUser = (
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  // Start with consistent initial state on both SSR and client to prevent hydration mismatch
   const [user, setUser] = useState<StudentUser | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  // Initialize auth state: Check /api/auth/me first, fallback to localStorage
+  // Hydrate auth state on mount and verify in background without blocking navigation
   useEffect(() => {
     let isMounted = true;
 
+    // 1. Immediately hydrate from localStorage on mount (0ms latency, no network wait)
+    try {
+      const storedStr = localStorage.getItem("abacus_active_student");
+      if (storedStr) {
+        const parsed = JSON.parse(storedStr);
+        if (parsed && (parsed.id === "std_demo_101" || parsed.email === "student@abacus.com")) {
+          const explicitlyLoggedIn = localStorage.getItem("abacus_demo_explicitly_logged_in");
+          if (!explicitlyLoggedIn) {
+            localStorage.removeItem("abacus_active_student");
+            setUser(null);
+            setIsLoading(false);
+            return;
+          }
+        }
+        if (parsed && (parsed.id || parsed.email)) {
+          const sanitized = sanitizeUser(parsed);
+          if (sanitized && isMounted) {
+            setUser(sanitized);
+            setIsLoading(false);
+          }
+        } else if (isMounted) {
+          setIsLoading(false);
+        }
+      } else if (isMounted) {
+        setIsLoading(false);
+      }
+    } catch {
+      if (isMounted) setIsLoading(false);
+    }
+
+    // 2. Fetch from backend in background with a fast 2-second timeout to avoid network hanging
     async function checkAuth() {
       try {
         let queryParams = "";
@@ -257,10 +289,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
         } catch {}
 
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 2000);
+
         const res = await fetch(`/api/auth/me${queryParams}`, {
           method: "GET",
           headers: { "Content-Type": "application/json" },
+          signal: controller.signal,
         });
+        clearTimeout(timeoutId);
 
         if (res.ok) {
           const data = await res.json();
@@ -269,49 +306,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             if (sanitized) {
               setUser(sanitized);
               localStorage.setItem("abacus_active_student", JSON.stringify(sanitized));
-              setIsLoading(false);
-              return;
             }
           }
         }
       } catch {
-        // Fallback to local storage if API call fails
-      }
-
-      // Local storage fallback for previously logged-in students
-      try {
-        const storedUser = localStorage.getItem("abacus_active_student");
-        if (storedUser && isMounted) {
-          const parsed = JSON.parse(storedUser);
-          // If stored user was the auto-seeded demo user and not explicitly logged in, clear it!
-          if (parsed && (parsed.id === "std_demo_101" || parsed.email === "student@abacus.com")) {
-            const explicitlyLoggedIn = localStorage.getItem("abacus_demo_explicitly_logged_in");
-            if (!explicitlyLoggedIn) {
-              localStorage.removeItem("abacus_active_student");
-              setUser(null);
-              setIsLoading(false);
-              return;
-            }
-          }
-
-          if (parsed && (parsed.id || parsed.email)) {
-            const sanitized = sanitizeUser(parsed);
-            if (sanitized) {
-              setUser(sanitized);
-              // CRUCIAL: Immediately re-persist the sanitized (upgraded) user back to localStorage
-              localStorage.setItem("abacus_active_student", JSON.stringify(sanitized));
-              setIsLoading(false);
-              return;
-            }
-          }
-        }
-      } catch {
-        // ignore
-      }
-
-      if (isMounted) {
-        setUser(null);
-        setIsLoading(false);
+        // Silently keep local user state on network timeout or offline
       }
     }
 

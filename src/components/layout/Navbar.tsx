@@ -16,7 +16,6 @@ export default function Navbar() {
 
   const navLinks = [
     { name: "Home", href: "/" },
-    { name: "Virtual Abacus", href: "/virtual-abacus" },
     { name: "About Us", href: "/about" },
     { name: "How It Works", href: "/how-it-works" },
     { name: "Contact", href: "/contact" },
@@ -98,10 +97,10 @@ export default function Navbar() {
             {isAuthenticated && user ? (
               <div className="flex items-center gap-2">
                 <Link
-                  href="/learning"
+                  href="/dashboard"
                   className="px-3.5 py-1.5 rounded-xl text-xs font-extrabold text-purple-800 bg-purple-100 hover:bg-purple-200 transition shadow-sm"
                 >
-                  Go to Classroom
+                  Go to Dashboard
                 </Link>
                 <Link
                   href="/profile"
@@ -200,11 +199,11 @@ export default function Navbar() {
                       </div>
                     </div>
                     <Link
-                      href="/learning"
+                      href="/dashboard"
                       onClick={() => setMobileMenuOpen(false)}
                       className="py-2.5 px-3 rounded-xl text-center text-xs font-extrabold text-purple-800 bg-purple-100 hover:bg-purple-200 transition"
                     >
-                      Go to Classroom
+                      Go to Dashboard
                     </Link>
                     <Button
                       onClick={() => {

@@ -1,36 +1,23 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { motion } from "framer-motion";
 import {
   BookOpen,
   CheckCircle2,
-  Play,
-  ArrowRight,
-  GraduationCap,
   Sparkles,
   Layers,
   Search,
-  Award,
   ChevronRight,
   HelpCircle,
 } from "lucide-react";
 import { ABACUS_LEVELS_DATA, AbacusLevel } from "@/data/syllabusData";
-import { useLearning } from "@/context/LearningContext";
 
 export default function SyllabusPage() {
-  const router = useRouter();
-  const { setCurrentLessonId } = useLearning();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilterLevel, setActiveFilterLevel] = useState<string>("all");
 
-  const handleNavigateToLesson = (targetLessonId: string = "lesson-1") => {
-    setCurrentLessonId(targetLessonId);
-    router.push("/learning");
-  };
 
   const scrollToLevel = (levelId: string) => {
     const el = document.getElementById(levelId);
@@ -229,26 +216,6 @@ export default function SyllabusPage() {
                       {lvl.description}
                     </p>
                   </div>
-
-                  {/* Level Quick Actions */}
-                  <div className="flex sm:flex-col items-center sm:items-end gap-2 flex-shrink-0">
-                    <Link
-                      href="/learning"
-                      onClick={() => setCurrentLessonId(`lesson-${lvl.levelNumber}`)}
-                      className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#F4A261] to-[#E76F51] hover:from-[#E76F51] hover:to-[#F4A261] text-white font-extrabold text-xs shadow-md transition hover:scale-105 active:scale-95 flex items-center justify-center gap-1.5 whitespace-nowrap"
-                    >
-                      <Play className="w-3.5 h-3.5 fill-white" />
-                      <span>Start Level {lvl.levelNumber}</span>
-                    </Link>
-
-                    <Link
-                      href="/learning/practice"
-                      className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-yellow-50 hover:bg-yellow-100 text-[#1D3557] border border-yellow-200 font-extrabold text-xs transition flex items-center justify-center gap-1.5 whitespace-nowrap"
-                    >
-                      <GraduationCap className="w-3.5 h-3.5 text-amber-700" />
-                      <span>Practice Drills</span>
-                    </Link>
-                  </div>
                 </div>
 
                 {/* Level Syllabus Curriculum Grid */}
@@ -304,41 +271,7 @@ export default function SyllabusPage() {
           )}
         </div>
 
-        {/* ============================================================ */}
-        {/* 3. BOTTOM BANNER */}
-        {/* ============================================================ */}
-        <div className="bg-gradient-to-r from-amber-100 via-orange-100 to-yellow-100 rounded-3xl p-6 sm:p-8 border-2 border-yellow-300 flex flex-col sm:flex-row items-center justify-between gap-6 shadow-md">
-          <div className="flex items-center gap-4">
-            <div className="text-4xl select-none">🌟</div>
-            <div className="space-y-0.5">
-              <h4 className="font-heading font-black text-[#1D3557] text-lg sm:text-xl">
-                Ready to begin with Level 1?
-              </h4>
-              <p className="text-xs sm:text-sm text-slate-700 font-medium">
-                Start interactive video tutorials and master the bead rules step-by-step!
-              </p>
-            </div>
-          </div>
 
-          <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
-            <Link
-              href="/learning"
-              className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-gradient-to-r from-[#F4A261] via-[#E76F51] to-[#E9C46A] text-white font-black text-sm shadow-xl shadow-orange-300 hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer flex-shrink-0"
-            >
-              <Play className="w-4 h-4 fill-white" />
-              <span>Go to Video Lessons</span>
-              <ArrowRight className="w-4 h-4" />
-            </Link>
-
-            <Link
-              href="/learning/exam"
-              className="w-full sm:w-auto px-6 py-4 rounded-2xl bg-white text-[#1D3557] border border-yellow-300 font-black text-sm shadow-md hover:bg-yellow-50 transition-all flex items-center justify-center gap-2"
-            >
-              <Award className="w-4 h-4 text-amber-600" />
-              <span>Final Exam & Certification</span>
-            </Link>
-          </div>
-        </div>
       </div>
     </div>
   );

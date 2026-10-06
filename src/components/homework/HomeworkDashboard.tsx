@@ -13,15 +13,12 @@ import {
   Sparkles,
   Star,
   Video,
-  Award,
   Calendar,
-  Layers,
   ArrowRight,
   TrendingUp,
   Filter,
   AlertCircle,
 } from "lucide-react";
-import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { HomeworkIntroModal } from "./HomeworkIntroModal";
 import { HomeworkPlayer } from "./HomeworkPlayer";
@@ -200,44 +197,6 @@ export const HomeworkDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* ============================================================ */}
-      {/* 3. LEARNING FLOW STEPPER BANNER */}
-      {/* ============================================================ */}
-      <div className="bg-white rounded-2xl p-4 border-2 border-stone-200 shadow-sm">
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
-          <div className="flex items-center gap-2 text-xs font-black text-stone-500 uppercase tracking-wider">
-            <Layers className="w-4 h-4 text-amber-500" />
-            <span>Learning Progression:</span>
-          </div>
-
-          <div className="flex items-center gap-2 sm:gap-4 text-xs font-bold w-full sm:w-auto justify-center">
-            <Link
-              href="/learning"
-              className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-orange-50 hover:bg-orange-100 text-orange-800 border border-orange-200 transition-colors"
-            >
-              <Video className="w-3.5 h-3.5 text-orange-600" />
-              <span>1. Video Lesson</span>
-            </Link>
-
-            <span className="text-stone-300 font-black">→</span>
-
-            <Link
-              href="/learning/practice"
-              className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 transition-colors"
-            >
-              <BookOpen className="w-3.5 h-3.5 text-amber-600" />
-              <span>2. Practice</span>
-            </Link>
-
-            <span className="text-stone-300 font-black">→</span>
-
-            <div className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-[#1D3557] text-white font-black shadow-sm">
-              <Award className="w-3.5 h-3.5 text-amber-300" />
-              <span>3. Homework</span>
-            </div>
-          </div>
-        </div>
-      </div>
 
       {/* ============================================================ */}
       {/* 4. TABS & FILTER BAR */}

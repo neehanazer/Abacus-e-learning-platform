@@ -11,6 +11,8 @@ import {
 import { PracticeCategoryOption } from "@/data/practiceData";
 import confetti from "canvas-confetti";
 
+import { useAuth } from "@/context/AuthContext";
+
 interface HomeworkContextType {
   // State
   homeworkList: HomeworkTask[];
@@ -52,10 +54,23 @@ interface HomeworkContextType {
 
 const HomeworkContext = createContext<HomeworkContextType | undefined>(undefined);
 
-const STORAGE_KEY = "abacus_homework_state_v2";
-const ATTEMPTS_KEY = "abacus_homework_attempts_v1";
-
 export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user } = useAuth();
+
+  // Resolve unique student key to scope homework state per student
+  const studentKey = React.useMemo(() => {
+    return user?.id || user?.email ? String(user.id || user.email).replace(/[^a-zA-Z0-9_-]/g, "_") : "guest";
+  }, [user]);
+
+  const studentLevel = React.useMemo(() => {
+    const raw = user?.selectedLevel || user?.abacusLevel || (user as any)?.currentLevel || "";
+    const m = String(raw).match(/Level\s*(\d+)/i) || String(raw).match(/^(\d+)$/);
+    return m ? parseInt(m[1], 10) : 1;
+  }, [user]);
+
+  const userTasksKey = `abacus_homework_state_v3_${studentKey}`;
+  const userAttemptsKey = `abacus_homework_attempts_v3_${studentKey}`;
+
   const [homeworkList, setHomeworkList] = useState<HomeworkTask[]>(INITIAL_HOMEWORK_LIST);
   const [activeHomework, setActiveHomework] = useState<HomeworkTask | null>(null);
   const [activeQuestionIndex, setActiveQuestionIndex] = useState<number>(0);
@@ -71,71 +86,88 @@ export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [attemptHistory, setAttemptHistory] = useState<HomeworkAttempt[]>([]);
   const [latestAttempt, setLatestAttempt] = useState<HomeworkAttempt | null>(null);
 
-  // Load from localStorage with v1 -> v2 migration
+  // Load from localStorage scoped to active student
   useEffect(() => {
     try {
-      const savedTasksV2 = localStorage.getItem(STORAGE_KEY);
-      if (savedTasksV2) {
-        const parsed = JSON.parse(savedTasksV2);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setHomeworkList(parsed);
+      // 1. Load student's attempts history
+      let loadedAttempts: HomeworkAttempt[] = [];
+      const savedAttempts = localStorage.getItem(userAttemptsKey);
+      if (savedAttempts) {
+        const parsedAttempts = JSON.parse(savedAttempts);
+        if (Array.isArray(parsedAttempts)) {
+          loadedAttempts = parsedAttempts;
+          setAttemptHistory(loadedAttempts);
         }
       } else {
-        // Check for v1 tasks to migrate past submissions
-        const savedTasksV1 = localStorage.getItem("abacus_homework_state_v1");
-        if (savedTasksV1) {
-          try {
-            const parsedV1 = JSON.parse(savedTasksV1);
-            if (Array.isArray(parsedV1)) {
-              const completedV1Ids = new Set(
-                parsedV1.filter((t: any) => t.status === "evaluated" || t.status === "submitted").map((t: any) => t.id)
-              );
-              const merged = INITIAL_HOMEWORK_LIST.map((t) => {
-                if (completedV1Ids.has(t.id)) {
-                  const match = parsedV1.find((p: any) => p.id === t.id);
-                  return match || t;
-                }
-                return t;
-              });
-              setHomeworkList(merged);
-              localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
-            }
-          } catch {
-            setHomeworkList(INITIAL_HOMEWORK_LIST);
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(INITIAL_HOMEWORK_LIST));
-          }
-        } else {
-          setHomeworkList(INITIAL_HOMEWORK_LIST);
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(INITIAL_HOMEWORK_LIST));
+        setAttemptHistory([]);
+      }
+
+      // Map of task IDs that this student has actually submitted/completed
+      const completedTaskIds = new Set(
+        loadedAttempts
+          .filter((a) => a && a.homeworkId)
+          .map((a) => a.homeworkId)
+      );
+
+      // 2. Load student's homework tasks
+      const savedTasks = localStorage.getItem(userTasksKey);
+      let tasksToSet: HomeworkTask[] = [];
+
+      if (savedTasks) {
+        const parsed = JSON.parse(savedTasks);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          tasksToSet = parsed;
         }
       }
 
-      const savedAttempts = localStorage.getItem(ATTEMPTS_KEY);
-      if (savedAttempts) {
-        const parsed = JSON.parse(savedAttempts);
-        if (Array.isArray(parsed)) {
-          setAttemptHistory(parsed);
-        }
+      if (tasksToSet.length === 0) {
+        // Initialize fresh task list from INITIAL_HOMEWORK_LIST
+        tasksToSet = INITIAL_HOMEWORK_LIST;
       }
+
+      // 3. Reconcile and sanitize task statuses:
+      // For any task at the student's current level, if it was marked evaluated
+      // but has 0 attempts and no record in loadedAttempts, it MUST be 'pending' for a new student!
+      const sanitizedTasks = tasksToSet.map((t) => {
+        const hasActualAttempt = completedTaskIds.has(t.id);
+        const isCurrentLevel = t.level === studentLevel;
+
+        if (isCurrentLevel && !hasActualAttempt && (t.status === "evaluated" || t.status === "submitted")) {
+          return {
+            ...t,
+            status: "pending" as const,
+            score: undefined,
+            accuracy: undefined,
+            evaluatedFeedback: undefined,
+            evaluatedStars: undefined,
+            attemptsCount: 0,
+            lastAttemptDate: undefined,
+          };
+        }
+        return t;
+      });
+
+      setHomeworkList(sanitizedTasks);
+      localStorage.setItem(userTasksKey, JSON.stringify(sanitizedTasks));
     } catch {
-      // Ignore
+      setHomeworkList(INITIAL_HOMEWORK_LIST);
     }
-  }, []);
+  }, [studentKey, studentLevel, userTasksKey, userAttemptsKey]);
 
-  // Save tasks to localStorage
+  // Save tasks to localStorage scoped to current student
   const saveTasks = (tasks: HomeworkTask[]) => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+      localStorage.setItem(userTasksKey, JSON.stringify(tasks));
       setHomeworkList(tasks);
     } catch {
       // Ignore
     }
   };
 
-  // Save attempts to localStorage
+  // Save attempts to localStorage scoped to current student
   const saveAttempts = (attempts: HomeworkAttempt[]) => {
     try {
-      localStorage.setItem(ATTEMPTS_KEY, JSON.stringify(attempts));
+      localStorage.setItem(userAttemptsKey, JSON.stringify(attempts));
       setAttemptHistory(attempts);
     } catch {
       // Ignore
@@ -375,8 +407,12 @@ export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   };
 
   const clearAttemptHistory = () => {
-    localStorage.removeItem(ATTEMPTS_KEY);
-    setAttemptHistory([]);
+    try {
+      localStorage.removeItem(userAttemptsKey);
+      setAttemptHistory([]);
+    } catch {
+      // Ignore
+    }
   };
 
   return (

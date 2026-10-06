@@ -50,7 +50,9 @@ export default function WorksheetPlayer() {
     practiceMode,
     setPracticeMode,
     targetMinutes,
+    setTargetMinutes,
     timeRemaining,
+    setTimeRemaining,
     resetTimer,
     isTimeUp,
   } = usePractice();
@@ -70,6 +72,7 @@ export default function WorksheetPlayer() {
 
   const [inputVal, setInputVal] = useState<string>("");
   const [showRuleTip, setShowRuleTip] = useState<boolean>(false);
+  const [showTimerPicker, setShowTimerPicker] = useState<boolean>(false);
 
   // Sync input box when question changes
   useEffect(() => {
@@ -165,7 +168,7 @@ export default function WorksheetPlayer() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-3 sm:px-6 py-6 space-y-6">
+    <div className="w-full max-w-[1450px] mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
       {/* ============================================================ */}
       {/* 1. TOP HEADER & TIMER BAR */}
       {/* ============================================================ */}
@@ -217,28 +220,74 @@ export default function WorksheetPlayer() {
             </div>
           ) : (
             <div className="flex items-center gap-2">
-              <div
-                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-2xl border-2 font-mono text-base font-black transition-colors shadow-sm ${
-                  timeRemaining <= 30
-                    ? "bg-rose-50 border-rose-300 text-rose-600 animate-pulse"
-                    : timeRemaining <= 60
-                    ? "bg-amber-50 border-amber-300 text-amber-900"
-                    : "bg-[#FFFBF0] border-orange-200 text-[#1D3557]"
-                }`}
-              >
-                <Clock className="w-4 h-4 text-orange-600" />
-                <span>{formatTime(timeRemaining)}</span>
-                <span className="text-[10px] font-sans font-bold text-slate-400 uppercase">
-                  ({targetMinutes}m)
-                </span>
-                <button
-                  type="button"
-                  onClick={toggleTimer}
-                  className="p-1 rounded-xl bg-orange-100 hover:bg-orange-200 text-[#1D3557] transition-colors ml-0.5 cursor-pointer"
-                  title={isTimerRunning ? "Pause Countdown" : "Resume Countdown"}
+              <div className="relative">
+                <div
+                  className={`flex items-center gap-2 px-3.5 py-1.5 rounded-2xl border-2 font-mono text-base font-black transition-colors shadow-sm ${
+                    timeRemaining <= 30
+                      ? "bg-rose-50 border-rose-300 text-rose-600 animate-pulse"
+                      : timeRemaining <= 60
+                      ? "bg-amber-50 border-amber-300 text-amber-900"
+                      : "bg-[#FFFBF0] border-orange-200 text-[#1D3557]"
+                  }`}
                 >
-                  {isTimerRunning ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3" />}
-                </button>
+                  <Clock className="w-4 h-4 text-orange-600" />
+                  <span>{formatTime(timeRemaining)}</span>
+                  <button
+                    type="button"
+                    onClick={() => setShowTimerPicker(!showTimerPicker)}
+                    className="text-[10px] font-sans font-bold text-orange-800 bg-orange-100 hover:bg-orange-200 px-1.5 py-0.5 rounded-md uppercase cursor-pointer transition flex items-center gap-0.5"
+                    title="Change timer duration inside"
+                  >
+                    <span>{targetMinutes}m</span>
+                    <span className="text-[8px]">▾</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={toggleTimer}
+                    className="p-1 rounded-xl bg-orange-100 hover:bg-orange-200 text-[#1D3557] transition-colors ml-0.5 cursor-pointer"
+                    title={isTimerRunning ? "Pause Countdown" : "Resume Countdown"}
+                  >
+                    {isTimerRunning ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3" />}
+                  </button>
+                </div>
+
+                {/* Popover to choose/change time inside */}
+                {showTimerPicker && (
+                  <div className="absolute top-full mt-2 left-0 bg-white rounded-2xl p-3 border-2 border-orange-200 shadow-xl z-50 min-w-[210px] space-y-2 animate-in fade-in">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                        Choose Duration:
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setShowTimerPicker(false)}
+                        className="text-xs font-bold text-slate-400 hover:text-slate-600"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-3 gap-1.5">
+                      {[1, 2, 3, 5, 10, 15].map((m) => (
+                        <button
+                          key={m}
+                          type="button"
+                          onClick={() => {
+                            setTargetMinutes(m);
+                            setTimeRemaining(m * 60);
+                            setShowTimerPicker(false);
+                          }}
+                          className={`py-1.5 px-2 rounded-xl text-xs font-black transition cursor-pointer ${
+                            targetMinutes === m
+                              ? "bg-[#E76F51] text-white shadow-xs"
+                              : "bg-orange-50 text-slate-700 hover:bg-orange-100"
+                          }`}
+                        >
+                          {m}m
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
 
               <button

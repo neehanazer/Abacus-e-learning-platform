@@ -103,13 +103,6 @@ export default function LearningNavbar() {
       isActive: isLearning,
     },
     {
-      id: "virtual-abacus",
-      name: "Virtual Abacus",
-      href: "/learning/virtual-abacus",
-      icon: <Calculator className="w-4 h-4" />,
-      isActive: isVirtualAbacus,
-    },
-    {
       id: "practice",
       name: "Practice",
       href: "/learning/practice",
@@ -144,6 +137,13 @@ export default function LearningNavbar() {
       icon: <Sparkles className="w-4 h-4" />,
       isActive: isCertificate,
     },
+    {
+      id: "virtual-abacus",
+      name: "Virtual Abacus",
+      href: "/learning/virtual-abacus",
+      icon: <Calculator className="w-4 h-4" />,
+      isActive: isVirtualAbacus,
+    },
   ];
 
   const handleNavClick = (item: NavOption) => {
@@ -174,7 +174,8 @@ export default function LearningNavbar() {
     router.push("/learning");
   };
 
-  const studentName = user?.fullName?.split(" ")[0] || "Arjun";
+  const studentName = user?.fullName?.split(" ")[0] || (user as any)?.name?.split(" ")[0] || "Arjun";
+  const userAvatar = user?.avatar || "🧙‍♂️";
   const userStars = 120 + bonusStars;
 
   const currentLessonObj = lessons.find((l) => l.id === currentLessonId) || lessons[0];
@@ -183,14 +184,14 @@ export default function LearningNavbar() {
   return (
     <>
       <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b-2 border-yellow-200 shadow-sm transition-all">
-        <div className="max-w-7xl mx-auto px-3 sm:px-6">
+        <div className="w-full max-w-[1600px] mx-auto px-3 sm:px-6">
           {/* Top Bar on Mobile & Desktop */}
-          <div className="flex items-center justify-between h-16 sm:h-20 gap-2">
+          <div className="flex items-center justify-between h-16 sm:h-20 gap-2 sm:gap-4">
             {/* Logo & Back to Dashboard */}
-            <div className="flex items-center gap-2 sm:gap-4">
+            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
               <Link
                 href="/dashboard"
-                className="flex items-center gap-1 sm:gap-1.5 px-3 py-1.5 rounded-full bg-yellow-50 hover:bg-yellow-100 border border-yellow-200 text-[#1D3557] font-bold text-xs sm:text-sm transition-all hover:scale-105"
+                className="flex items-center gap-1 sm:gap-1.5 px-3 py-1.5 rounded-full bg-yellow-50 hover:bg-yellow-100 border border-yellow-200 text-[#1D3557] font-bold text-xs sm:text-sm transition-all hover:scale-105 shrink-0"
                 title="Back to Dashboard"
               >
                 <ArrowLeft className="w-4 h-4 text-[#F4A261]" />
@@ -199,8 +200,8 @@ export default function LearningNavbar() {
 
               <div className="h-6 w-px bg-yellow-200 hidden sm:block" />
 
-              <Link href="/learning" className="flex items-center gap-2 group">
-                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-tr from-[#F4A261] to-[#E9C46A] p-0.5 shadow-md shadow-orange-100 group-hover:scale-105 transition-transform">
+              <Link href="/learning" className="flex items-center gap-2 group shrink-0">
+                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-tr from-[#F4A261] to-[#E9C46A] p-0.5 shadow-md shadow-orange-100 group-hover:scale-105 transition-transform shrink-0">
                   <div className="w-full h-full bg-white rounded-[14px] flex items-center justify-center">
                     <span className="text-xl">🧮</span>
                   </div>
@@ -210,7 +211,7 @@ export default function LearningNavbar() {
                     <span>Abacus</span>
                     <span className="text-[#F4A261]">Learning</span>
                   </div>
-                  <span className="text-[10px] font-bold text-emerald-600 flex items-center gap-1 -mt-1">
+                  <span className="text-[10px] font-bold text-emerald-600 flex items-center gap-1 -mt-1 whitespace-nowrap">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                     {isLevel2 ? "Level 2 — Explorer Curriculum" : "Level 1 — Video Lessons"}
                   </span>
@@ -219,7 +220,7 @@ export default function LearningNavbar() {
             </div>
 
             {/* Middle Nav Links (Desktop) */}
-            <nav className="hidden lg:flex items-center gap-1 bg-[#FFF9ED] p-1.5 rounded-full border border-yellow-200 shadow-inner">
+            <nav className="hidden lg:flex items-center gap-0.5 sm:gap-1 bg-[#FFF9ED] p-1.5 rounded-full border border-yellow-200 shadow-inner shrink-0">
               {navItems.map((item) => {
                 const isActive = item.isActive;
                 const isVideosTab = item.id === "learning";
@@ -230,7 +231,7 @@ export default function LearningNavbar() {
                       <div className="flex items-center">
                         <button
                           onClick={() => handleNavClick(item)}
-                          className={`flex items-center gap-2 pl-3.5 pr-2 py-1.5 rounded-l-full text-xs font-extrabold transition-all duration-200 cursor-pointer ${
+                          className={`flex items-center gap-1.5 pl-2.5 sm:pl-3 pr-1.5 py-1.5 rounded-l-full text-xs font-extrabold transition-all duration-200 cursor-pointer whitespace-nowrap ${
                             isActive
                               ? "bg-gradient-to-r from-[#F4A261] to-[#E76F51] text-white shadow-md shadow-orange-200"
                               : "text-slate-600 hover:text-[#1D3557] hover:bg-yellow-100/70"
@@ -241,7 +242,7 @@ export default function LearningNavbar() {
                         </button>
                         <button
                           onClick={() => setVideosDropdownOpen((prev) => !prev)}
-                          className={`pr-3 pl-1.5 py-1.5 rounded-r-full text-xs font-extrabold transition-all duration-200 cursor-pointer border-l border-white/20 ${
+                          className={`pr-2.5 sm:pr-3 pl-1.5 py-1.5 rounded-r-full text-xs font-extrabold transition-all duration-200 cursor-pointer border-l border-white/20 ${
                             isActive
                               ? "bg-[#E76F51] text-white"
                               : "text-slate-600 hover:text-[#1D3557] hover:bg-yellow-100/70"
@@ -346,7 +347,7 @@ export default function LearningNavbar() {
                   <button
                     key={item.id}
                     onClick={() => handleNavClick(item)}
-                    className={`relative flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-extrabold transition-all duration-200 cursor-pointer ${
+                    className={`relative flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full text-xs font-extrabold transition-all duration-200 cursor-pointer whitespace-nowrap ${
                       isActive
                         ? "bg-gradient-to-r from-[#F4A261] to-[#E76F51] text-white shadow-md shadow-orange-200 scale-105"
                         : "text-slate-600 hover:text-[#1D3557] hover:bg-yellow-100/70"
@@ -365,9 +366,9 @@ export default function LearningNavbar() {
             </nav>
 
             {/* Right Side Stats & Profile */}
-            <div className="flex items-center gap-2 sm:gap-3">
+            <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
               {/* Level Progress Indicator Badge */}
-              <div className="hidden md:flex items-center gap-2 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-full">
+              <div className="hidden xl:flex items-center gap-2 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-full shrink-0 whitespace-nowrap">
                 <div className="w-2 h-2 rounded-full bg-emerald-500" />
                 <span className="text-xs font-extrabold text-emerald-800">
                   {completedCount}/{totalLessons} Lessons ({overallProgress}%)
@@ -375,7 +376,7 @@ export default function LearningNavbar() {
               </div>
 
               {/* Star Points Badge */}
-              <div className="flex items-center gap-1.5 bg-yellow-100/90 border border-yellow-300 px-3 py-1.5 rounded-full shadow-sm">
+              <div className="flex items-center gap-1.5 bg-yellow-100/90 border border-yellow-300 px-2.5 sm:px-3 py-1.5 rounded-full shadow-sm shrink-0 whitespace-nowrap">
                 <Star className="w-4 h-4 text-amber-500 fill-amber-400 animate-pulse" />
                 <span className="text-xs sm:text-sm font-extrabold text-[#1D3557]">
                   {userStars}
@@ -383,12 +384,16 @@ export default function LearningNavbar() {
               </div>
 
               {/* Student Avatar */}
-              <div className="flex items-center gap-2 bg-white px-2 sm:px-3 py-1 rounded-full border border-yellow-200 shadow-sm">
-                <span className="text-lg">🧙‍♂️</span>
-                <span className="hidden sm:inline text-xs font-bold text-[#1D3557]">
+              <Link
+                href="/profile"
+                className="flex items-center gap-2 bg-white px-2.5 sm:px-3 py-1 rounded-full border border-yellow-200 hover:border-yellow-400 hover:bg-yellow-50/60 shadow-sm shrink-0 whitespace-nowrap transition-all duration-200 group cursor-pointer"
+                title="View My Profile"
+              >
+                <span className="text-lg group-hover:scale-110 transition-transform">{userAvatar}</span>
+                <span className="inline text-xs font-bold text-[#1D3557] group-hover:text-amber-800 whitespace-nowrap">
                   {studentName}
                 </span>
-              </div>
+              </Link>
             </div>
           </div>
 

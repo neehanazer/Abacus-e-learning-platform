@@ -184,63 +184,82 @@ export default function InteractiveAbacus() {
       </div>
 
       {/* Main Abacus Outer Frame */}
-      <div className="abacus-frame rounded-2xl p-4 border-4 border-amber-800/40 relative shadow-inner bg-amber-50/50">
-        {/* Horizontal Beam */}
-        <div className="absolute left-0 right-0 top-[38%] h-3 bg-gradient-to-r from-amber-700 via-amber-600 to-amber-700 z-10 shadow-md flex items-center justify-around px-4">
-          {/* Alignment dots on beam */}
+      <div className="abacus-frame rounded-3xl p-4 sm:p-5 border-4 sm:border-8 border-amber-900/60 relative shadow-2xl bg-amber-50/40 overflow-hidden">
+        
+        {/* Background Vertical Rods (5 continuous rods behind beads) */}
+        <div className="absolute inset-x-4 sm:inset-x-5 top-4 bottom-14 grid grid-cols-5 gap-3 sm:gap-4 pointer-events-none">
           {[0, 1, 2, 3, 4].map((i) => (
-            <div key={i} className="w-2 h-2 rounded-full bg-amber-200/80 shadow-inner" />
+            <div key={i} className="flex justify-center h-full">
+              <div className="w-1.5 h-full bg-gradient-to-r from-slate-300 via-slate-100 to-slate-300 rounded-full shadow-inner" />
+            </div>
           ))}
         </div>
 
-        {/* Rods Grid */}
-        <div className="grid grid-cols-5 gap-3 sm:gap-4 relative z-0 min-h-[260px]">
+        {/* 1. Upper Deck (Above the Beam: Exactly 1 Upper Bead per Rod) */}
+        <div className="grid grid-cols-5 gap-3 sm:gap-4 relative z-10 h-[64px]">
           {columns.map((col, colIdx) => {
             const colInfo = PLACE_VALUES[colIdx];
             return (
-              <div key={colIdx} className="flex flex-col items-center justify-between relative">
-                {/* Vertical Metal Rod */}
-                <div className="absolute top-0 bottom-0 w-1 bg-slate-300/80 rounded-full z-0 shadow-inner" />
+              <div key={colIdx} className="flex justify-center items-start pt-[6px]">
+                <motion.button
+                  onClick={() => handleUpperClick(colIdx)}
+                  animate={{ y: col.upper ? 30 : 0 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 26 }}
+                  className={`w-11 sm:w-13 h-7 rounded-full ${colInfo.color} shadow-md cursor-pointer flex items-center justify-center text-xs text-white font-extrabold border-2 border-white/50 hover:brightness-110 active:scale-95 transition-transform`}
+                  title={`Upper bead (+5) on ${colInfo.label}`}
+                >
+                  5
+                </motion.button>
+              </div>
+            );
+          })}
+        </div>
 
-                {/* Upper Deck (1 Bead) */}
-                <div className="h-20 w-full flex flex-col items-center justify-start pt-1 z-20">
-                  <motion.button
-                    onClick={() => handleUpperClick(colIdx)}
-                    animate={{ y: col.upper ? 28 : 0 }}
-                    transition={{ type: "spring", stiffness: 350, damping: 22 }}
-                    className={`w-10 sm:w-12 h-6 sm:h-7 rounded-full ${colInfo.color} abacus-bead cursor-pointer flex items-center justify-center text-[10px] text-white font-bold border border-white/40`}
-                  >
-                    5
-                  </motion.button>
-                </div>
+        {/* 2. The Reckoning Beam (Answer Line) - Physically separates Upper and Lower Deck */}
+        <div className="w-full h-3.5 sm:h-4 bg-gradient-to-r from-amber-900 via-amber-700 to-amber-900 border-y border-amber-950 shadow-md relative z-20 flex items-center justify-around px-2 sm:px-3">
+          {[0, 1, 2, 3, 4].map((i) => (
+            <div key={i} className="w-2.5 h-2.5 rounded-full bg-amber-100 border border-amber-300/80 shadow-xs flex items-center justify-center" />
+          ))}
+        </div>
 
-                {/* Lower Deck (4 Beads) */}
-                <div className="h-32 w-full flex flex-col items-center justify-end pb-1 gap-1.5 z-20">
-                  {[0, 1, 2, 3].map((beadIdx) => {
-                    const isActive = beadIdx < col.lowerCount;
-                    return (
-                      <motion.button
-                        key={beadIdx}
-                        onClick={() => handleLowerClick(colIdx, beadIdx)}
-                        animate={{ y: isActive ? -28 : 0 }}
-                        transition={{ type: "spring", stiffness: 350, damping: 22 }}
-                        className={`w-10 sm:w-12 h-6 sm:h-7 rounded-full ${colInfo.color} abacus-bead cursor-pointer flex items-center justify-center text-[10px] text-white font-bold border border-white/40`}
-                      >
-                        1
-                      </motion.button>
-                    );
-                  })}
-                </div>
+        {/* 3. Lower Deck (Below the Beam: Exactly 4 Lower Beads per Rod) */}
+        <div className="grid grid-cols-5 gap-3 sm:gap-4 relative z-10 h-[158px]">
+          {columns.map((col, colIdx) => {
+            const colInfo = PLACE_VALUES[colIdx];
+            return (
+              <div key={colIdx} className="flex flex-col justify-end items-center pb-[6px] gap-1 h-[158px]">
+                {[0, 1, 2, 3].map((beadIdx) => {
+                  const isActive = beadIdx < col.lowerCount;
+                  return (
+                    <motion.button
+                      key={beadIdx}
+                      onClick={() => handleLowerClick(colIdx, beadIdx)}
+                      animate={{ y: isActive ? -28 : 0 }}
+                      transition={{ type: "spring", stiffness: 400, damping: 26 }}
+                      className={`w-11 sm:w-13 h-7 rounded-full ${colInfo.color} shadow-md cursor-pointer flex items-center justify-center text-xs text-white font-extrabold border-2 border-white/50 hover:brightness-110 active:scale-95 transition-transform`}
+                      title={`Lower bead #${beadIdx + 1} (+1) on ${colInfo.label}`}
+                    >
+                      1
+                    </motion.button>
+                  );
+                })}
+              </div>
+            );
+          })}
+        </div>
 
-                {/* Column Label */}
-                <div className="mt-2 text-center">
-                  <span className="text-[11px] font-bold text-slate-600 block">
-                    {colInfo.label}
-                  </span>
-                  <span className="text-[10px] text-slate-400 font-mono">
-                    {((col.upper ? 5 : 0) + col.lowerCount)}
-                  </span>
-                </div>
+        {/* 4. Column Place Value Labels */}
+        <div className="grid grid-cols-5 gap-3 sm:gap-4 mt-3 pt-2 border-t border-amber-800/10 relative z-10">
+          {columns.map((col, colIdx) => {
+            const colInfo = PLACE_VALUES[colIdx];
+            return (
+              <div key={colIdx} className="text-center">
+                <span className="text-[11px] font-bold text-slate-700 block tracking-tight">
+                  {colInfo.label}
+                </span>
+                <span className="text-xs font-black text-amber-800 font-mono">
+                  {(col.upper ? 5 : 0) + col.lowerCount}
+                </span>
               </div>
             );
           })}

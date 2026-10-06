@@ -343,9 +343,9 @@ body.theme-dark-cyber {
 }
 
 .sub-title {
-    font-size: 12px;
+    font-size: 13px;
     color: var(--text-secondary);
-    font-weight: 500;
+    font-weight: 600;
 }
 
 .header-actions {
@@ -360,17 +360,17 @@ body.theme-dark-cyber {
     align-items: center;
     gap: 6px;
     background: var(--ctrl-bg, #ffffff);
-    padding: 4px 10px;
+    padding: 5px 12px;
     border-radius: 10px;
-    border: 1px solid var(--ctrl-border, rgba(0, 0, 0, 0.1));
+    border: 1px solid var(--ctrl-border, rgba(0, 0, 0, 0.12));
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 .ctrl-label {
-    font-size: 11px;
-    font-weight: 600;
+    font-size: 12px;
+    font-weight: 700;
     text-transform: uppercase;
-    color: var(--text-muted);
+    color: var(--text-primary);
     letter-spacing: 0.5px;
 }
 
@@ -432,17 +432,18 @@ body.theme-dark-cyber {
 }
 
 /* --------------------------------------------------------------------------
-   READOUT HUD
+   READOUT HUD & DISPLAY CONTROLS
    -------------------------------------------------------------------------- */
 .readout-hud {
     display: flex;
     justify-content: center;
+    align-items: stretch;
+    gap: 16px;
     width: 100%;
+    flex-wrap: wrap;
 }
 
-.readout-card.main-counter-card {
-    width: 100%;
-    max-width: 520px;
+.readout-card {
     background: var(--bg-card);
     backdrop-filter: blur(12px);
     border: 1px solid var(--bg-card-border);
@@ -453,6 +454,38 @@ body.theme-dark-cyber {
     gap: 8px;
     box-shadow: var(--bg-card-shadow, 0 4px 20px rgba(0, 0, 0, 0.08));
     transition: background 0.3s ease, border-color 0.3s ease;
+}
+
+.readout-card.main-counter-card {
+    flex: 1 1 320px;
+    max-width: 460px;
+}
+
+.readout-card.display-options-card {
+    flex: 1 1 360px;
+    max-width: 480px;
+    justify-content: space-between;
+}
+
+.display-options-wrapper {
+    display: flex;
+    align-items: center;
+    height: 100%;
+    min-height: 48px;
+}
+
+.display-options-wrapper .toggle-chips {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.units-legend-badge.view-badge {
+    color: var(--accent-gold);
+    background: rgba(245, 158, 11, 0.08);
+    border-color: rgba(245, 158, 11, 0.25);
 }
 
 .readout-header {
@@ -576,6 +609,11 @@ body.theme-dark-cyber {
 
 .mode-panel.hidden {
     display: none;
+}
+
+.mode-panel:empty,
+#free-play-panel:empty {
+    display: none !important;
 }
 
 /* --------------------------------------------------------------------------

@@ -101,10 +101,10 @@ export const ANIMATED_LESSON_SCRIPTS: Record<string, LessonScript> = {
   "lesson-2": {
     lessonId: "lesson-2",
     lessonNumber: 2,
-    title: "Understanding Upper Bead (5) & Lower Beads (1-4)",
+    title: "Introducing Small Friend Rule",
     instructorAvatar: "👩‍🏫",
     instructorName: "Sensei Maya",
-    topicBadge: "Bead Values",
+    topicBadge: "Small Friend Rules",
     scenes: [
       {
         step: 1,

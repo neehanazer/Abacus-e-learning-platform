@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
@@ -21,9 +21,6 @@ import {
   CheckCircle2,
   Flame,
   Video,
-  Play,
-  ChevronDown,
-  Clock,
   Calculator,
   LayoutDashboard,
 } from "lucide-react";
@@ -55,19 +52,6 @@ export default function LearningNavbar() {
   } = useLearning();
 
   const [previewModal, setPreviewModal] = useState<NavOption | null>(null);
-  const [videosDropdownOpen, setVideosDropdownOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
-  // Close dropdown on click outside
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setVideosDropdownOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
 
   const isSyllabus = pathname.startsWith("/learning/syllabus");
   const isPractice = pathname.startsWith("/learning/practice");
@@ -168,12 +152,6 @@ export default function LearningNavbar() {
     }
   };
 
-  const handleSelectLessonFromNavbar = (lessonId: string) => {
-    setCurrentLessonId(lessonId);
-    setVideosDropdownOpen(false);
-    router.push("/learning");
-  };
-
   const studentName = user?.fullName?.split(" ")[0] || (user as any)?.name?.split(" ")[0] || "Arjun";
   const userAvatar = user?.avatar || "🧙‍♂️";
   const userStars = 120 + bonusStars;
@@ -236,125 +214,6 @@ export default function LearningNavbar() {
             <nav className="hidden lg:flex items-center gap-0.5 sm:gap-1 bg-[#FFF9ED] p-1.5 rounded-full border border-yellow-200 shadow-inner shrink-0 lg:-ml-6 xl:-ml-12">
               {navItems.map((item) => {
                 const isActive = item.isActive;
-                const isVideosTab = item.id === "learning";
-
-                if (isVideosTab) {
-                  return (
-                    <div key={item.id} className="relative" ref={dropdownRef}>
-                      <div className="flex items-center">
-                        <button
-                          onClick={() => handleNavClick(item)}
-                          className={`flex items-center gap-1.5 pl-2.5 sm:pl-3 pr-1.5 py-1.5 rounded-l-full text-xs font-extrabold transition-all duration-200 cursor-pointer whitespace-nowrap ${
-                            isActive
-                              ? "bg-gradient-to-r from-[#F4A261] to-[#E76F51] text-white shadow-md shadow-orange-200"
-                              : "text-slate-600 hover:text-[#1D3557] hover:bg-yellow-100/70"
-                          }`}
-                        >
-                          {item.icon}
-                          <span>{item.name}</span>
-                        </button>
-                        <button
-                          onClick={() => setVideosDropdownOpen((prev) => !prev)}
-                          className={`pr-2.5 sm:pr-3 pl-1.5 py-1.5 rounded-r-full text-xs font-extrabold transition-all duration-200 cursor-pointer border-l border-white/20 ${
-                            isActive
-                              ? "bg-[#E76F51] text-white"
-                              : "text-slate-600 hover:text-[#1D3557] hover:bg-yellow-100/70"
-                          }`}
-                          title="Browse all 8 Animated Video Lessons"
-                        >
-                          <ChevronDown
-                            className={`w-3.5 h-3.5 transition-transform duration-200 ${
-                              videosDropdownOpen ? "rotate-180" : ""
-                            }`}
-                          />
-                        </button>
-                      </div>
-
-                      {/* Dropdown for All 8 Animated Lesson Videos */}
-                      <AnimatePresence>
-                        {videosDropdownOpen && (
-                          <motion.div
-                            initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                            animate={{ opacity: 1, y: 0, scale: 1 }}
-                            exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                            transition={{ duration: 0.2 }}
-                            className="absolute left-0 mt-3 w-80 sm:w-96 bg-white rounded-3xl p-4 shadow-2xl border-2 border-yellow-200 z-50 overflow-hidden"
-                          >
-                            <div className="flex items-center justify-between pb-3 border-b border-yellow-100 mb-2">
-                              <div>
-                                <h4 className="font-heading font-extrabold text-[#1D3557] text-sm flex items-center gap-1.5">
-                                  <span>🎬 All 8 Video Lessons</span>
-                                </h4>
-                                <p className="text-[11px] text-slate-500 font-medium">
-                                  {isLevel2 ? "Level 2: Two-Digit & Rules Curriculum" : "Level 1: Basic Numbers & Operations"}
-                                </p>
-                              </div>
-                              <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
-                                {completedCount}/{totalLessons} Done
-                              </span>
-                            </div>
-
-                            <div className="max-h-72 overflow-y-auto space-y-1.5 pr-1 custom-scrollbar">
-                              {lessons.map((les) => {
-                                const isCur = les.id === currentLessonId;
-                                return (
-                                  <div
-                                    key={les.id}
-                                    onClick={() => handleSelectLessonFromNavbar(les.id)}
-                                    className={`flex items-center justify-between p-2.5 rounded-2xl transition-all cursor-pointer border ${
-                                      isCur
-                                        ? "bg-orange-50 border-orange-300 text-orange-950 font-bold"
-                                        : "bg-slate-50/70 hover:bg-yellow-50 border-transparent hover:border-yellow-200 text-slate-700"
-                                    }`}
-                                  >
-                                    <div className="flex items-center gap-2.5 min-w-0">
-                                      <div
-                                        className={`w-7 h-7 rounded-xl flex items-center justify-center text-xs font-black shrink-0 ${
-                                          isCur
-                                            ? "bg-[#F4A261] text-white shadow-sm"
-                                            : les.completed
-                                            ? "bg-emerald-500 text-white"
-                                            : "bg-slate-200 text-slate-700"
-                                        }`}
-                                      >
-                                        {les.completed ? "✓" : les.lessonNumber}
-                                      </div>
-                                      <div className="min-w-0">
-                                        <p className="text-xs font-extrabold truncate leading-tight">
-                                          Lesson {les.lessonNumber}: {les.title}
-                                        </p>
-                                        <div className="flex items-center gap-2 text-[10px] text-slate-400 mt-0.5">
-                                          <span className="flex items-center gap-1">
-                                            <Clock className="w-3 h-3" />
-                                            {les.duration}
-                                          </span>
-                                          <span>•</span>
-                                          <span className="text-amber-700 font-semibold truncate">
-                                            {les.topic}
-                                          </span>
-                                        </div>
-                                      </div>
-                                    </div>
-
-                                    <div className="shrink-0 pl-2">
-                                      {isCur ? (
-                                        <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-orange-200 text-orange-800 animate-pulse">
-                                          Playing
-                                        </span>
-                                      ) : (
-                                        <Play className="w-3.5 h-3.5 text-slate-400 hover:text-orange-500 transition-colors" />
-                                      )}
-                                    </div>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </div>
-                  );
-                }
 
                 return (
                   <button

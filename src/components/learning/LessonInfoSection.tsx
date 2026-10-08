@@ -32,7 +32,7 @@ export default function LessonInfoSection({
   hasPrevious,
   hasNext,
 }: LessonInfoSectionProps) {
-  const { markLessonCompleted } = useLearning();
+  const { totalLessons } = useLearning();
 
   return (
     <div className="bg-white rounded-3xl p-6 sm:p-8 border-2 border-yellow-200 shadow-xl space-y-6">
@@ -41,7 +41,7 @@ export default function LessonInfoSection({
         <div className="space-y-2 max-w-2xl">
           <div className="flex flex-wrap items-center gap-2">
             <span className="px-3 py-1 rounded-full bg-orange-100 text-orange-800 font-extrabold text-xs">
-              Lesson {lesson.lessonNumber} of 8
+              Lesson {lesson.lessonNumber} of {totalLessons}
             </span>
             <span className="px-3 py-1 rounded-full bg-yellow-100 text-[#1D3557] font-bold text-xs">
               {lesson.level}
@@ -58,23 +58,6 @@ export default function LessonInfoSection({
           <p className="text-sm sm:text-base text-slate-600 leading-relaxed">
             {lesson.description}
           </p>
-        </div>
-
-        {/* Mark as Completed Button */}
-        <div className="flex-shrink-0 flex items-center">
-          <button
-            onClick={() => markLessonCompleted(lesson.id)}
-            className={`w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-full font-extrabold text-sm sm:text-base shadow-lg transition-all duration-200 cursor-pointer ${
-              lesson.completed
-                ? "bg-emerald-500 hover:bg-emerald-600 text-white shadow-emerald-200 hover:scale-105"
-                : "bg-gradient-to-r from-[#F4A261] via-[#E76F51] to-[#E9C46A] hover:from-[#E9C46A] hover:to-[#F4A261] text-white shadow-orange-200 hover:scale-105 active:scale-95"
-            }`}
-          >
-            <CheckCircle2 className="w-5 h-5" />
-            <span>
-              {lesson.completed ? "Lesson Completed! 🎉" : "Mark as Completed"}
-            </span>
-          </button>
         </div>
       </div>
 

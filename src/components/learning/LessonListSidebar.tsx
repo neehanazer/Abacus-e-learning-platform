@@ -24,7 +24,14 @@ export default function LessonListSidebar({
   currentLessonId,
   onSelectLesson,
 }: LessonListSidebarProps) {
-  const { lessons, completedCount, totalLessons, overallProgress } = useLearning();
+  const {
+    lessons,
+    completedCount,
+    totalLessons,
+    overallProgress,
+    activeLevel,
+    setActiveLevel,
+  } = useLearning();
 
   return (
     <div className="bg-white rounded-3xl p-5 sm:p-6 border-2 border-yellow-200 shadow-xl space-y-5">
@@ -37,16 +44,42 @@ export default function LessonListSidebar({
             </div>
             <div>
               <h3 className="font-heading font-extrabold text-[#1D3557] text-base sm:text-lg">
-                Level 1 Curriculum
+                Level {activeLevel} Curriculum
               </h3>
               <p className="text-xs text-slate-500 font-medium">
-                Basic Numbers & Operations
+                {activeLevel === 2
+                  ? "Multi-Row & 2-Digit Expansion"
+                  : "Basic Numbers & Rules"}
               </p>
             </div>
           </div>
           <span className="text-xs font-extrabold px-2.5 py-1 rounded-full bg-yellow-100 text-amber-800 border border-yellow-200">
             {completedCount}/{totalLessons} Done
           </span>
+        </div>
+
+        {/* Level Switcher Buttons */}
+        <div className="flex items-center gap-2 pt-1">
+          <button
+            onClick={() => setActiveLevel(1)}
+            className={`flex-1 py-1.5 px-3 rounded-xl text-xs font-extrabold transition-all cursor-pointer ${
+              activeLevel === 1
+                ? "bg-[#F4A261] text-white shadow-sm"
+                : "bg-yellow-50 text-slate-600 hover:bg-yellow-100 border border-yellow-200/60"
+            }`}
+          >
+            🌱 Level 1
+          </button>
+          <button
+            onClick={() => setActiveLevel(2)}
+            className={`flex-1 py-1.5 px-3 rounded-xl text-xs font-extrabold transition-all cursor-pointer ${
+              activeLevel === 2
+                ? "bg-[#3B82F6] text-white shadow-sm"
+                : "bg-yellow-50 text-slate-600 hover:bg-yellow-100 border border-yellow-200/60"
+            }`}
+          >
+            🧭 Level 2
+          </button>
         </div>
 
         {/* Visual Progress Bar (Level Progress ███████░░░ 70%) */}

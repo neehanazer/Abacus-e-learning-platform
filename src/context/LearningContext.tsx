@@ -1,7 +1,13 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
-import { Lesson, MOCK_LESSONS } from "@/data/lessonsData";
+import {
+  Lesson,
+  MOCK_LESSONS,
+  LEVEL_1_LESSONS,
+  LEVEL_2_LESSONS,
+  LESSONS_BY_LEVEL,
+} from "@/data/lessonsData";
 import confetti from "canvas-confetti";
 import { useAuth } from "@/context/AuthContext";
 
@@ -9,6 +15,8 @@ interface LearningContextType {
   lessons: Lesson[];
   currentLessonId: string;
   currentLesson: Lesson;
+  activeLevel: number;
+  setActiveLevel: (level: number) => void;
   setCurrentLessonId: (id: string) => void;
   markLessonCompleted: (id: string) => void;
   updateLessonProgress: (id: string, seconds: number) => void;
@@ -25,67 +33,102 @@ interface LearningContextType {
 
 const LearningContext = createContext<LearningContextType | undefined>(undefined);
 
-const STORAGE_KEY = "abacus_learning_state_v1";
-
 export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const { user } = useAuth();
-  const [lessons, setLessons] = useState<Lesson[]>(MOCK_LESSONS);
-  const [currentLessonId, setCurrentLessonId] = useState<string>("lesson-4");
+
+  // Determine user's assigned level (defaults to 2 if user profile is Level 2, else 1)
+  const isUserLevel2 =
+    (user?.selectedLevel?.includes("2") ||
+      user?.abacusLevel?.includes("2") ||
+      user?.currentLevel === 2) ??
+    false;
+
+  const [activeLevel, setActiveLevel] = useState<number>(isUserLevel2 ? 2 : 1);
+
+  // Active level's default lessons
+  const defaultLessons = LESSONS_BY_LEVEL[activeLevel] || LEVEL_1_LESSONS;
+
+  const [lessons, setLessons] = useState<Lesson[]>(defaultLessons);
+  const [currentLessonId, setCurrentLessonId] = useState<string>(
+    defaultLessons[0]?.id || "lesson-1"
+  );
   const [bonusStars, setBonusStars] = useState<number>(150);
   const [isCelebrationModalOpen, setIsCelebrationModalOpen] = useState(false);
-  const [completedLessonForModal, setCompletedLessonForModal] = useState<Lesson | null>(null);
+  const [completedLessonForModal, setCompletedLessonForModal] =
+    useState<Lesson | null>(null);
 
-  // Synchronize with user level: if student is promoted to Level 2, mark Level 1 lessons completed & unlock Level 2
+  // Automatically upgrade to Level 2 if student is upgraded in their profile
   useEffect(() => {
-    const isLevel2 = (user?.selectedLevel?.includes("2") || user?.abacusLevel?.includes("2")) ?? false;
-    if (isLevel2) {
-      setLessons((prev) =>
-        prev.map((l) => {
-          if (l.lessonNumber <= 4) {
-            return { ...l, completed: true, isLocked: false, watchedSeconds: l.durationSeconds };
-          }
-          if (l.lessonNumber === 5) {
-            return { ...l, isLocked: false };
-          }
-          return l;
-        })
-      );
-      setCurrentLessonId((prev) =>
-        prev === "lesson-1" || prev === "lesson-2" || prev === "lesson-3" || prev === "lesson-4"
-          ? "lesson-5"
-          : prev
-      );
+    if (isUserLevel2 && activeLevel !== 2) {
+      setActiveLevel(2);
     }
-  }, [user?.selectedLevel, user?.abacusLevel]);
+  }, [isUserLevel2, activeLevel]);
 
-  // Load persisted state if available
+  // Load and merge lessons whenever activeLevel changes
   useEffect(() => {
+    const levelLessons = LESSONS_BY_LEVEL[activeLevel] || LEVEL_1_LESSONS;
+    const storageKey = `abacus_learning_state_lvl_${activeLevel}`;
+
     try {
-      const saved = localStorage.getItem(STORAGE_KEY);
+      const saved = localStorage.getItem(storageKey);
       if (saved) {
         const parsed = JSON.parse(saved);
         if (parsed.lessons && Array.isArray(parsed.lessons)) {
-          setLessons(parsed.lessons);
+          const validLessonIds = new Set(levelLessons.map((m) => m.id));
+          const filtered = parsed.lessons.filter((pl: Lesson) =>
+            validLessonIds.has(pl.id)
+          );
+          const merged = levelLessons.map((def: Lesson) => {
+            const pl = filtered.find((p: Lesson) => p.id === def.id);
+            return pl
+              ? {
+                  ...def,
+                  completed: pl.completed,
+                  watchedSeconds: pl.watchedSeconds,
+                  isLocked: pl.isLocked,
+                }
+              : def;
+          });
+          setLessons(merged);
+        } else {
+          setLessons(levelLessons);
         }
-        if (parsed.currentLessonId) {
+
+        if (
+          parsed.currentLessonId &&
+          levelLessons.some((m) => m.id === parsed.currentLessonId)
+        ) {
           setCurrentLessonId(parsed.currentLessonId);
+        } else {
+          setCurrentLessonId(levelLessons[0]?.id || "lesson-1");
         }
+
         if (typeof parsed.bonusStars === "number") {
           setBonusStars(parsed.bonusStars);
         }
+      } else {
+        setLessons(levelLessons);
+        setCurrentLessonId(levelLessons[0]?.id || "lesson-1");
       }
     } catch {
-      // Fallback
+      setLessons(levelLessons);
+      setCurrentLessonId(levelLessons[0]?.id || "lesson-1");
     }
-  }, []);
+  }, [activeLevel]);
 
-  // Save changes to localStorage
-  const saveState = (updatedLessons: Lesson[], curId: string, stars: number) => {
+  // Save changes to localStorage for active level
+  const saveState = (
+    updatedLessons: Lesson[],
+    curId: string,
+    stars: number,
+    levelNum = activeLevel
+  ) => {
     try {
+      const storageKey = `abacus_learning_state_lvl_${levelNum}`;
       localStorage.setItem(
-        STORAGE_KEY,
+        storageKey,
         JSON.stringify({
           lessons: updatedLessons,
           currentLessonId: curId,
@@ -98,23 +141,25 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   const currentLesson =
-    lessons.find((l) => l.id === currentLessonId) || lessons[0];
+    lessons.find((l) => l.id === currentLessonId) || lessons[0] || defaultLessons[0];
 
   const recentLesson =
     lessons.find((l) => !l.completed && l.watchedSeconds > 0) ||
     lessons.find((l) => !l.completed) ||
-    lessons[0];
+    lessons[0] ||
+    defaultLessons[0];
 
   const completedCount = lessons.filter((l) => l.completed).length;
   const totalLessons = lessons.length;
-  const overallProgress = Math.round((completedCount / totalLessons) * 100);
+  const overallProgress =
+    totalLessons > 0 ? Math.round((completedCount / totalLessons) * 100) : 0;
 
   const markLessonCompleted = (id: string) => {
     const target = lessons.find((l) => l.id === id);
     if (!target) return;
 
     const newStars = target.completed ? bonusStars : bonusStars + 50;
-    
+
     // Unlock next lesson if available
     const currentIndex = lessons.findIndex((l) => l.id === id);
     const updated = lessons.map((l, index) => {
@@ -158,7 +203,6 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({
       const target = prev.find((l) => l.id === id);
       if (!target) return prev;
       const clampedSeconds = Math.min(Math.max(0, seconds), target.durationSeconds);
-      // Avoid state update if seconds haven't changed significantly (less than 2s difference)
       if (Math.abs(target.watchedSeconds - clampedSeconds) < 2) {
         return prev;
       }
@@ -178,10 +222,11 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({
   }, []);
 
   const resetProgress = () => {
-    setLessons(MOCK_LESSONS);
-    setCurrentLessonId("lesson-4");
+    const levelLessons = LESSONS_BY_LEVEL[activeLevel] || LEVEL_1_LESSONS;
+    setLessons(levelLessons);
+    setCurrentLessonId(levelLessons[0]?.id || "lesson-1");
     setBonusStars(150);
-    saveState(MOCK_LESSONS, "lesson-4", 150);
+    saveState(levelLessons, levelLessons[0]?.id || "lesson-1", 150);
   };
 
   return (
@@ -190,6 +235,8 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({
         lessons,
         currentLessonId,
         currentLesson,
+        activeLevel,
+        setActiveLevel,
         setCurrentLessonId: (id: string) => {
           setCurrentLessonId(id);
           saveState(lessons, id, bonusStars);

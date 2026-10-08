@@ -157,7 +157,7 @@ export default function LevelOverviewHero({
               </button>
             ) : (
               <button
-                onClick={() => onContinue("lesson-4")}
+                onClick={() => onContinue("lesson-1")}
                 className="w-full py-4 px-6 rounded-full bg-gradient-to-r from-[#F4A261] via-[#E76F51] to-[#E9C46A] hover:from-[#E9C46A] hover:to-[#F4A261] text-white font-extrabold text-base shadow-lg shadow-orange-300 hover:shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2.5 cursor-pointer group"
               >
                 <Play className="w-5 h-5 fill-white" />

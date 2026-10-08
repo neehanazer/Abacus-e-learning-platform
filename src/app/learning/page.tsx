@@ -27,6 +27,8 @@ export default function LearningDashboardPage() {
     lessons,
     currentLessonId,
     currentLesson,
+    activeLevel,
+    setActiveLevel,
     setCurrentLessonId,
     recentLesson,
     completedCount,
@@ -39,7 +41,6 @@ export default function LearningDashboardPage() {
   const studioRef = useRef<HTMLDivElement>(null);
 
   const studentName = user?.fullName?.split(" ")[0] || "Arjun";
-  const isLevel2 = (user?.selectedLevel?.includes("2") || user?.abacusLevel?.includes("2")) ?? false;
   const currentIndex = lessons.findIndex((l) => l.id === currentLessonId);
   const hasPrevious = currentIndex > 0;
   const hasNext = currentIndex < lessons.length - 1;
@@ -97,17 +98,41 @@ export default function LearningDashboardPage() {
 
           {/* Quick Stats Pill Cards */}
           <div className="flex flex-wrap sm:flex-nowrap items-center gap-3">
-            {/* Current Level Card */}
-            <div className="bg-yellow-50/80 border-2 border-yellow-200 rounded-2xl px-4 py-3 min-w-[130px]">
-              <span className="text-[11px] font-bold text-slate-500 uppercase block">
-                Current Level
-              </span>
-              <span className="text-sm font-extrabold text-[#1D3557] flex items-center gap-1 mt-0.5">
-                <span className="text-base">🥋</span> {isLevel2 ? "Level 2" : "Level 1"}
-              </span>
-              <span className="text-[10px] font-bold text-orange-700 block mt-0.5">
-                {isLevel2 ? "Two-Digit & Rules" : "Basic Numbers"}
-              </span>
+            {/* Current Level Card / Switcher */}
+            <div className="bg-yellow-50/80 border-2 border-yellow-200 rounded-2xl px-4 py-2.5 min-w-[145px] flex flex-col justify-between">
+              <div>
+                <span className="text-[11px] font-bold text-slate-500 uppercase block">
+                  Active Level
+                </span>
+                <span className="text-sm font-extrabold text-[#1D3557] flex items-center gap-1 mt-0.5">
+                  <span className="text-base">{activeLevel === 2 ? "🧭" : "🌱"}</span> Level {activeLevel}
+                </span>
+                <span className="text-[10px] font-bold text-orange-700 block">
+                  {activeLevel === 2 ? "Multi-Row & 2-Digit" : "Basic Numbers"}
+                </span>
+              </div>
+              <div className="flex items-center gap-1 mt-2 pt-1 border-t border-yellow-200/80">
+                <button
+                  onClick={() => setActiveLevel(1)}
+                  className={`px-2 py-0.5 rounded-lg text-[10px] font-extrabold transition-all cursor-pointer ${
+                    activeLevel === 1
+                      ? "bg-[#F4A261] text-white shadow-xs"
+                      : "bg-white text-slate-600 hover:bg-yellow-100 border border-yellow-200/50"
+                  }`}
+                >
+                  Lvl 1
+                </button>
+                <button
+                  onClick={() => setActiveLevel(2)}
+                  className={`px-2 py-0.5 rounded-lg text-[10px] font-extrabold transition-all cursor-pointer ${
+                    activeLevel === 2
+                      ? "bg-[#3B82F6] text-white shadow-xs"
+                      : "bg-white text-slate-600 hover:bg-yellow-100 border border-yellow-200/50"
+                  }`}
+                >
+                  Lvl 2
+                </button>
+              </div>
             </div>
 
             {/* Completed Lessons */}

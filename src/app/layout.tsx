@@ -3,7 +3,9 @@ import { Fredoka, Plus_Jakarta_Sans } from "next/font/google";
 import Navbar from "@/components/layout/Navbar";
 import RotaryFabNav from "@/components/layout/RotaryFabNav";
 import Footer from "@/components/layout/Footer";
+import ProductTour from "@/components/layout/ProductTour";
 import { AuthProvider } from "@/context/AuthContext";
+import "driver.js/dist/driver.css";
 import "./globals.css";
 
 const fredoka = Fredoka({
@@ -36,6 +38,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col font-sans bg-abacus-pattern selection:bg-purple-200 selection:text-purple-900">
         <AuthProvider>
+          <ProductTour />
           {/* Laptop & Desktop Navigation Bar */}
           <Navbar />
           {/* Mobile & Phone Rotary FAB Navigation */}

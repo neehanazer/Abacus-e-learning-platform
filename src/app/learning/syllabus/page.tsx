@@ -56,7 +56,7 @@ export default function SyllabusPage() {
         {/* ============================================================ */}
         {/* 1. HERO HEADER */}
         {/* ============================================================ */}
-        <section className="bg-white rounded-[2.5rem] p-6 sm:p-10 border-2 border-yellow-200 shadow-xl shadow-yellow-100/50 relative overflow-hidden">
+        <section data-tour="syllabus-roadmap" className="bg-white rounded-[2.5rem] p-6 sm:p-10 border-2 border-yellow-200 shadow-xl shadow-yellow-100/50 relative overflow-hidden">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
             <div className="space-y-3 max-w-2xl">
               <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-orange-100 text-orange-900 text-xs font-black uppercase tracking-wider">

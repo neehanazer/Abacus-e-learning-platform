@@ -298,7 +298,7 @@ export default function BrainGymPage() {
 
       {/* VIEW 1: GAME SELECTION SCREEN (BOXES FORMAT WITH UNSPLASH IMAGERY) */}
       {!activeGame ? (
-        <main className="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 z-10 flex flex-col">
+        <main data-tour="braingym-center" className="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 z-10 flex flex-col">
           {/* Header Title & Tagline */}
           <div className="text-center max-w-2xl mx-auto mb-8 sm:mb-10">
             <motion.div

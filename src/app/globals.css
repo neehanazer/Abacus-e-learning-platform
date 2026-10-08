@@ -33,6 +33,48 @@ h1, h2, h3, h4, h5, h6, .font-heading {
   font-family: var(--font-heading), var(--font-body), system-ui, sans-serif;
 }
 
+.abacus-tour-popover {
+  max-width: min(360px, calc(100vw - 32px));
+  border: 1px solid rgba(244, 162, 97, 0.3);
+  border-radius: 22px;
+  padding: 18px;
+  background: #fffdf7;
+  box-shadow: 0 24px 70px rgba(21, 36, 67, 0.28);
+  font-family: var(--font-body), system-ui, sans-serif;
+}
+
+.abacus-tour-popover .driver-popover-title {
+  color: #1d3557;
+  font-family: var(--font-heading), system-ui, sans-serif;
+  font-size: 19px;
+  font-weight: 800;
+}
+
+.abacus-tour-popover .driver-popover-description {
+  color: #526174;
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.abacus-tour-popover .driver-popover-progress-text {
+  color: #9a5b23;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.abacus-tour-popover .driver-popover-navigation-btns button {
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.abacus-tour-popover .driver-popover-next-btn {
+  border-color: #e76f51;
+  background: #e76f51;
+  color: white;
+  text-shadow: none;
+}
+
 /* Glassmorphism Cards */
 .glass-card {
   background: rgba(255, 255, 255, 0.85);

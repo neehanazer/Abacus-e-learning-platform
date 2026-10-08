@@ -47,7 +47,7 @@ export default function VirtualAbacus() {
   }, []);
 
   return (
-    <div className="w-full min-h-screen bg-gradient-to-b from-[#FAFAFE] via-[#F3F0FF]/40 to-[#F0F4FF] py-4 px-2 sm:px-6">
+    <div data-tour="virtual-abacus-center" className="w-full min-h-screen bg-gradient-to-b from-[#FAFAFE] via-[#F3F0FF]/40 to-[#F0F4FF] py-4 px-2 sm:px-6">
       <div className="max-w-7xl mx-auto">
         {/* Virtual Abacus Main Host Container */}
         <div ref={containerRef} className="virtual-abacus-app" data-theme="light-classic">

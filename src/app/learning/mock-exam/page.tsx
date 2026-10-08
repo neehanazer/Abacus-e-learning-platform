@@ -415,7 +415,7 @@ export default function MockExamPage() {
       {/* 1. CATALOG VIEW: MOCK EXAMS LIST */}
       {/* ============================================================== */}
       {viewState === "catalog" && (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-6 sm:pt-10">
+        <div data-tour="mock-exam-center" className="max-w-7xl mx-auto px-4 sm:px-6 pt-6 sm:pt-10">
           {/* Header Banner */}
           <div className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-r from-[#F4A261] via-[#E76F51] to-[#E9C46A] p-6 sm:p-10 text-white shadow-xl shadow-orange-200/50 mb-10">
             <div className="relative z-10 max-w-2xl">

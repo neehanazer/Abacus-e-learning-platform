@@ -260,6 +260,7 @@ export default function AbacusWorldDashboard() {
         <div className="grid md:grid-cols-2 gap-6 lg:gap-8 max-w-5xl mx-auto">
           {/* Learning Hub Card */}
           <div 
+            data-tour="dashboard-learning"
             onClick={() => router.push("/learning/syllabus")}
             className="group relative bg-gradient-to-b from-[#FFF8E7] to-[#FFF3D6] rounded-[2rem] p-8 border-2 border-yellow-200/50 shadow-xl shadow-yellow-100/50 hover:shadow-2xl hover:shadow-yellow-200/50 hover:-translate-y-1 transition-all duration-300 overflow-hidden cursor-pointer"
           >
@@ -298,6 +299,7 @@ export default function AbacusWorldDashboard() {
 
           {/* Braingym Games Card */}
           <div 
+            data-tour="dashboard-games"
             onClick={() => router.push("/dashboard/braingym")}
             className="group relative bg-gradient-to-b from-[#E8F4FD] to-[#D6EBFA] rounded-[2rem] p-8 border-2 border-blue-200/50 shadow-xl shadow-blue-100/50 hover:shadow-2xl hover:shadow-blue-200/50 hover:-translate-y-1 transition-all duration-300 overflow-hidden cursor-pointer"
           >

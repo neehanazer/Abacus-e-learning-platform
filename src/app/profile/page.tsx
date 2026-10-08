@@ -92,7 +92,7 @@ function ProfileContent() {
   };
 
   return (
-    <div className="min-h-[85vh] py-10 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto space-y-8">
+    <div data-tour="student-profile" className="min-h-[85vh] py-10 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto space-y-8">
       {/* Top Back Navigation Bar */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">

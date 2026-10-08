@@ -690,7 +690,7 @@ export default function FinalExamPage() {
       {/* 1. OVERVIEW & READINESS GUARD VIEW */}
       {/* ============================================================== */}
       {viewState === "overview" && (
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-6 sm:pt-10">
+        <div data-tour="exam-center" className="max-w-5xl mx-auto px-4 sm:px-6 pt-6 sm:pt-10">
           {/* URGENT DUE DATE TODAY NOTIFICATION BANNER */}
           {homeworkStats.dueTodayTasks.length > 0 && (
             <div className="bg-gradient-to-r from-amber-500/15 via-rose-500/15 to-orange-500/15 border-2 border-amber-500/50 rounded-3xl p-5 mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-lg backdrop-blur-sm animate-pulse">

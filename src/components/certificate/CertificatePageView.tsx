@@ -166,7 +166,7 @@ export default function CertificatePageView({
       )}
 
       {/* Main Content Area */}
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 pt-6 sm:pt-10 space-y-8 relative z-10">
+      <main data-tour="certificate-center" className="max-w-6xl mx-auto px-4 sm:px-6 pt-6 sm:pt-10 space-y-8 relative z-10">
         {/* ============================================================ */}
         {/* HERO SECTION */}
         {/* ============================================================ */}

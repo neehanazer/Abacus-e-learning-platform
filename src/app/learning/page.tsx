@@ -178,7 +178,7 @@ export default function LearningDashboardPage() {
         {/* ============================================================ */}
         {/* 3. DEDICATED VIDEO LESSON STUDIO & SIDEBAR */}
         {/* ============================================================ */}
-        <div ref={studioRef} className="grid grid-cols-1 lg:grid-cols-12 gap-8 pt-2">
+        <div ref={studioRef} data-tour="lesson-studio" className="grid grid-cols-1 lg:grid-cols-12 gap-8 pt-2">
           {/* Main Video Player & Lesson Details (8 Cols) */}
           <div className="lg:col-span-8 space-y-6">
             {/* Interactive Video Player */}

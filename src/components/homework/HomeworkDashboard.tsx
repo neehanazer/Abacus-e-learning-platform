@@ -137,7 +137,7 @@ export const HomeworkDashboard: React.FC = () => {
       : 0;
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
+    <div data-tour="homework-center" className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
       {/* ============================================================ */}
       {/* URGENT DUE DATE TODAY NOTIFICATION BANNER */}
       {/* ============================================================ */}

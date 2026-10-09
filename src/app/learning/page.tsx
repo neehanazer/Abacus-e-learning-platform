@@ -36,6 +36,7 @@ export default function LearningDashboardPage() {
     overallProgress,
     bonusStars,
     resetProgress,
+    openTour,
   } = useLearning();
 
   const studioRef = useRef<HTMLDivElement>(null);
@@ -80,10 +81,19 @@ export default function LearningDashboardPage() {
             🧮
           </div>
 
-          <div className="space-y-2 max-w-xl">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-orange-100 text-orange-800 text-xs font-extrabold uppercase tracking-wider">
-              <Sparkles className="w-3.5 h-3.5 text-orange-600" />
-              Interactive Video Learning Hub
+          <div className="space-y-3 max-w-xl">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-orange-100 text-orange-800 text-xs font-extrabold uppercase tracking-wider">
+                <Sparkles className="w-3.5 h-3.5 text-orange-600" />
+                Interactive Video Learning Hub
+              </span>
+              <button
+                onClick={openTour}
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-amber-400 to-orange-400 hover:from-amber-500 hover:to-orange-500 text-white text-xs font-extrabold shadow-sm hover:scale-105 active:scale-95 transition-all cursor-pointer"
+                title="Launch the complete Learning Hub tour"
+              >
+                <span>🚀 Take Website Tour</span>
+              </button>
             </div>
 
             <h1 className="text-3xl sm:text-4xl font-extrabold text-[#1D3557] font-heading tracking-tight">

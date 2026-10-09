@@ -17,6 +17,8 @@ import {
   Zap,
   Globe,
   Grid,
+  Grid3x3,
+  Grid2x2,
   ChevronLeft,
   Volume2,
   VolumeX,
@@ -73,6 +75,7 @@ export default function BrainGymPage() {
   const [activeGame, setActiveGame] = useState<GameId | null>(null);
   const [filterCategory, setFilterCategory] = useState<"all" | "core" | "arcade" | "memory">("core");
   const [viewMode, setViewMode] = useState<"photos" | "icons">("photos");
+  const [columns, setColumns] = useState<3 | 4>(4);
 
   // Core 4 Games matching the user's reference image + Unsplash photography:
   const ALL_GAMES: GameOption[] = [
@@ -298,7 +301,7 @@ export default function BrainGymPage() {
 
       {/* VIEW 1: GAME SELECTION SCREEN (BOXES FORMAT WITH UNSPLASH IMAGERY) */}
       {!activeGame ? (
-        <main data-tour="braingym-center" className="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 z-10 flex flex-col">
+        <main data-tour="braingym-center" className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 z-10 flex flex-col">
           {/* Header Title & Tagline */}
           <div className="text-center max-w-2xl mx-auto mb-8 sm:mb-10">
             <motion.div
@@ -327,7 +330,7 @@ export default function BrainGymPage() {
             </motion.p>
 
             {/* View Mode & Category Controls */}
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-6">
+            <div className="flex flex-col sm:flex-row flex-wrap items-center justify-center gap-3 mt-6">
               {/* Category Filter Pills */}
               <div className="flex flex-wrap items-center justify-center gap-1.5 bg-white p-1.5 rounded-2xl border border-slate-200 shadow-sm">
                 {[
@@ -377,13 +380,45 @@ export default function BrainGymPage() {
                   <span>Graphic Boxes</span>
                 </button>
               </div>
+
+              {/* Column Layout Density (3 or 4 per row) */}
+              <div className="flex items-center gap-1 bg-white p-1 rounded-2xl border border-slate-200 shadow-sm text-xs font-bold">
+                <button
+                  onClick={() => setColumns(3)}
+                  className={`px-3 py-1.5 rounded-xl transition cursor-pointer flex items-center gap-1.5 ${
+                    columns === 3
+                      ? "bg-slate-900 text-white shadow-sm"
+                      : "text-slate-600 hover:text-slate-900"
+                  }`}
+                  title="Display 3 boxes per row"
+                >
+                  <Grid3x3 className="w-3.5 h-3.5" />
+                  <span>3 Per Row</span>
+                </button>
+                <button
+                  onClick={() => setColumns(4)}
+                  className={`px-3 py-1.5 rounded-xl transition cursor-pointer flex items-center gap-1.5 ${
+                    columns === 4
+                      ? "bg-slate-900 text-white shadow-sm"
+                      : "text-slate-600 hover:text-slate-900"
+                  }`}
+                  title="Display 4 boxes per row"
+                >
+                  <Grid2x2 className="w-3.5 h-3.5" />
+                  <span>4 Per Row</span>
+                </button>
+              </div>
             </div>
           </div>
 
-          {/* GAME BOXES GRID (Exact Boxes Format with Unsplash Photos) */}
+          {/* GAME BOXES GRID (Configurable 3 or 4 per row, fully responsive) */}
           <motion.div
             layout
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6 sm:gap-8 max-w-4xl mx-auto w-full"
+            className={`grid gap-5 sm:gap-6 w-full mx-auto ${
+              columns === 4
+                ? "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 max-w-7xl"
+                : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 max-w-6xl"
+            }`}
           >
             {displayedGames.map((game, index) => (
               <motion.div
@@ -395,7 +430,7 @@ export default function BrainGymPage() {
                 whileHover={{ y: -6, scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => setActiveGame(game.id)}
-                className="group relative bg-white rounded-[36px] p-6 sm:p-8 border-2 border-slate-200/90 shadow-xl hover:shadow-2xl transition-all duration-300 flex flex-col justify-between text-center cursor-pointer overflow-hidden min-h-[350px]"
+                className="group relative bg-white rounded-[32px] p-5 sm:p-6 border-2 border-slate-200/90 shadow-xl hover:shadow-2xl transition-all duration-300 flex flex-col justify-between text-center cursor-pointer overflow-hidden min-h-[340px]"
               >
                 {/* Subtle Card Background Glow */}
                 <div className="absolute inset-0 bg-gradient-to-b from-white via-white to-slate-50/80 pointer-events-none" />
@@ -412,7 +447,7 @@ export default function BrainGymPage() {
 
                 {/* VISUAL SHOWCASE: Unsplash Photo Banner vs Pure Icon */}
                 {viewMode === "photos" ? (
-                  <div className="relative z-10 w-full h-44 sm:h-48 rounded-2xl overflow-hidden mb-4 shadow-md bg-slate-100 group/img">
+                  <div className="relative z-10 w-full h-40 sm:h-44 rounded-2xl overflow-hidden mb-3.5 shadow-md bg-slate-100 group/img">
                     <img
                       src={game.unsplashImage}
                       alt={`${game.titlePart1}${game.titlePart2}`}
@@ -421,7 +456,7 @@ export default function BrainGymPage() {
                     <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/20 pointer-events-none" />
 
                     {/* Floating 3D Icon Badge on Corner */}
-                    <div className="absolute bottom-2.5 right-2.5 w-13 h-13 rounded-2xl bg-white/95 backdrop-blur-md p-1 shadow-lg border border-white/50 flex items-center justify-center">
+                    <div className="absolute bottom-2.5 right-2.5 w-11 h-11 rounded-xl bg-white/95 backdrop-blur-md p-1 shadow-md border border-white/50 flex items-center justify-center">
                       <div className="scale-75 origin-center">
                         {game.iconComponent || game.iconFallback}
                       </div>
@@ -435,15 +470,17 @@ export default function BrainGymPage() {
                   </div>
                 ) : (
                   /* Pure Icon Mode (Reference Image Style) */
-                  <div className="relative z-10 py-5 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                    {game.iconComponent || game.iconFallback}
+                  <div className="relative z-10 py-4 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                    <div className="scale-90 origin-center">
+                      {game.iconComponent || game.iconFallback}
+                    </div>
                   </div>
                 )}
 
                 {/* Typography (Matches Dual-Color Serif Style in Reference Image) */}
                 <div className="relative z-10 space-y-1">
-                  <h3 className="text-3xl sm:text-4xl font-black font-serif tracking-tight">
-                    <span style={{ color: game.colorPart1 }}>{game.titlePart1}</span>
+                  <h3 className="text-2xl sm:text-2xl lg:text-3xl font-black font-serif tracking-tight leading-snug">
+                    <span style={{ color: game.colorPart1 }}>{game.titlePart1}</span>{" "}
                     <span style={{ color: game.colorPart2 }}>{game.titlePart2}</span>
                   </h3>
                   <p className="text-xs sm:text-sm text-slate-500 line-clamp-2 max-w-xs mx-auto leading-relaxed">
@@ -452,8 +489,8 @@ export default function BrainGymPage() {
                 </div>
 
                 {/* Bottom Action Pill */}
-                <div className="relative z-10 mt-5 w-full">
-                  <div className="w-full py-3 rounded-2xl bg-slate-900 group-hover:bg-gradient-to-r group-hover:from-rose-600 group-hover:to-amber-500 text-white font-black text-sm shadow-md transition-all flex items-center justify-center gap-2">
+                <div className="relative z-10 mt-4 w-full">
+                  <div className="w-full py-2.5 rounded-2xl bg-slate-900 group-hover:bg-gradient-to-r group-hover:from-rose-600 group-hover:to-amber-500 text-white font-black text-xs sm:text-sm shadow-md transition-all flex items-center justify-center gap-2">
                     <Gamepad2 className="w-4 h-4" />
                     <span>Launch Game</span>
                   </div>

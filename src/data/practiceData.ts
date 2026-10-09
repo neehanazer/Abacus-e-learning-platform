@@ -1,3 +1,5 @@
+import { getQuestionsForRule } from "@/lib/abacusRuleGenerator";
+
 export type QuestionType = "vertical-calc" | "multiple-choice" | "bead-representation" | "single-row" | "multiplication" | "division";
 
 export type RuleType =
@@ -846,79 +848,168 @@ export function generateQuestionForCategory(cat: PracticeCategoryOption, index: 
     };
   }
 
-  // 3. Small Friends Specific
-  if (cat.id === "l1-small-friends") {
-    const sfPairs = [
-      { start: 4, add: 4, rule: "+4 = +5 - 1" },
-      { start: 3, add: 4, rule: "+4 = +5 - 1" },
-      { start: 4, add: 3, rule: "+3 = +5 - 2" },
-      { start: 3, add: 3, rule: "+3 = +5 - 2" },
-      { start: 4, add: 2, rule: "+2 = +5 - 3" },
-      { start: 3, add: 2, rule: "+2 = +5 - 3" },
-      { start: 4, add: 1, rule: "+1 = +5 - 4" },
-      { start: 5, add: -4, rule: "-4 = -5 + 1" },
-      { start: 6, add: -3, rule: "-3 = -5 + 2" },
-      { start: 7, add: -2, rule: "-2 = -5 + 3" },
-      { start: 8, add: -4, rule: "-4 = -5 + 1" },
+  // 2.5 Simple 1-Digit (3-Row authentic set)
+  if (cat.id === "l1-simple-1digit" || cat.id === "l1-1digit-3row") {
+    const pool = [
+      [8, 1, -5],
+      [1, 7, -3],
+      [4, 5, -2],
+      [4, -1, 6],
+      [7, 1, -6],
+      [8, -5, 6],
+      [3, 6, -1],
+      [5, 2, -1],
+      [3, 1, -2],
+      [4, -3, 2],
+      [1, 6, -1],
+      [5, 3, -5],
+      [2, 6, -1],
+      [8, -5, 1],
+      [2, 7, -5],
+      [4, 5, -8],
+      [8, 1, -8],
+      [1, 3, -2],
+      [1, 8, -4],
+      [3, 6, -3],
     ];
-    const pick = sfPairs[Math.floor(Math.random() * sfPairs.length)];
-    const nums = [pick.start, pick.add];
-    const rem = pick.start + pick.add > 5 ? -2 : 1;
-    nums.push(rem);
+    const nums = pool[(index - 1 + pool.length) % pool.length];
     const ans = calculateSum(nums);
-
     return {
       id: qId,
       level: 1,
-      title: "Small Friend Rule Calculation",
+      title: cat.name,
       category: cat.name,
       categoryId: cat.id,
-      ruleType: "small-friend",
+      ruleType: "direct",
       digits: 1,
       rowCount: 3,
       numbers: nums,
       targetAnswer: ans,
       questionType: "vertical-calc",
-      ruleHint: `Small Friend Rule: ${pick.rule}`,
-      explanation: `Using formula ${pick.rule}: ${nums.join(" ")} = ${ans}.`,
+      ruleHint: "Direct Calculation: Move upper (value 5) and lower (value 1) beads directly without formulas.",
+      explanation: `Direct bead calculation: ${nums.map((n, idx) => (idx === 0 ? String(n) : n > 0 ? `+ ${n}` : `- ${Math.abs(n)}`)).join(" ")} = ${ans}.`,
     };
   }
 
-  // 4. Big Friends Specific
-  if (cat.id === "l1-big-friends") {
-    const bfPairs = [
-      { start: 9, add: 9, rule: "+9 = -1 + 10" },
-      { start: 8, add: 8, rule: "+8 = -2 + 10" },
-      { start: 7, add: 7, rule: "+7 = -3 + 10" },
-      { start: 6, add: 6, rule: "+6 = -4 + 10" },
-      { start: 5, add: 8, rule: "+8 = -2 + 10" },
-      { start: 4, add: 9, rule: "+9 = -1 + 10" },
-      { start: 3, add: 8, rule: "+8 = -2 + 10" },
-      { start: 14, add: -8, rule: "-8 = -10 + 2" },
-      { start: 15, add: -9, rule: "-9 = -10 + 1" },
-      { start: 12, add: -7, rule: "-7 = -10 + 3" },
+  // 2.6 1-Digit 5-Row (5-Row authentic set)
+  if (cat.id === "l1-1digit-5row") {
+    const pool = [
+      [9, -2, -5, -2, 6],
+      [8, -1, 2, -3, 2],
+      [6, -1, 2, -7, 1],
+      [6, -1, 2, -5, 1],
+      [1, 3, -4, 3, -1],
+      [3, -2, 8, -1, -3],
+      [4, -3, 7, -6, 1],
+      [6, 3, -9, 8, -1],
+      [8, -2, -6, 2, 6],
+      [8, -6, 2, -3, 2],
+      [9, -6, -2, 5, 3],
+      [4, -3, 8, -9, 2],
+      [6, 3, -8, 5, 3],
+      [6, 2, -7, 1, 6],
+      [6, -5, 3, 5, -7],
+      [4, -2, 1, 5, -3],
+      [7, 2, -3, -5, 8],
+      [4, 5, -6, -3, 2],
+      [7, -6, 7, -3, 4],
+      [3, 5, -8, 6, 2],
     ];
-    const pick = bfPairs[Math.floor(Math.random() * bfPairs.length)];
-    const nums = [pick.start, pick.add];
-    const rem = pick.start + pick.add > 10 ? -3 : 2;
-    nums.push(rem);
+    const nums = pool[(index - 1 + pool.length) % pool.length];
     const ans = calculateSum(nums);
-
     return {
       id: qId,
       level: 1,
-      title: "Big Friend Rule Calculation",
+      title: cat.name,
       category: cat.name,
       categoryId: cat.id,
-      ruleType: "big-friend",
+      ruleType: "direct",
       digits: 1,
-      rowCount: 3,
+      rowCount: 5,
       numbers: nums,
       targetAnswer: ans,
       questionType: "vertical-calc",
-      ruleHint: `Big Friend Rule: ${pick.rule}`,
-      explanation: `Using formula ${pick.rule}: ${nums.join(" ")} = ${ans}.`,
+      ruleHint: "Continuous Drill: Direct calculation across 5 single-digit rows vertically on your soroban.",
+      explanation: `Direct 5-Row sequential calculation: ${nums.map((n, idx) => (idx === 0 ? String(n) : n > 0 ? `+ ${n}` : `- ${Math.abs(n)}`)).join(" ")} = ${ans}.`,
     };
+  }
+
+  // 2.7 Simple 2-Digit (Authentic 3-Row, 5-Row and 2-Row Question Datasets)
+  if (cat.id === "l1-simple-2digit") {
+    const pool = [
+      [52, 17, -11], [88, -72, 31], [24, 75, -31], [82, -80, 61], [89, -81, 41],
+      [43, -42, 55], [84, -34, 18], [13, -12, 20], [40, 54, -41], [20, 18, -17],
+      [93, -92, 98], [89, -87, 77], [12, 75, -16], [84, -60, 55], [48, 51, -58],
+      [83, -81, 42], [66, -55, 87], [23, -12, 88], [54, -52, 20], [72, -11, 17],
+      [28, -13, 21, 63, -61], [13, 65, 21, -48, 40], [11, 27, -23, 83, -36],
+      [26, 23, -29, 10, 53], [47, -21, 20, -15, 18], [11, 63, -62, 11, 50],
+      [70, 12, 10, -20, 12], [17, 80, -86, 38, -24], [84, -30, -54, 96, -11],
+      [79, -28, 43, -44, 23], [27, 21, -26, 77, -10], [52, 42, -51, -43, 97],
+      [54, 45, -21, -78, 38], [13, -10, 55, 31, -54], [89, -23, -65, 98, -71],
+      [30, 11, -41, 12, 50], [60, 29, -27, 36, -86], [98, -37, 17, -68, 88],
+      [85, -30, -55, 78, -51], [35, -15, 18, -37, 23],
+      [12, 21], [23, 11], [31, 12], [42, 52], [51, 23], [22, 22], [65, 23],
+      [74, 15], [33, 11], [88, -22], [44, -13], [95, -40], [56, 21], [14, 30],
+    ];
+    const nums = pool[(index - 1 + pool.length) % pool.length];
+    const ans = calculateSum(nums);
+    return {
+      id: qId,
+      level: 1,
+      title: cat.name,
+      category: cat.name,
+      categoryId: cat.id,
+      ruleType: "direct",
+      digits: 2,
+      rowCount: nums.length,
+      numbers: nums,
+      targetAnswer: ans,
+      questionType: "vertical-calc",
+      ruleHint: "Direct 2-Digit Calculation: Coordinate tens and units columns simultaneously without formulas.",
+      explanation: `Direct 2-digit bead calculation: ${nums.map((n, idx) => (idx === 0 ? String(n) : n > 0 ? `+ ${n}` : `- ${Math.abs(n)}`)).join(" ")} = ${ans}.`,
+    };
+  }
+
+  // 3. Small Friends Specific (Authentic verified single-rule questions)
+  if (cat.id === "l1-small-friends") {
+    const sfOptions = [
+      "small-friend-plus-4", "small-friend-plus-3", "small-friend-plus-2", "small-friend-plus-1",
+      "small-friend-minus-4", "small-friend-minus-3", "small-friend-minus-2", "small-friend-minus-1",
+    ];
+    const targetOpt = sfOptions[(index - 1 + sfOptions.length) % sfOptions.length];
+    const pool = getQuestionsForRule(targetOpt);
+    if (pool && pool.length > 0) {
+      const pick = pool[Math.floor(Math.random() * pool.length)];
+      return {
+        ...pick,
+        id: qId,
+        title: "Small Friend Rule Calculation",
+        category: cat.name,
+        categoryId: cat.id,
+      };
+    }
+  }
+
+  // 4. Big Friends Specific (Authentic verified single-rule questions)
+  if (cat.id === "l1-big-friends") {
+    const bfOptions = [
+      "big-friend-plus-9", "big-friend-plus-8", "big-friend-plus-7", "big-friend-plus-6", "big-friend-plus-5",
+      "big-friend-plus-4", "big-friend-plus-3", "big-friend-plus-2", "big-friend-plus-1",
+      "big-friend-minus-9", "big-friend-minus-8", "big-friend-minus-7", "big-friend-minus-6", "big-friend-minus-5",
+      "big-friend-minus-4", "big-friend-minus-3", "big-friend-minus-2", "big-friend-minus-1",
+    ];
+    const targetOpt = bfOptions[(index - 1 + bfOptions.length) % bfOptions.length];
+    const pool = getQuestionsForRule(targetOpt);
+    if (pool && pool.length > 0) {
+      const pick = pool[Math.floor(Math.random() * pool.length)];
+      return {
+        ...pick,
+        id: qId,
+        title: "Big Friend Rule Calculation",
+        category: cat.name,
+        categoryId: cat.id,
+      };
+    }
   }
 
   // 5. Multi-Row Multi-Digit Addition/Subtraction (All Row Counts: 2 to 30)
@@ -1045,20 +1136,28 @@ export function generateComprehensivePracticeQuestions(
   const qPerCategory = Math.max(1, Math.floor(count / 4));
   const timestamp = Date.now();
 
-  // 1. Direct / 2-Digit Calculation (Level 1)
+  // 1. Direct Calculation (Level 1 - 20 Authentic 3-Row Questions)
   const directPool: number[][] = [
-    [2, 1, 5],
-    [3, 5, -2],
-    [1, 3, 5],
-    [4, 5, -3],
-    [2, 2, 5, -4],
-    [7, -2, 4],
-    [14, 5, -3],
-    [23, 15, -12],
-    [5, 2, 1, -3],
-    [6, 3, -4, 2],
-    [11, 22, 15],
-    [35, 12, -21],
+    [8, 1, -5],
+    [1, 7, -3],
+    [4, 5, -2],
+    [4, -1, 6],
+    [7, 1, -6],
+    [8, -5, 6],
+    [3, 6, -1],
+    [5, 2, -1],
+    [3, 1, -2],
+    [4, -3, 2],
+    [1, 6, -1],
+    [5, 3, -5],
+    [2, 6, -1],
+    [8, -5, 1],
+    [2, 7, -5],
+    [4, 5, -8],
+    [8, 1, -8],
+    [1, 3, -2],
+    [1, 8, -4],
+    [3, 6, -3],
   ];
 
   const directQuestions: PracticeQuestion[] = [];
@@ -1158,20 +1257,28 @@ export function generateComprehensivePracticeQuestions(
     });
   }
 
-  // 4. 1-Digit 5-Row Calculation (5 consecutive single-digit operations)
+  // 4. 1-Digit 5-Row Calculation (20 Authentic 5-Row Questions)
   const fiveRowPool: number[][] = [
-    [4, 2, 1, -5, 3],
-    [2, 3, 4, -6, 5],
-    [7, -4, 3, -2, 5],
-    [9, -5, 4, -3, 2],
-    [3, 5, -2, 3, -4],
-    [6, 3, -5, 4, -3],
-    [1, 7, -5, 6, -4],
-    [8, -6, 5, 2, -4],
-    [5, 4, -3, 2, -6],
-    [2, 6, 1, -5, 4],
-    [3, 1, 5, -7, 6],
-    [4, 5, -2, -5, 6],
+    [9, -2, -5, -2, 6],
+    [8, -1, 2, -3, 2],
+    [6, -1, 2, -7, 1],
+    [6, -1, 2, -5, 1],
+    [1, 3, -4, 3, -1],
+    [3, -2, 8, -1, -3],
+    [4, -3, 7, -6, 1],
+    [6, 3, -9, 8, -1],
+    [8, -2, -6, 2, 6],
+    [8, -6, 2, -3, 2],
+    [9, -6, -2, 5, 3],
+    [4, -3, 8, -9, 2],
+    [6, 3, -8, 5, 3],
+    [6, 2, -7, 1, 6],
+    [6, -5, 3, 5, -7],
+    [4, -2, 1, 5, -3],
+    [7, 2, -3, -5, 8],
+    [4, 5, -6, -3, 2],
+    [7, -6, 7, -3, 4],
+    [3, 5, -8, 6, 2],
   ];
 
   const fiveRowQuestions: PracticeQuestion[] = [];

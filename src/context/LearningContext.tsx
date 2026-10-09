@@ -29,6 +29,10 @@ interface LearningContextType {
   setIsCelebrationModalOpen: (open: boolean) => void;
   completedLessonForModal: Lesson | null;
   resetProgress: () => void;
+  isTourOpen: boolean;
+  setIsTourOpen: (open: boolean) => void;
+  openTour: () => void;
+  closeTour: () => void;
 }
 
 const LearningContext = createContext<LearningContextType | undefined>(undefined);
@@ -58,6 +62,36 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({
   const [isCelebrationModalOpen, setIsCelebrationModalOpen] = useState(false);
   const [completedLessonForModal, setCompletedLessonForModal] =
     useState<Lesson | null>(null);
+
+  // Website Tour State
+  const [isTourOpen, setIsTourOpen] = useState(false);
+
+  // Auto-trigger tour for newly arriving students
+  useEffect(() => {
+    try {
+      // The product-wide walkthrough already introduces this area in context.
+      if (window.location.search.includes("product-tour=1")) return;
+      const hasSeenTour = localStorage.getItem("has_seen_learning_hub_tour_v1");
+      if (!hasSeenTour) {
+        const timer = setTimeout(() => {
+          setIsTourOpen(true);
+        }, 750);
+        return () => clearTimeout(timer);
+      }
+    } catch {
+      // Fallback
+    }
+  }, []);
+
+  const openTour = () => setIsTourOpen(true);
+  const closeTour = () => {
+    setIsTourOpen(false);
+    try {
+      localStorage.setItem("has_seen_learning_hub_tour_v1", "true");
+    } catch {
+      // Fallback
+    }
+  };
 
   // Automatically upgrade to Level 2 if student is upgraded in their profile
   useEffect(() => {
@@ -252,6 +286,10 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({
         setIsCelebrationModalOpen,
         completedLessonForModal,
         resetProgress,
+        isTourOpen,
+        setIsTourOpen,
+        openTour,
+        closeTour,
       }}
     >
       {children}

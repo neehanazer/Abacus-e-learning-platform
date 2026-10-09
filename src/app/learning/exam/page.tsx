@@ -88,6 +88,22 @@ interface ExamEvaluationResult {
   }[];
 }
 
+function cleanQuestionText(text: string): string {
+  if (!text) return "";
+  return text
+    .replace(/^Calculate\s*(?:[A-Za-z0-9\s()×÷/+-]+)?:\s*/i, "")
+    .trim();
+}
+
+function formatMathExpression(text: string): string {
+  const cleaned = cleanQuestionText(text);
+  if (!cleaned) return "";
+  if (cleaned.endsWith("=") || cleaned.endsWith("= ?")) {
+    return cleaned;
+  }
+  return `${cleaned} = ?`;
+}
+
 const LEVEL_FINAL_EXAM_MAP: Record<number, { id: string; title: string; description: string }> = {
   1: {
     id: "67b100000000000000000003",
@@ -1136,9 +1152,12 @@ export default function FinalExamPage() {
               {currentQ.ruleType || `Official Level ${activeLevelTab} Evaluation Problem`}
             </span>
 
-            <h3 className="text-4xl sm:text-6xl font-black font-heading text-[#1D3557] tracking-wider mb-6">
-              {currentQ.questionText}
-            </h3>
+            {/* Clean Horizontal Math Expression: Display as a clean, large inline equation */}
+            <div className="my-6 px-4 py-6 sm:py-8 rounded-3xl bg-[#FFFDF7] border-2 border-indigo-200/90 shadow-sm flex items-center justify-center">
+              <h3 className="text-2xl sm:text-4xl md:text-5xl font-black font-mono tracking-wide text-[#1D3557] select-all leading-relaxed break-words text-center">
+                {formatMathExpression(currentQ.questionText)}
+              </h3>
+            </div>
 
             {/* Direct Answer Entry (No Options Given) */}
             <div className="max-w-sm mx-auto mb-8 space-y-4">
@@ -1221,12 +1240,12 @@ export default function FinalExamPage() {
               </div>
             </div>
 
-            {/* Prev / Next controls */}
-            <div className="flex items-center justify-between gap-4 pt-6 border-t border-slate-100">
+            {/* Prev / Next & Submit controls */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 border-t border-slate-100">
               <button
                 onClick={() => setCurrentQuestionIndex((prev) => Math.max(0, prev - 1))}
                 disabled={currentQuestionIndex === 0}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-slate-100 border border-slate-200 text-xs font-extrabold hover:bg-slate-200 disabled:opacity-30 disabled:cursor-not-allowed transition"
+                className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-slate-100 border border-slate-200 text-xs font-extrabold hover:bg-slate-200 disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer"
               >
                 <ArrowLeft className="w-4 h-4" />
                 <span>Previous</span>
@@ -1236,16 +1255,36 @@ export default function FinalExamPage() {
                 {currentQuestionIndex + 1} / {questions.length}
               </span>
 
-              <button
-                onClick={() =>
-                  setCurrentQuestionIndex((prev) => Math.min(questions.length - 1, prev + 1))
-                }
-                disabled={currentQuestionIndex === questions.length - 1}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-indigo-600 text-white text-xs font-extrabold hover:bg-indigo-700 disabled:opacity-30 disabled:cursor-not-allowed transition shadow-sm"
-              >
-                <span>Next</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() =>
+                    setCurrentQuestionIndex((prev) => Math.min(questions.length - 1, prev + 1))
+                  }
+                  disabled={currentQuestionIndex === questions.length - 1}
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-indigo-600 text-white text-xs font-extrabold hover:bg-indigo-700 disabled:opacity-30 disabled:cursor-not-allowed transition shadow-sm cursor-pointer"
+                >
+                  <span>Next</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+
+                {/* Submit Final Exam Button placed right next to Next */}
+                <button
+                  onClick={() => {
+                    if (
+                      confirm(
+                        `Are you ready to submit your Official Certification Exam? You have answered ${answeredCount} of ${questions.length} questions.`
+                      )
+                    ) {
+                      handleSubmitFinalExam();
+                    }
+                  }}
+                  disabled={isSubmitting}
+                  className="flex items-center gap-2 py-2.5 px-5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-700 text-white font-extrabold text-xs shadow-md hover:shadow-lg transition-all hover:scale-105 active:scale-95 disabled:opacity-50 cursor-pointer"
+                >
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>{isSubmitting ? "Grading..." : "Submit Exam"}</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>

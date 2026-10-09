@@ -22,7 +22,17 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
 
     const { searchParams } = new URL(req.url);
     const queryStudentId = searchParams.get("studentId");
-    const targetStudentId = student?._id ? student._id.toString() : queryStudentId || "std_demo_101";
+    const queryEmail = searchParams.get("email");
+
+    const emailLower = (student?.email || queryEmail || "").toLowerCase();
+    const isNeeha =
+      emailLower === "neehanaz226@gmail.com" ||
+      queryStudentId === "std_neeha_226" ||
+      (student as any)?._id?.toString() === "6ab4bdd6022c50de24e9a2a7";
+
+    const targetStudentId = student?._id
+      ? student._id.toString()
+      : queryStudentId || (isNeeha ? "std_neeha_226" : "std_demo_101");
 
     const startData = await ExamService.startExam(examId, targetStudentId);
 

@@ -1,4 +1,5 @@
 import { PracticeQuestion, QuestionType, RuleType } from "./practiceData";
+import { getQuestionsForRule } from "@/lib/abacusRuleGenerator";
 
 export interface UntimedWorksheetOption {
   id: string;
@@ -35,9 +36,11 @@ export const UNTIMED_WORKSHEET_OPTIONS: UntimedWorksheetOption[] = [
     category: "simple",
     categoryGroup: "Simple Calculations (Direct)",
     icon: "1️⃣",
-    badge: "1 Digit • Direct",
-    description: "Direct addition and subtraction on unit beads without formulas.",
+    badge: "1 Digit • Direct • 40 Qs",
+    description: "Direct addition and subtraction on unit beads without formulas (20× 3-Row & 20× 5-Row Drills).",
     color: "from-amber-400 to-orange-500",
+    isPdfWorksheet: true,
+    questionCount: 40,
   },
   {
     id: "simple-2digits",
@@ -45,9 +48,11 @@ export const UNTIMED_WORKSHEET_OPTIONS: UntimedWorksheetOption[] = [
     category: "simple",
     categoryGroup: "Simple Calculations (Direct)",
     icon: "🔢",
-    badge: "2 Digits • Direct",
-    description: "Direct calculations across tens and units rods without rules.",
+    badge: "2 Digits • Direct • 54 Qs",
+    description: "Direct calculations across tens and units rods without rules (2-Row, 3-Row & 5-Row Drills).",
     color: "from-blue-400 to-indigo-500",
+    isPdfWorksheet: true,
+    questionCount: 54,
   },
 
   // --- 2. SMALL FRIEND RULES (ADDITION: +4, +3, +2, +1) ---
@@ -58,9 +63,11 @@ export const UNTIMED_WORKSHEET_OPTIONS: UntimedWorksheetOption[] = [
     categoryGroup: "Small Friend Addition (+)",
     ruleFormula: "+4 = +5 - 1",
     icon: "🤝",
-    badge: "+4 Rule",
-    description: "Formula: +4 = +5 - 1 (Complement of 4 to 5 is 1)",
+    badge: "+4 Rule • 30 Qs",
+    description: "Formula: +4 = +5 - 1 (Complement of 4 to 5 is 1). Exactly one rule event.",
     color: "from-emerald-400 to-teal-500",
+    isPdfWorksheet: true,
+    questionCount: 30,
   },
   {
     id: "small-friend-plus-3",
@@ -69,9 +76,11 @@ export const UNTIMED_WORKSHEET_OPTIONS: UntimedWorksheetOption[] = [
     categoryGroup: "Small Friend Addition (+)",
     ruleFormula: "+3 = +5 - 2",
     icon: "🤝",
-    badge: "+3 Rule",
-    description: "Formula: +3 = +5 - 2 (Complement of 3 to 5 is 2)",
+    badge: "+3 Rule • 30 Qs",
+    description: "Formula: +3 = +5 - 2 (Complement of 3 to 5 is 2). Exactly one rule event.",
     color: "from-emerald-400 to-teal-500",
+    isPdfWorksheet: true,
+    questionCount: 30,
   },
   {
     id: "small-friend-plus-2",
@@ -80,9 +89,11 @@ export const UNTIMED_WORKSHEET_OPTIONS: UntimedWorksheetOption[] = [
     categoryGroup: "Small Friend Addition (+)",
     ruleFormula: "+2 = +5 - 3",
     icon: "🤝",
-    badge: "+2 Rule",
-    description: "Formula: +2 = +5 - 3 (Complement of 2 to 5 is 3)",
+    badge: "+2 Rule • 30 Qs",
+    description: "Formula: +2 = +5 - 3 (Complement of 2 to 5 is 3). Exactly one rule event.",
     color: "from-emerald-400 to-teal-500",
+    isPdfWorksheet: true,
+    questionCount: 30,
   },
   {
     id: "small-friend-plus-1",
@@ -91,9 +102,11 @@ export const UNTIMED_WORKSHEET_OPTIONS: UntimedWorksheetOption[] = [
     categoryGroup: "Small Friend Addition (+)",
     ruleFormula: "+1 = +5 - 4",
     icon: "🤝",
-    badge: "+1 Rule",
-    description: "Formula: +1 = +5 - 4 (Complement of 1 to 5 is 4)",
+    badge: "+1 Rule • 30 Qs",
+    description: "Formula: +1 = +5 - 4 (Complement of 1 to 5 is 4). Exactly one rule event.",
     color: "from-emerald-400 to-teal-500",
+    isPdfWorksheet: true,
+    questionCount: 30,
   },
 
   // --- 3. SMALL FRIEND RULES (SUBTRACTION: -4, -3, -2, -1) ---
@@ -104,9 +117,11 @@ export const UNTIMED_WORKSHEET_OPTIONS: UntimedWorksheetOption[] = [
     categoryGroup: "Small Friend Subtraction (-)",
     ruleFormula: "-4 = -5 + 1",
     icon: "🤝",
-    badge: "-4 Rule",
-    description: "Formula: -4 = -5 + 1 (Borrow 5, return 1)",
+    badge: "-4 Rule • 30 Qs",
+    description: "Formula: -4 = -5 + 1 (Borrow 5, return 1). Exactly one rule event.",
     color: "from-rose-400 to-pink-500",
+    isPdfWorksheet: true,
+    questionCount: 30,
   },
   {
     id: "small-friend-minus-3",
@@ -115,9 +130,11 @@ export const UNTIMED_WORKSHEET_OPTIONS: UntimedWorksheetOption[] = [
     categoryGroup: "Small Friend Subtraction (-)",
     ruleFormula: "-3 = -5 + 2",
     icon: "🤝",
-    badge: "-3 Rule",
-    description: "Formula: -3 = -5 + 2 (Borrow 5, return 2)",
+    badge: "-3 Rule • 30 Qs",
+    description: "Formula: -3 = -5 + 2 (Borrow 5, return 2). Exactly one rule event.",
     color: "from-rose-400 to-pink-500",
+    isPdfWorksheet: true,
+    questionCount: 30,
   },
   {
     id: "small-friend-minus-2",
@@ -126,9 +143,11 @@ export const UNTIMED_WORKSHEET_OPTIONS: UntimedWorksheetOption[] = [
     categoryGroup: "Small Friend Subtraction (-)",
     ruleFormula: "-2 = -5 + 3",
     icon: "🤝",
-    badge: "-2 Rule",
-    description: "Formula: -2 = -5 + 3 (Borrow 5, return 3)",
+    badge: "-2 Rule • 30 Qs",
+    description: "Formula: -2 = -5 + 3 (Borrow 5, return 3). Exactly one rule event.",
     color: "from-rose-400 to-pink-500",
+    isPdfWorksheet: true,
+    questionCount: 30,
   },
   {
     id: "small-friend-minus-1",
@@ -137,9 +156,11 @@ export const UNTIMED_WORKSHEET_OPTIONS: UntimedWorksheetOption[] = [
     categoryGroup: "Small Friend Subtraction (-)",
     ruleFormula: "-1 = -5 + 4",
     icon: "🤝",
-    badge: "-1 Rule",
-    description: "Formula: -1 = -5 + 4 (Borrow 5, return 4)",
+    badge: "-1 Rule • 30 Qs",
+    description: "Formula: -1 = -5 + 4 (Borrow 5, return 4). Exactly one rule event.",
     color: "from-rose-400 to-pink-500",
+    isPdfWorksheet: true,
+    questionCount: 30,
   },
 
   // --- 4. BIG FRIEND RULES (ADDITION: +9 to +1) ---
@@ -150,9 +171,11 @@ export const UNTIMED_WORKSHEET_OPTIONS: UntimedWorksheetOption[] = [
     categoryGroup: "Big Friend Addition (+)",
     ruleFormula: "+9 = -1 + 10",
     icon: "🚀",
-    badge: "+9 Rule",
-    description: "Formula: +9 = -1 + 10 (Complement of 9 to 10 is 1)",
+    badge: "+9 Rule • 30 Qs",
+    description: "Formula: +9 = -1 + 10 (Complement of 9 to 10 is 1). Exactly one rule event.",
     color: "from-purple-400 to-indigo-500",
+    isPdfWorksheet: true,
+    questionCount: 30,
   },
   {
     id: "big-friend-plus-8",
@@ -161,9 +184,11 @@ export const UNTIMED_WORKSHEET_OPTIONS: UntimedWorksheetOption[] = [
     categoryGroup: "Big Friend Addition (+)",
     ruleFormula: "+8 = -2 + 10",
     icon: "🚀",
-    badge: "+8 Rule",
-    description: "Formula: +8 = -2 + 10 (Complement of 8 to 10 is 2)",
+    badge: "+8 Rule • 30 Qs",
+    description: "Formula: +8 = -2 + 10 (Complement of 8 to 10 is 2). Exactly one rule event.",
     color: "from-purple-400 to-indigo-500",
+    isPdfWorksheet: true,
+    questionCount: 30,
   },
   {
     id: "big-friend-plus-7",
@@ -172,9 +197,11 @@ export const UNTIMED_WORKSHEET_OPTIONS: UntimedWorksheetOption[] = [
     categoryGroup: "Big Friend Addition (+)",
     ruleFormula: "+7 = -3 + 10",
     icon: "🚀",
-    badge: "+7 Rule",
-    description: "Formula: +7 = -3 + 10 (Complement of 7 to 10 is 3)",
+    badge: "+7 Rule • 30 Qs",
+    description: "Formula: +7 = -3 + 10 (Complement of 7 to 10 is 3). Exactly one rule event.",
     color: "from-purple-400 to-indigo-500",
+    isPdfWorksheet: true,
+    questionCount: 30,
   },
   {
     id: "big-friend-plus-6",
@@ -183,9 +210,11 @@ export const UNTIMED_WORKSHEET_OPTIONS: UntimedWorksheetOption[] = [
     categoryGroup: "Big Friend Addition (+)",
     ruleFormula: "+6 = -4 + 10",
     icon: "🚀",
-    badge: "+6 Rule",
-    description: "Formula: +6 = -4 + 10 (Complement of 6 to 10 is 4)",
+    badge: "+6 Rule • 30 Qs",
+    description: "Formula: +6 = -4 + 10 (Complement of 6 to 10 is 4). Exactly one rule event.",
     color: "from-purple-400 to-indigo-500",
+    isPdfWorksheet: true,
+    questionCount: 30,
   },
   {
     id: "big-friend-plus-5",
@@ -194,9 +223,11 @@ export const UNTIMED_WORKSHEET_OPTIONS: UntimedWorksheetOption[] = [
     categoryGroup: "Big Friend Addition (+)",
     ruleFormula: "+5 = -5 + 10",
     icon: "🚀",
-    badge: "+5 Rule",
-    description: "Formula: +5 = -5 + 10 (Complement of 5 to 10 is 5)",
+    badge: "+5 Rule • 30 Qs",
+    description: "Formula: +5 = -5 + 10 (Complement of 5 to 10 is 5). Exactly one rule event.",
     color: "from-purple-400 to-indigo-500",
+    isPdfWorksheet: true,
+    questionCount: 30,
   },
   {
     id: "big-friend-plus-4",
@@ -205,9 +236,11 @@ export const UNTIMED_WORKSHEET_OPTIONS: UntimedWorksheetOption[] = [
     categoryGroup: "Big Friend Addition (+)",
     ruleFormula: "+4 = -6 + 10",
     icon: "🚀",
-    badge: "+4 Rule",
-    description: "Formula: +4 = -6 + 10 (Complement of 4 to 10 is 6)",
+    badge: "+4 Rule • 30 Qs",
+    description: "Formula: +4 = -6 + 10 (Complement of 4 to 10 is 6). Exactly one rule event.",
     color: "from-purple-400 to-indigo-500",
+    isPdfWorksheet: true,
+    questionCount: 30,
   },
   {
     id: "big-friend-plus-3",
@@ -216,8 +249,8 @@ export const UNTIMED_WORKSHEET_OPTIONS: UntimedWorksheetOption[] = [
     categoryGroup: "Big Friend Addition (+)",
     ruleFormula: "+3 = -7 + 10",
     icon: "🚀",
-    badge: "📄 PDF • 30 Qs",
-    description: "Official PDF Worksheet: 30 Questions across Sections A, B & C for Rule +3 = -7 + 10.",
+    badge: "+3 Rule • 30 Qs",
+    description: "Formula: +3 = -7 + 10 (Complement of 3 to 10 is 7). Exactly one rule event.",
     color: "from-purple-400 to-indigo-500",
     isPdfWorksheet: true,
     questionCount: 30,
@@ -229,8 +262,8 @@ export const UNTIMED_WORKSHEET_OPTIONS: UntimedWorksheetOption[] = [
     categoryGroup: "Big Friend Addition (+)",
     ruleFormula: "+2 = -8 + 10",
     icon: "🚀",
-    badge: "📄 PDF • 30 Qs",
-    description: "Official PDF Worksheet: 30 Questions across Sections A, B & C for Rule +2 = -8 + 10.",
+    badge: "+2 Rule • 30 Qs",
+    description: "Formula: +2 = -8 + 10 (Complement of 2 to 10 is 8). Exactly one rule event.",
     color: "from-purple-400 to-indigo-500",
     isPdfWorksheet: true,
     questionCount: 30,
@@ -242,8 +275,8 @@ export const UNTIMED_WORKSHEET_OPTIONS: UntimedWorksheetOption[] = [
     categoryGroup: "Big Friend Addition (+)",
     ruleFormula: "+1 = -9 + 10",
     icon: "🚀",
-    badge: "📄 PDF • 30 Qs",
-    description: "Official PDF Worksheet: 30 Questions across Sections A, B & C for Rule +1 = -9 + 10.",
+    badge: "+1 Rule • 30 Qs",
+    description: "Formula: +1 = -9 + 10 (Complement of 1 to 10 is 9). Exactly one rule event.",
     color: "from-purple-400 to-indigo-500",
     isPdfWorksheet: true,
     questionCount: 30,
@@ -257,9 +290,11 @@ export const UNTIMED_WORKSHEET_OPTIONS: UntimedWorksheetOption[] = [
     categoryGroup: "Big Friend Subtraction (-)",
     ruleFormula: "-9 = -10 + 1",
     icon: "🎯",
-    badge: "-9 Rule",
-    description: "Formula: -9 = -10 + 1 (Borrow 10, return 1)",
+    badge: "-9 Rule • 30 Qs",
+    description: "Formula: -9 = -10 + 1 (Borrow 10, return 1). Exactly one rule event.",
     color: "from-amber-500 to-red-500",
+    isPdfWorksheet: true,
+    questionCount: 30,
   },
   {
     id: "big-friend-minus-8",
@@ -268,9 +303,11 @@ export const UNTIMED_WORKSHEET_OPTIONS: UntimedWorksheetOption[] = [
     categoryGroup: "Big Friend Subtraction (-)",
     ruleFormula: "-8 = -10 + 2",
     icon: "🎯",
-    badge: "-8 Rule",
-    description: "Formula: -8 = -10 + 2 (Borrow 10, return 2)",
+    badge: "-8 Rule • 30 Qs",
+    description: "Formula: -8 = -10 + 2 (Borrow 10, return 2). Exactly one rule event.",
     color: "from-amber-500 to-red-500",
+    isPdfWorksheet: true,
+    questionCount: 30,
   },
   {
     id: "big-friend-minus-7",
@@ -279,9 +316,11 @@ export const UNTIMED_WORKSHEET_OPTIONS: UntimedWorksheetOption[] = [
     categoryGroup: "Big Friend Subtraction (-)",
     ruleFormula: "-7 = -10 + 3",
     icon: "🎯",
-    badge: "-7 Rule",
-    description: "Formula: -7 = -10 + 3 (Borrow 10, return 3)",
+    badge: "-7 Rule • 30 Qs",
+    description: "Formula: -7 = -10 + 3 (Borrow 10, return 3). Exactly one rule event.",
     color: "from-amber-500 to-red-500",
+    isPdfWorksheet: true,
+    questionCount: 30,
   },
   {
     id: "big-friend-minus-6",
@@ -290,9 +329,11 @@ export const UNTIMED_WORKSHEET_OPTIONS: UntimedWorksheetOption[] = [
     categoryGroup: "Big Friend Subtraction (-)",
     ruleFormula: "-6 = -10 + 4",
     icon: "🎯",
-    badge: "-6 Rule",
-    description: "Formula: -6 = -10 + 4 (Borrow 10, return 4)",
+    badge: "-6 Rule • 30 Qs",
+    description: "Formula: -6 = -10 + 4 (Borrow 10, return 4). Exactly one rule event.",
     color: "from-amber-500 to-red-500",
+    isPdfWorksheet: true,
+    questionCount: 30,
   },
   {
     id: "big-friend-minus-5",
@@ -301,9 +342,11 @@ export const UNTIMED_WORKSHEET_OPTIONS: UntimedWorksheetOption[] = [
     categoryGroup: "Big Friend Subtraction (-)",
     ruleFormula: "-5 = -10 + 5",
     icon: "🎯",
-    badge: "-5 Rule",
-    description: "Formula: -5 = -10 + 5 (Borrow 10, return 5)",
+    badge: "-5 Rule • 30 Qs",
+    description: "Formula: -5 = -10 + 5 (Borrow 10, return 5). Exactly one rule event.",
     color: "from-amber-500 to-red-500",
+    isPdfWorksheet: true,
+    questionCount: 30,
   },
   {
     id: "big-friend-minus-4",
@@ -312,9 +355,11 @@ export const UNTIMED_WORKSHEET_OPTIONS: UntimedWorksheetOption[] = [
     categoryGroup: "Big Friend Subtraction (-)",
     ruleFormula: "-4 = -10 + 6",
     icon: "🎯",
-    badge: "-4 Rule",
-    description: "Formula: -4 = -10 + 6 (Borrow 10, return 6)",
+    badge: "-4 Rule • 30 Qs",
+    description: "Formula: -4 = -10 + 6 (Borrow 10, return 6). Exactly one rule event.",
     color: "from-amber-500 to-red-500",
+    isPdfWorksheet: true,
+    questionCount: 30,
   },
   {
     id: "big-friend-minus-3",
@@ -323,9 +368,11 @@ export const UNTIMED_WORKSHEET_OPTIONS: UntimedWorksheetOption[] = [
     categoryGroup: "Big Friend Subtraction (-)",
     ruleFormula: "-3 = -10 + 7",
     icon: "🎯",
-    badge: "-3 Rule",
-    description: "Formula: -3 = -10 + 7 (Borrow 10, return 7)",
+    badge: "-3 Rule • 30 Qs",
+    description: "Formula: -3 = -10 + 7 (Borrow 10, return 7). Exactly one rule event.",
     color: "from-amber-500 to-red-500",
+    isPdfWorksheet: true,
+    questionCount: 30,
   },
   {
     id: "big-friend-minus-2",
@@ -334,8 +381,8 @@ export const UNTIMED_WORKSHEET_OPTIONS: UntimedWorksheetOption[] = [
     categoryGroup: "Big Friend Subtraction (-)",
     ruleFormula: "-2 = -10 + 8",
     icon: "🎯",
-    badge: "📄 PDF • 30 Qs",
-    description: "Official PDF Worksheet: 30 Questions across Sections A, B & C for Rule -2 = -10 + 8.",
+    badge: "-2 Rule • 30 Qs",
+    description: "Formula: -2 = -10 + 8 (Borrow 10, return 8). Exactly one rule event.",
     color: "from-amber-500 to-red-500",
     isPdfWorksheet: true,
     questionCount: 30,
@@ -347,9 +394,11 @@ export const UNTIMED_WORKSHEET_OPTIONS: UntimedWorksheetOption[] = [
     categoryGroup: "Big Friend Subtraction (-)",
     ruleFormula: "-1 = -10 + 9",
     icon: "🎯",
-    badge: "-1 Rule",
-    description: "Formula: -1 = -10 + 9 (Borrow 10, return 9)",
+    badge: "-1 Rule • 30 Qs",
+    description: "Formula: -1 = -10 + 9 (Borrow 10, return 9). Exactly one rule event.",
     color: "from-amber-500 to-red-500",
+    isPdfWorksheet: true,
+    questionCount: 30,
   },
 
   // --- 6. MULTI-ROW WORKSHEETS ---
@@ -359,9 +408,11 @@ export const UNTIMED_WORKSHEET_OPTIONS: UntimedWorksheetOption[] = [
     category: "multi-row",
     categoryGroup: "Multi-Row Worksheets",
     icon: "⚡",
-    badge: "1D 3 Rows",
+    badge: "1D 3 Rows • 20 Qs",
     description: "Single-digit calculations stacked across 3 rows.",
     color: "from-teal-400 to-cyan-600",
+    isPdfWorksheet: true,
+    questionCount: 20,
   },
   {
     id: "1digit-5row",
@@ -369,9 +420,11 @@ export const UNTIMED_WORKSHEET_OPTIONS: UntimedWorksheetOption[] = [
     category: "multi-row",
     categoryGroup: "Multi-Row Worksheets",
     icon: "⚡",
-    badge: "1D 5 Rows",
+    badge: "1D 5 Rows • 20 Qs",
     description: "Continuous 5-row single-digit speed drills.",
     color: "from-cyan-500 to-blue-600",
+    isPdfWorksheet: true,
+    questionCount: 20,
   },
   {
     id: "1digit-7row",
@@ -1067,10 +1120,231 @@ function makePdfQuestion(
 }
 
 // ============================================================
-// EXACT QUESTIONS FROM OFFICIAL USER-UPLOADED PDFs
-// (BFR = Big Friend Rule, SFR = Small Friend Rule)
+// AUTHENTIC 1-DIGIT DIRECT CALCULATION QUESTION DATASETS
+// Set 1: 20 Questions (3 Rows)
+// Set 2: 20 Questions (5 Rows)
+// ============================================================
+export const SIMPLE_1DIGIT_SET_1_NUMBERS: number[][] = [
+  [8, 1, -5],
+  [1, 7, -3],
+  [4, 5, -2],
+  [4, -1, 6],
+  [7, 1, -6],
+  [8, -5, 6],
+  [3, 6, -1],
+  [5, 2, -1],
+  [3, 1, -2],
+  [4, -3, 2],
+  [1, 6, -1],
+  [5, 3, -5],
+  [2, 6, -1],
+  [8, -5, 1],
+  [2, 7, -5],
+  [4, 5, -8],
+  [8, 1, -8],
+  [1, 3, -2],
+  [1, 8, -4],
+  [3, 6, -3],
+];
+
+export const SIMPLE_1DIGIT_SET_2_NUMBERS: number[][] = [
+  [9, -2, -5, -2, 6],
+  [8, -1, 2, -3, 2],
+  [6, -1, 2, -7, 1],
+  [6, -1, 2, -5, 1],
+  [1, 3, -4, 3, -1],
+  [3, -2, 8, -1, -3],
+  [4, -3, 7, -6, 1],
+  [6, 3, -9, 8, -1],
+  [8, -2, -6, 2, 6],
+  [8, -6, 2, -3, 2],
+  [9, -6, -2, 5, 3],
+  [4, -3, 8, -9, 2],
+  [6, 3, -8, 5, 3],
+  [6, 2, -7, 1, 6],
+  [6, -5, 3, 5, -7],
+  [4, -2, 1, 5, -3],
+  [7, 2, -3, -5, 8],
+  [4, 5, -6, -3, 2],
+  [7, -6, 7, -3, 4],
+  [3, 5, -8, 6, 2],
+];
+
+function makeDirectSimpleQuestion(
+  optionId: string,
+  optionName: string,
+  section: "A" | "B",
+  col: number,
+  numbers: number[],
+  targetAnswer: number
+): PracticeQuestion {
+  const optionsSet = new Set<number>([targetAnswer]);
+  for (const delta of [-2, 2, -1, 1, -3, 3, 4, -4]) {
+    const val = targetAnswer + delta;
+    if (val >= 0 && val <= 9 && val !== targetAnswer) optionsSet.add(val);
+    if (optionsSet.size === 4) break;
+  }
+  let extra = 1;
+  while (optionsSet.size < 4) {
+    const val = (targetAnswer + extra++) % 10;
+    optionsSet.add(val);
+  }
+
+  const formulaStr = numbers
+    .map((n, i) => (i === 0 ? String(n) : n < 0 ? `- ${Math.abs(n)}` : `+ ${n}`))
+    .join(" ");
+
+  const rowLabel = numbers.length === 3 ? "3-Row" : "5-Row";
+
+  return {
+    id: `direct-1d-${optionId}-${section.toLowerCase()}-${col}`,
+    level: 1,
+    title: `${optionName} (${section === "A" ? "Set 1: 3-Row" : "Set 2: 5-Row"}, Q${col})`,
+    category: optionName,
+    categoryId: optionId,
+    ruleType: "direct",
+    digits: 1,
+    rowCount: numbers.length,
+    numbers,
+    targetAnswer,
+    questionType: "vertical-calc",
+    options: Array.from(optionsSet).sort(() => Math.random() - 0.5),
+    ruleHint: "Direct Calculation: Move upper (value 5) and lower (value 1) beads directly without formulas.",
+    explanation: `Direct Calculation (${rowLabel}, Q${col}): ${formulaStr} = ${targetAnswer}.`,
+  };
+}
+
+export const SIMPLE_2DIGIT_EXISTING_PAIRS: number[][] = [
+  [12, 21], [23, 11], [31, 12], [42, 52], [51, 23],
+  [22, 22], [65, 23], [74, 15], [33, 11], [88, -22],
+  [44, -13], [95, -40], [56, 21], [14, 30],
+];
+
+export const SIMPLE_2DIGIT_SET_3ROW_NUMBERS: number[][] = [
+  [52, 17, -11],
+  [88, -72, 31],
+  [24, 75, -31],
+  [82, -80, 61],
+  [89, -81, 41],
+  [43, -42, 55],
+  [84, -34, 18],
+  [13, -12, 20],
+  [40, 54, -41],
+  [20, 18, -17],
+  [93, -92, 98],
+  [89, -87, 77],
+  [12, 75, -16],
+  [84, -60, 55],
+  [48, 51, -58],
+  [83, -81, 42],
+  [66, -55, 87],
+  [23, -12, 88],
+  [54, -52, 20],
+  [72, -11, 17],
+];
+
+export const SIMPLE_2DIGIT_SET_5ROW_NUMBERS: number[][] = [
+  [28, -13, 21, 63, -61],
+  [13, 65, 21, -48, 40],
+  [11, 27, -23, 83, -36],
+  [26, 23, -29, 10, 53],
+  [47, -21, 20, -15, 18],
+  [11, 63, -62, 11, 50],
+  [70, 12, 10, -20, 12],
+  [17, 80, -86, 38, -24],
+  [84, -30, -54, 96, -11],
+  [79, -28, 43, -44, 23],
+  [27, 21, -26, 77, -10],
+  [52, 42, -51, -43, 97],
+  [54, 45, -21, -78, 38],
+  [13, -10, 55, 31, -54],
+  [89, -23, -65, 98, -71],
+  [30, 11, -41, 12, 50],
+  [60, 29, -27, 36, -86],
+  [98, -37, 17, -68, 88],
+  [85, -30, -55, 78, -51],
+  [35, -15, 18, -37, 23],
+];
+
+function makeDirect2DSimpleQuestion(
+  optionId: string,
+  optionName: string,
+  section: "A" | "B" | "C",
+  col: number,
+  numbers: number[],
+  targetAnswer: number
+): PracticeQuestion {
+  const optionsSet = new Set<number>([targetAnswer]);
+  for (const delta of [-10, 10, -2, 2, -1, 1, -5, 5]) {
+    const val = targetAnswer + delta;
+    if (val >= 0 && val <= 100 && val !== targetAnswer) optionsSet.add(val);
+    if (optionsSet.size === 4) break;
+  }
+  let extra = 3;
+  while (optionsSet.size < 4) {
+    optionsSet.add(Math.max(0, (targetAnswer + extra++) % 100));
+  }
+
+  const formulaStr = numbers
+    .map((n, i) => (i === 0 ? String(n) : n < 0 ? `- ${Math.abs(n)}` : `+ ${n}`))
+    .join(" ");
+
+  const rowLabel = `${numbers.length}-Row`;
+
+  return {
+    id: `direct-2d-${optionId}-${section.toLowerCase()}-${col}`,
+    level: 1,
+    title: `${optionName} (Section ${section}: ${rowLabel}, Q${col})`,
+    category: optionName,
+    categoryId: optionId,
+    ruleType: "direct",
+    digits: 2,
+    rowCount: numbers.length,
+    numbers,
+    targetAnswer,
+    questionType: "vertical-calc",
+    options: Array.from(optionsSet).sort(() => Math.random() - 0.5),
+    ruleHint: "Direct 2-Digit Calculation: Coordinate tens and units columns simultaneously without formulas.",
+    explanation: `Direct 2-Digit Calculation (${rowLabel}, Q${col}): ${formulaStr} = ${targetAnswer}.`,
+  };
+}
+
+// ============================================================
+// EXACT QUESTIONS FROM OFFICIAL USER-UPLOADED PDFs & SYLLABUS
+// (BFR = Big Friend Rule, SFR = Small Friend Rule, Direct)
 // ============================================================
 export const PDF_EXACT_WORKSHEETS: Record<string, PracticeQuestion[]> = {
+  // ------------------------------------------------------------
+  // Simple Calculation 1 Digit (Set 1: 20 3-Row Qs, Set 2: 20 5-Row Qs)
+  // ------------------------------------------------------------
+  "simple-1digit": [
+    ...SIMPLE_1DIGIT_SET_1_NUMBERS.map((nums, idx) =>
+      makeDirectSimpleQuestion("simple-1digit", "Simple Calculation 1 Digit", "A", idx + 1, nums, sum(nums))
+    ),
+    ...SIMPLE_1DIGIT_SET_2_NUMBERS.map((nums, idx) =>
+      makeDirectSimpleQuestion("simple-1digit", "Simple Calculation 1 Digit", "B", idx + 1, nums, sum(nums))
+    ),
+  ],
+  "1digit-3row": SIMPLE_1DIGIT_SET_1_NUMBERS.map((nums, idx) =>
+    makeDirectSimpleQuestion("1digit-3row", "1 Digit 3 Row Worksheet", "A", idx + 1, nums, sum(nums))
+  ),
+  "1digit-5row": SIMPLE_1DIGIT_SET_2_NUMBERS.map((nums, idx) =>
+    makeDirectSimpleQuestion("1digit-5row", "1 Digit 5 Row Worksheet", "B", idx + 1, nums, sum(nums))
+  ),
+  // ------------------------------------------------------------
+  // Simple Calculation 2 Digits (54 Authentic Qs: 2-Row, 3-Row & 5-Row)
+  // ------------------------------------------------------------
+  "simple-2digits": [
+    ...SIMPLE_2DIGIT_EXISTING_PAIRS.map((nums, idx) =>
+      makeDirect2DSimpleQuestion("simple-2digits", "Simple Calculation 2 Digits", "A", idx + 1, nums, sum(nums))
+    ),
+    ...SIMPLE_2DIGIT_SET_3ROW_NUMBERS.map((nums, idx) =>
+      makeDirect2DSimpleQuestion("simple-2digits", "Simple Calculation 2 Digits", "B", idx + 1, nums, sum(nums))
+    ),
+    ...SIMPLE_2DIGIT_SET_5ROW_NUMBERS.map((nums, idx) =>
+      makeDirect2DSimpleQuestion("simple-2digits", "Simple Calculation 2 Digits", "C", idx + 1, nums, sum(nums))
+    ),
+  ],
   // ------------------------------------------------------------
   // Big Friend Rule: +1 = -9 + 10 (media_1790697446368.pdf)
   // ------------------------------------------------------------
@@ -1240,6 +1514,13 @@ export function generateUntimedWorksheetQuestions(
     const pdfQuestions = PDF_EXACT_WORKSHEETS[optionId];
     return count && count < pdfQuestions.length ? pdfQuestions.slice(0, count) : [...pdfQuestions];
   }
+
+  // If this is one of the 26 authentic Small Friend or Big Friend rules, return the verified authentic single-rule questions!
+  const ruleQuestions = getQuestionsForRule(optionId);
+  if (ruleQuestions && ruleQuestions.length > 0) {
+    return count && count < ruleQuestions.length ? ruleQuestions.slice(0, count) : [...ruleQuestions];
+  }
+
   const option = UNTIMED_WORKSHEET_OPTIONS.find((o) => o.id === optionId) || UNTIMED_WORKSHEET_OPTIONS[0];
   const questions: PracticeQuestion[] = [];
 
@@ -1261,15 +1542,8 @@ export function generateUntimedWorksheetQuestions(
     // 1. SIMPLE 1 DIGIT (Direct)
     if (optionId === "simple-1digit") {
       digits = 1;
-      rowCount = 2;
-      // Pair of single digits without carrying/borrowing/5-rule
-      const directPairs = [
-        [1, 2], [2, 1], [3, 1], [1, 3], [2, 2],
-        [5, 1], [5, 2], [5, 3], [6, 1], [7, 2],
-        [4, -1], [4, -2], [3, -1], [8, -2], [9, -4],
-        [1, 1, 2], [2, 2, 5], [5, 3, -2], [6, 2, -3]
-      ];
-      numbers = [...directPairs[i % directPairs.length]];
+      const combined = [...SIMPLE_1DIGIT_SET_1_NUMBERS, ...SIMPLE_1DIGIT_SET_2_NUMBERS];
+      numbers = [...combined[i % combined.length]];
       rowCount = numbers.length;
       const ans = sum(numbers);
       explanation = `Direct bead movement: ${numbers.join(" ")} = ${ans}`;
@@ -1278,13 +1552,13 @@ export function generateUntimedWorksheetQuestions(
     // 2. SIMPLE 2 DIGITS (Direct)
     else if (optionId === "simple-2digits") {
       digits = 2;
-      rowCount = 2;
-      const direct2DPairs = [
-        [12, 21], [23, 11], [31, 12], [42, 52], [51, 23],
-        [22, 22], [65, 23], [74, 15], [33, 11], [88, -22],
-        [44, -13], [95, -40], [56, 21], [14, 30]
+      const combined = [
+        ...SIMPLE_2DIGIT_EXISTING_PAIRS,
+        ...SIMPLE_2DIGIT_SET_3ROW_NUMBERS,
+        ...SIMPLE_2DIGIT_SET_5ROW_NUMBERS,
       ];
-      numbers = [...direct2DPairs[i % direct2DPairs.length]];
+      numbers = [...combined[i % combined.length]];
+      rowCount = numbers.length;
       const ans = sum(numbers);
       explanation = `Direct 2-digit bead calculation on tens & units: ${numbers.join(" ")} = ${ans}`;
     }
@@ -1579,12 +1853,7 @@ export function generateUntimedWorksheetQuestions(
     else if (optionId === "1digit-3row") {
       digits = 1;
       rowCount = 3;
-      let cur = Math.floor(Math.random() * 5) + 3;
-      const n1 = cur;
-      const n2 = Math.random() > 0.5 ? Math.floor(Math.random() * 3) + 1 : -(Math.floor(Math.random() * 2) + 1);
-      cur += n2;
-      const n3 = cur > 4 ? -(Math.floor(Math.random() * 3) + 1) : Math.floor(Math.random() * 3) + 1;
-      numbers = [n1, n2, n3];
+      numbers = [...SIMPLE_1DIGIT_SET_1_NUMBERS[i % SIMPLE_1DIGIT_SET_1_NUMBERS.length]];
       const ans = sum(numbers);
       explanation = `3-Row Single Digit: ${numbers.join(" ")} = ${ans}`;
     }
@@ -1593,19 +1862,7 @@ export function generateUntimedWorksheetQuestions(
     else if (optionId === "1digit-5row") {
       digits = 1;
       rowCount = 5;
-      let cur = Math.floor(Math.random() * 4) + 3;
-      numbers = [cur];
-      for (let r = 1; r < 5; r++) {
-        if (cur >= 5 && Math.random() > 0.45) {
-          const sub = Math.floor(Math.random() * 3) + 1;
-          numbers.push(-sub);
-          cur -= sub;
-        } else {
-          const add = Math.floor(Math.random() * 3) + 1;
-          numbers.push(add);
-          cur += add;
-        }
-      }
+      numbers = [...SIMPLE_1DIGIT_SET_2_NUMBERS[i % SIMPLE_1DIGIT_SET_2_NUMBERS.length]];
       const ans = sum(numbers);
       explanation = `5-Row Single Digit: ${numbers.join(" ")} = ${ans}`;
     }

@@ -38,6 +38,7 @@ interface MockExamCard {
   latestScore: number | null;
   latestPercentage: number | null;
   isPassed: boolean;
+  type?: string;
 }
 
 const MOCK_LEVELS = [
@@ -102,6 +103,57 @@ const LEVEL_TOPICS_SUMMARY: Record<number, { title: string; desc: string }[]> = 
   ],
 };
 
+const LEVEL_MOCK_EXAM_MAP: Record<number, { id: string; title: string; description: string }> = {
+  1: {
+    id: "67b100000000000000000001",
+    title: "Level 1: Official Practice Mock Exam",
+    description:
+      "Comprehensive timed mock exam testing Direct Calculations, Small Friend Rules, Big Friend Rules, and 1-Digit 7-Row Calculations.",
+  },
+  2: {
+    id: "67b100000000000000000022",
+    title: "Level 2: Official Practice Mock Exam",
+    description:
+      "Official timed practice mock exam covering 1-Digit 10-Row running addition and 2-Digit 8-Row championship calculations under timed conditions.",
+  },
+  3: {
+    id: "67b100000000000000000023",
+    title: "Level 3: Official Practice Mock Exam",
+    description:
+      "Level 3 Practice Mock Exam testing 3-Digit 5-Row and 2-Digit 10-Row continuous arithmetic under timed conditions.",
+  },
+  4: {
+    id: "67b100000000000000000024",
+    title: "Level 4: Official Practice Mock Exam",
+    description:
+      "Level 4 Mock Exam testing 4-Digit 5-Row and 3-Digit 10-Row speed drills under timed conditions.",
+  },
+  5: {
+    id: "67b100000000000000000025",
+    title: "Level 5: Official Practice Mock Exam",
+    description:
+      "Level 5 Practice Mock Exam testing 4-Digit 7-Row and Multiplication (2-Digit × 1-Digit) under timed conditions.",
+  },
+  6: {
+    id: "67b100000000000000000026",
+    title: "Level 6: Official Practice Mock Exam",
+    description:
+      "Level 6 Practice Mock Exam testing 5-Digit 5-Row, Multiplication (4D×1D & 2D×2D), and Division (2D÷1D).",
+  },
+  7: {
+    id: "67b100000000000000000027",
+    title: "Level 7: Official Practice Mock Exam",
+    description:
+      "Level 7 Practice Mock Exam testing Multiplication (3D×3D) and Division (3D÷1D).",
+  },
+  8: {
+    id: "67b100000000000000000028",
+    title: "Level 8: Official Practice Mock Exam",
+    description:
+      "Level 8 Practice Mock Exam testing comprehensive concepts from Level 1 through Level 7.",
+  },
+};
+
 interface ExamQuestion {
   id: string;
   questionNumber: number;
@@ -144,6 +196,22 @@ interface ExamEvaluationResult {
     explanation?: string;
     ruleType?: string;
   }[];
+}
+
+function cleanQuestionText(text: string): string {
+  if (!text) return "";
+  return text
+    .replace(/^Calculate\s*(?:[A-Za-z0-9\s()×÷/+-]+)?:\s*/i, "")
+    .trim();
+}
+
+function formatMathExpression(text: string): string {
+  const cleaned = cleanQuestionText(text);
+  if (!cleaned) return "";
+  if (cleaned.endsWith("=") || cleaned.endsWith("= ?")) {
+    return cleaned;
+  }
+  return `${cleaned} = ?`;
 }
 
 export default function MockExamPage() {
@@ -196,7 +264,12 @@ export default function MockExamPage() {
       setLoading(true);
       setError(null);
 
-      const res = await fetch("/api/exams/mock");
+      const queryParams = new URLSearchParams();
+      if (studentLevel) queryParams.set("level", String(studentLevel));
+      if (user?.id) queryParams.set("studentId", user.id);
+      if (user?.email) queryParams.set("email", user.email);
+
+      const res = await fetch(`/api/exams/mock?${queryParams.toString()}`);
       const data = await res.json();
 
       if (data.success && Array.isArray(data.data)) {
@@ -210,7 +283,7 @@ export default function MockExamPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [studentLevel, user?.id, user?.email]);
 
   useEffect(() => {
     fetchMockExams();
@@ -293,9 +366,19 @@ export default function MockExamPage() {
       setLoading(true);
       setError(null);
 
-      const res = await fetch(`/api/exams/${exam.id}/start`, {
+      const queryParams = new URLSearchParams();
+      if (user?.id) queryParams.set("studentId", user.id);
+      if (user?.email) queryParams.set("email", user.email);
+      if (studentLevel) queryParams.set("level", String(studentLevel));
+
+      const res = await fetch(`/api/exams/${exam.id}/start?${queryParams.toString()}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          studentId: user?.id,
+          email: user?.email,
+          level: studentLevel,
+        }),
       });
 
       const data = await res.json();
@@ -498,15 +581,21 @@ export default function MockExamPage() {
 
           {/* Selected Level Mock Exam Hub Card */}
           {!loading && !error && (() => {
+            const mockDef =
+              LEVEL_MOCK_EXAM_MAP[activeLevelTab] ||
+              LEVEL_MOCK_EXAM_MAP[studentLevel] ||
+              LEVEL_MOCK_EXAM_MAP[1];
+
             const singleExam: MockExamCard =
               exams.find(
                 (e) => (e as any).levelOrder === activeLevelTab || e.title.includes(`Level ${activeLevelTab}`)
-              ) ||
-              exams[0] || {
-                id: "67b100000000000000000001",
-                title: `Level ${activeLevelTab}: Official Practice Mock Exam`,
-                description: `Official Practice Mock Exam for Level ${activeLevelTab} syllabus.`,
+              ) || {
+                id: mockDef.id,
+                title: mockDef.title,
+                description: mockDef.description,
                 levelName: `Level ${activeLevelTab}`,
+                levelOrder: activeLevelTab,
+                type: "mock",
                 duration: 10,
                 totalQuestions: 10,
                 totalMarks: 100,
@@ -719,27 +808,12 @@ export default function MockExamPage() {
                 </button>
               </div>
 
-              {/* Main Question Display */}
-              <h3 className="text-3xl sm:text-5xl font-black font-heading text-[#1D3557] tracking-wider mb-4">
-                {currentQ.questionText}
-              </h3>
-
-              {/* For 1-Digit 5-Row Drill: Display authentic Abacus vertical stack */}
-              {currentQ.numbers && currentQ.numbers.length >= 4 && (
-                <div className="inline-block bg-[#FFFDF7] border-2 border-orange-200 rounded-2xl p-4 my-2 font-mono text-2xl font-black shadow-sm">
-                  <div className="text-[10px] font-bold uppercase text-orange-600 tracking-wider mb-2 font-sans">
-                    5-Row Drill Stack
-                  </div>
-                  {currentQ.numbers.map((num, i) => (
-                    <div key={i} className="text-right px-6 leading-relaxed">
-                      {i === 0 ? num : num > 0 ? `+ ${num}` : `- ${Math.abs(num)}`}
-                    </div>
-                  ))}
-                  <div className="border-t-2 border-orange-300 mt-2 pt-1 text-center text-xs text-orange-700 font-sans font-bold">
-                    = ?
-                  </div>
-                </div>
-              )}
+              {/* Clean Horizontal Math Expression: Display as a clean, large inline equation */}
+              <div className="my-6 px-4 py-6 sm:py-8 rounded-3xl bg-[#FFFDF7] border-2 border-orange-200/90 shadow-sm flex items-center justify-center">
+                <h3 className="text-2xl sm:text-4xl md:text-5xl font-black font-mono tracking-wide text-[#1D3557] select-all leading-relaxed break-words text-center">
+                  {formatMathExpression(currentQ.questionText)}
+                </h3>
+              </div>
 
               <p className="text-xs font-bold text-slate-400 mt-2 mb-6">
                 Calculate with your abacus beads or mental visualization, then enter your final answer below.
@@ -826,12 +900,12 @@ export default function MockExamPage() {
                 </div>
               </div>
 
-              {/* Prev / Next controls */}
-              <div className="flex items-center justify-between gap-4 pt-6 border-t border-orange-100">
+              {/* Prev / Next & Submit controls */}
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 border-t border-orange-100">
                 <button
                   onClick={() => setCurrentQuestionIndex((prev) => Math.max(0, prev - 1))}
                   disabled={currentQuestionIndex === 0}
-                  className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-orange-50 border border-orange-200 text-xs font-extrabold hover:bg-orange-100 disabled:opacity-30 disabled:cursor-not-allowed transition"
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-orange-50 border border-orange-200 text-xs font-extrabold hover:bg-orange-100 disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer"
                 >
                   <ArrowLeft className="w-4 h-4" />
                   <span>Previous</span>
@@ -841,16 +915,36 @@ export default function MockExamPage() {
                   {currentQuestionIndex + 1} / {questions.length}
                 </span>
 
-                <button
-                  onClick={() =>
-                    setCurrentQuestionIndex((prev) => Math.min(questions.length - 1, prev + 1))
-                  }
-                  disabled={currentQuestionIndex === questions.length - 1}
-                  className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-[#F4A261] text-white text-xs font-extrabold hover:bg-[#E76F51] disabled:opacity-30 disabled:cursor-not-allowed transition shadow-sm"
-                >
-                  <span>Next</span>
-                  <ArrowRight className="w-4 h-4" />
-                </button>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() =>
+                      setCurrentQuestionIndex((prev) => Math.min(questions.length - 1, prev + 1))
+                    }
+                    disabled={currentQuestionIndex === questions.length - 1}
+                    className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-[#F4A261] text-white text-xs font-extrabold hover:bg-[#E76F51] disabled:opacity-30 disabled:cursor-not-allowed transition shadow-sm cursor-pointer"
+                  >
+                    <span>Next</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+
+                  {/* Submit Button placed right next to Next */}
+                  <button
+                    onClick={() => {
+                      if (
+                        confirm(
+                          `Are you ready to submit your Mock Exam? You have answered ${answeredCount} of ${questions.length} questions.`
+                        )
+                      ) {
+                        handleSubmitExam();
+                      }
+                    }}
+                    disabled={isSubmitting}
+                    className="flex items-center gap-2 py-2.5 px-5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-700 text-white font-extrabold text-xs shadow-md hover:shadow-lg transition-all hover:scale-105 active:scale-95 disabled:opacity-50 cursor-pointer"
+                  >
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>{isSubmitting ? "Evaluating..." : "Submit Exam"}</span>
+                  </button>
+                </div>
               </div>
             </div>
 

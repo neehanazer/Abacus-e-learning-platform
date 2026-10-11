@@ -3,10 +3,11 @@ import { connectToDatabase } from "@/lib/mongodb";
 import Level from "@/models/Level";
 import Topic from "@/models/Topic";
 import Lesson from "@/models/Lesson";
-import Homework, { IHomework } from "@/models/Homework";
-import HomeworkQuestion, { IHomeworkQuestion } from "@/models/HomeworkQuestion";
+import Homework from "@/models/Homework";
+import HomeworkQuestion from "@/models/HomeworkQuestion";
 import Student from "@/models/Student";
 import HomeworkAttempt from "@/models/HomeworkAttempt";
+import { INITIAL_HOMEWORK_LIST, HomeworkTask } from "@/data/homeworkData";
 
 export interface SeedHomeworkQuestionDef {
   _id: string;
@@ -33,1154 +34,217 @@ export interface SeedHomeworkDef {
   topicId: string;
   lessonId: string;
   lessonNumber: number;
-  recommendedTime: number; // in minutes
+  recommendedTime: number;
   dueDateDaysAhead: number;
   status: "pending" | "inProgress" | "submitted" | "evaluated";
   questions: SeedHomeworkQuestionDef[];
 }
 
-export const HOMEWORK_CATALOG: SeedHomeworkDef[] = [
-  // =========================================================================
-  // HOMEWORK 1: Linked to Lesson 1 (Introduction & Direct 1-Digit Calculation)
-  // =========================================================================
-  {
-    _id: "67a900000000000000000001",
-    homeworkNumber: 1,
-    title: "Homework 01: Direct 1-Digit Calculation",
-    description:
-      "Complete the following 10 single-digit addition and subtraction questions using direct finger movements on your unit rod. No formulas needed!",
-    levelOrder: 1,
-    levelId: "678900000000000000000001",
-    topicId: "678900000000000000010001",
-    lessonId: "678900000000000001000001",
-    lessonNumber: 1,
-    recommendedTime: 10,
-    dueDateDaysAhead: 7,
-    status: "pending",
-    questions: [
-      {
-        _id: "67aa00000000000000001001",
-        question: "Calculate on unit rod: +1 + 2",
-        questionType: "numberInput",
-        numbers: [1, 2],
-        correctAnswer: 3,
-        options: [2, 3, 4, 5],
-        difficulty: "easy",
-        marks: 1,
-        operation: "+",
-        ruleHint: "Direct thumb flick: Push 1 bead up, then push 2 beads up.",
-        explanation: "1 + 2 = 3 using direct lower bead movements.",
-        order: 1,
-      },
-      {
-        _id: "67aa00000000000000001002",
-        question: "Calculate on unit rod: +2 + 2",
-        questionType: "numberInput",
-        numbers: [2, 2],
-        correctAnswer: 4,
-        options: [3, 4, 5, 2],
-        difficulty: "easy",
-        marks: 1,
-        operation: "+",
-        ruleHint: "Direct thumb: push 2 lower beads, then 2 more lower beads.",
-        explanation: "2 + 2 = 4 on the unit rod.",
-        order: 2,
-      },
-      {
-        _id: "67aa00000000000000001003",
-        question: "Calculate on unit rod: +4 - 3",
-        questionType: "numberInput",
-        numbers: [4, -3],
-        correctAnswer: 1,
-        options: [1, 2, 0, 3],
-        difficulty: "easy",
-        marks: 1,
-        operation: "-",
-        ruleHint: "Direct index finger: Pull 3 lower beads down away from the beam.",
-        explanation: "4 - 3 = 1.",
-        order: 3,
-      },
-      {
-        _id: "67aa00000000000000001004",
-        question: "Calculate on unit rod: +3 - 1 + 2",
-        questionType: "numberInput",
-        numbers: [3, -1, 2],
-        correctAnswer: 4,
-        options: [4, 5, 3, 2],
-        difficulty: "easy",
-        marks: 1,
-        operation: "+",
-        ruleHint: "Direct: push 3 up, pull 1 down, push 2 up.",
-        explanation: "3 - 1 + 2 = 4.",
-        order: 4,
-      },
-      {
-        _id: "67aa00000000000000001005",
-        question: "Calculate on unit rod: +1 + 1 + 2",
-        questionType: "numberInput",
-        numbers: [1, 1, 2],
-        correctAnswer: 4,
-        options: [3, 4, 5, 2],
-        difficulty: "easy",
-        marks: 1,
-        operation: "+",
-        ruleHint: "Consecutive thumb flicks upward.",
-        explanation: "1 + 1 + 2 = 4.",
-        order: 5,
-      },
-      {
-        _id: "67aa00000000000000001006",
-        question: "Calculate on unit rod: +4 - 2 - 1",
-        questionType: "numberInput",
-        numbers: [4, -2, -1],
-        correctAnswer: 1,
-        options: [1, 2, 3, 0],
-        difficulty: "easy",
-        marks: 1,
-        operation: "-",
-        ruleHint: "Push 4 up with thumb, pull 2 down with index, pull 1 down with index.",
-        explanation: "4 - 2 - 1 = 1.",
-        order: 6,
-      },
-      {
-        _id: "67aa00000000000000001007",
-        question: "Calculate on unit rod: +2 + 1 - 3",
-        questionType: "numberInput",
-        numbers: [2, 1, -3],
-        correctAnswer: 0,
-        options: [0, 1, 2, 3],
-        difficulty: "easy",
-        marks: 1,
-        operation: "-",
-        ruleHint: "All beads cleared from beam. Result is zero.",
-        explanation: "2 + 1 - 3 = 0.",
-        order: 7,
-      },
-      {
-        _id: "67aa00000000000000001008",
-        question: "Calculate on unit rod: +3 + 1 - 2 + 1",
-        questionType: "numberInput",
-        numbers: [3, 1, -2, 1],
-        correctAnswer: 3,
-        options: [2, 3, 4, 1],
-        difficulty: "medium",
-        marks: 1,
-        operation: "+",
-        ruleHint: "Follow bead order carefully: +3, +1 (=4), -2 (=2), +1 (=3).",
-        explanation: "3 + 1 - 2 + 1 = 3.",
-        order: 8,
-      },
-      {
-        _id: "67aa00000000000000001009",
-        question: "Calculate on unit rod: +1 + 3 - 4 + 2",
-        questionType: "numberInput",
-        numbers: [1, 3, -4, 2],
-        correctAnswer: 2,
-        options: [1, 2, 3, 4],
-        difficulty: "medium",
-        marks: 1,
-        operation: "+",
-        ruleHint: "Direct movements only.",
-        explanation: "1 + 3 = 4, 4 - 4 = 0, 0 + 2 = 2.",
-        order: 9,
-      },
-      {
-        _id: "67aa00000000000000001010",
-        question: "Calculate on unit rod: +2 + 2 - 1 - 2",
-        questionType: "numberInput",
-        numbers: [2, 2, -1, -2],
-        correctAnswer: 1,
-        options: [1, 2, 3, 0],
-        difficulty: "medium",
-        marks: 1,
-        operation: "-",
-        ruleHint: "Push 2, push 2, pull 1, pull 2.",
-        explanation: "2 + 2 - 1 - 2 = 1.",
-        order: 10,
-      },
-    ],
-  },
-
-  // =========================================================================
-  // HOMEWORK 2: Linked to Lesson 2 (Direct Addition & Subtraction (1 to 4))
-  // =========================================================================
-  {
-    _id: "67a900000000000000000002",
-    homeworkNumber: 2,
-    title: "Homework 02: 2-Digit Direct Manipulations",
-    description:
-      "Practice 2-digit numbers using simultaneous left-hand (tens rod) and right-hand (unit rod) finger flicks.",
-    levelOrder: 1,
-    levelId: "678900000000000000000001",
-    topicId: "678900000000000000010001",
-    lessonId: "678900000000000001000002",
-    lessonNumber: 2,
-    recommendedTime: 12,
-    dueDateDaysAhead: 7,
-    status: "pending",
-    questions: [
-      {
-        _id: "67aa00000000000000002001",
-        question: "Calculate across tens & units: +12 + 21",
-        questionType: "numberInput",
-        numbers: [12, 21],
-        correctAnswer: 33,
-        options: [31, 33, 34, 43],
-        difficulty: "easy",
-        marks: 1,
-        operation: "+",
-        ruleHint: "Tens rod: 1 + 2 = 3. Units rod: 2 + 1 = 3.",
-        explanation: "12 + 21 = 33.",
-        order: 1,
-      },
-      {
-        _id: "67aa00000000000000002002",
-        question: "Calculate: +23 + 11",
-        questionType: "numberInput",
-        numbers: [23, 11],
-        correctAnswer: 34,
-        options: [34, 35, 44, 33],
-        difficulty: "easy",
-        marks: 1,
-        operation: "+",
-        ruleHint: "Tens rod: 2 + 1 = 3. Units rod: 3 + 1 = 4.",
-        explanation: "23 + 11 = 34.",
-        order: 2,
-      },
-      {
-        _id: "67aa00000000000000002003",
-        question: "Calculate: +44 - 22",
-        questionType: "numberInput",
-        numbers: [44, -22],
-        correctAnswer: 22,
-        options: [22, 20, 24, 18],
-        difficulty: "easy",
-        marks: 1,
-        operation: "-",
-        ruleHint: "Pull 2 beads down on both tens and units rods.",
-        explanation: "44 - 22 = 22.",
-        order: 3,
-      },
-      {
-        _id: "67aa00000000000000002004",
-        question: "Calculate: +31 + 12 - 21",
-        questionType: "numberInput",
-        numbers: [31, 12, -21],
-        correctAnswer: 22,
-        options: [22, 24, 21, 23],
-        difficulty: "medium",
-        marks: 1,
-        operation: "+",
-        ruleHint: "Step 1: 31 + 12 = 43. Step 2: 43 - 21 = 22.",
-        explanation: "31 + 12 - 21 = 22.",
-        order: 4,
-      },
-      {
-        _id: "67aa00000000000000002005",
-        question: "Calculate: +11 + 22 + 11",
-        questionType: "numberInput",
-        numbers: [11, 22, 11],
-        correctAnswer: 44,
-        options: [44, 43, 34, 42],
-        difficulty: "medium",
-        marks: 1,
-        operation: "+",
-        ruleHint: "Direct flicks on both rods up to 4 beads each.",
-        explanation: "11 + 22 + 11 = 44.",
-        order: 5,
-      },
-      {
-        _id: "67aa00000000000000002006",
-        question: "Calculate: +43 - 12 - 21",
-        questionType: "numberInput",
-        numbers: [43, -12, -21],
-        correctAnswer: 10,
-        options: [10, 11, 12, 9],
-        difficulty: "medium",
-        marks: 1,
-        operation: "-",
-        ruleHint: "Tens rod: 4 - 1 - 2 = 1. Units rod: 3 - 2 - 1 = 0.",
-        explanation: "43 - 12 - 21 = 10.",
-        order: 6,
-      },
-      {
-        _id: "67aa00000000000000002007",
-        question: "Calculate: +20 + 14 - 12",
-        questionType: "numberInput",
-        numbers: [20, 14, -12],
-        correctAnswer: 22,
-        options: [22, 24, 21, 20],
-        difficulty: "medium",
-        marks: 1,
-        operation: "+",
-        ruleHint: "Keep track of zero on units rod in step 1.",
-        explanation: "20 + 14 = 34; 34 - 12 = 22.",
-        order: 7,
-      },
-      {
-        _id: "67aa00000000000000002008",
-        question: "Calculate: +13 + 31 - 24",
-        questionType: "numberInput",
-        numbers: [13, 31, -24],
-        correctAnswer: 20,
-        options: [20, 22, 18, 24],
-        difficulty: "hard",
-        marks: 1,
-        operation: "-",
-        ruleHint: "13 + 31 = 44. Then 44 - 24 = 20.",
-        explanation: "13 + 31 - 24 = 20.",
-        order: 8,
-      },
-    ],
-  },
-
-  // =========================================================================
-  // HOMEWORK 3: Linked to Lesson 3 (Heaven Bead Activations - The Number 5)
-  // =========================================================================
-  {
-    _id: "67a900000000000000000003",
-    homeworkNumber: 3,
-    title: "Homework 03: Heaven Bead 5 Manipulations",
-    description:
-      "Practice activating and deactivating the 5-bead in the upper deck using the index finger combined with lower earth beads.",
-    levelOrder: 1,
-    levelId: "678900000000000000000001",
-    topicId: "678900000000000000010001",
-    lessonId: "678900000000000001000003",
-    lessonNumber: 3,
-    recommendedTime: 12,
-    dueDateDaysAhead: 7,
-    status: "pending",
-    questions: [
-      {
-        _id: "67aa00000000000000003001",
-        question: "Calculate on unit rod: +5 + 3",
-        questionType: "numberInput",
-        numbers: [5, 3],
-        correctAnswer: 8,
-        options: [7, 8, 9, 6],
-        difficulty: "easy",
-        marks: 1,
-        operation: "+",
-        ruleHint: "Index finger pulls 5 down to beam, thumb pushes 3 earth beads up.",
-        explanation: "5 + 3 = 8.",
-        order: 1,
-      },
-      {
-        _id: "67aa00000000000000003002",
-        question: "Calculate: +5 + 4 - 2",
-        questionType: "numberInput",
-        numbers: [5, 4, -2],
-        correctAnswer: 7,
-        options: [6, 7, 8, 5],
-        difficulty: "easy",
-        marks: 1,
-        operation: "+",
-        ruleHint: "5 + 4 = 9 (full rod). Pull 2 earth beads away.",
-        explanation: "5 + 4 - 2 = 7.",
-        order: 2,
-      },
-      {
-        _id: "67aa00000000000000003003",
-        question: "Calculate: +9 - 5 + 1",
-        questionType: "numberInput",
-        numbers: [9, -5, 1],
-        correctAnswer: 5,
-        options: [4, 5, 6, 3],
-        difficulty: "easy",
-        marks: 1,
-        operation: "+",
-        ruleHint: "Clear 5-bead up with index: 9 - 5 = 4. Then 4 + 1... wait: 4 + 1 is 5.",
-        explanation: "9 - 5 = 4; 4 + 1 = 5 (or using small friend: 5).",
-        order: 3,
-      },
-      {
-        _id: "67aa00000000000000003004",
-        question: "Calculate: +2 + 5 - 1",
-        questionType: "numberInput",
-        numbers: [2, 5, -1],
-        correctAnswer: 6,
-        options: [6, 7, 5, 8],
-        difficulty: "easy",
-        marks: 1,
-        operation: "+",
-        ruleHint: "Push 2, bring down 5 (=7), pull down 1 (=6).",
-        explanation: "2 + 5 - 1 = 6.",
-        order: 4,
-      },
-      {
-        _id: "67aa00000000000000003005",
-        question: "Calculate: +8 - 3 + 2",
-        questionType: "numberInput",
-        numbers: [8, -3, 2],
-        correctAnswer: 7,
-        options: [7, 6, 8, 5],
-        difficulty: "medium",
-        marks: 1,
-        operation: "+",
-        ruleHint: "8 = (5 + 3). Remove 3 earth beads (=5). Add 2 earth beads (=7).",
-        explanation: "8 - 3 + 2 = 7.",
-        order: 5,
-      },
-      {
-        _id: "67aa00000000000000003006",
-        question: "Calculate: +7 - 2 - 5 + 3",
-        questionType: "numberInput",
-        numbers: [7, -2, -5, 3],
-        correctAnswer: 3,
-        options: [3, 2, 4, 1],
-        difficulty: "medium",
-        marks: 1,
-        operation: "+",
-        ruleHint: "7 - 2 = 5. 5 - 5 = 0. 0 + 3 = 3.",
-        explanation: "7 - 2 - 5 + 3 = 3.",
-        order: 6,
-      },
-      {
-        _id: "67aa00000000000000003007",
-        question: "Calculate: +6 + 3 - 5 - 2",
-        questionType: "numberInput",
-        numbers: [6, 3, -5, -2],
-        correctAnswer: 2,
-        options: [2, 1, 3, 4],
-        difficulty: "medium",
-        marks: 1,
-        operation: "-",
-        ruleHint: "6 + 3 = 9. 9 - 5 = 4. 4 - 2 = 2.",
-        explanation: "6 + 3 - 5 - 2 = 2.",
-        order: 7,
-      },
-      {
-        _id: "67aa00000000000000003008",
-        question: "Calculate: +5 + 2 + 1 - 6",
-        questionType: "numberInput",
-        numbers: [5, 2, 1, -6],
-        correctAnswer: 2,
-        options: [2, 1, 3, 0],
-        difficulty: "hard",
-        marks: 1,
-        operation: "-",
-        ruleHint: "5 + 2 + 1 = 8. Subtract 6 (open pinch 5 and 1) = 2.",
-        explanation: "8 - 6 = 2.",
-        order: 8,
-      },
-    ],
-  },
-
-  // =========================================================================
-  // HOMEWORK 4: Linked to Lesson 4 (Small Friend Addition +4 = +5 - 1)
-  // =========================================================================
-  {
-    _id: "67a900000000000000000004",
-    homeworkNumber: 4,
-    title: "Homework 04: Small Friends Addition (+4 Rule)",
-    description:
-      "Apply the Small Friend formula (+4 = +5 - 1) whenever there are not enough lower beads to add 4 directly.",
-    levelOrder: 1,
-    levelId: "678900000000000000000001",
-    topicId: "678900000000000000010002",
-    lessonId: "678900000000000001000004",
-    lessonNumber: 4,
-    recommendedTime: 15,
-    dueDateDaysAhead: 7,
-    status: "pending",
-    questions: [
-      {
-        _id: "67aa00000000000000004001",
-        question: "Calculate: +1 + 4",
-        questionType: "numberInput",
-        numbers: [1, 4],
-        correctAnswer: 5,
-        options: [4, 5, 6, 7],
-        difficulty: "easy",
-        marks: 1,
-        operation: "+",
-        ruleHint: "+4 = +5 - 1 (Pull down 5 with index, pull down 1 with index).",
-        explanation: "1 + 4 = 5 using small friend rule +5 - 1.",
-        order: 1,
-      },
-      {
-        _id: "67aa00000000000000004002",
-        question: "Calculate: +2 + 4",
-        questionType: "numberInput",
-        numbers: [2, 4],
-        correctAnswer: 6,
-        options: [5, 6, 7, 8],
-        difficulty: "easy",
-        marks: 1,
-        operation: "+",
-        ruleHint: "+4 = +5 - 1. 2 + 5 - 1 = 6.",
-        explanation: "2 + 4 = 6.",
-        order: 2,
-      },
-      {
-        _id: "67aa00000000000000004003",
-        question: "Calculate: +3 + 4 - 2",
-        questionType: "numberInput",
-        numbers: [3, 4, -2],
-        correctAnswer: 5,
-        options: [4, 5, 6, 7],
-        difficulty: "medium",
-        marks: 1,
-        operation: "+",
-        ruleHint: "3 + 4 = 7 (+5 - 1). Then 7 - 2 = 5.",
-        explanation: "3 + 4 - 2 = 5.",
-        order: 3,
-      },
-      {
-        _id: "67aa00000000000000004004",
-        question: "Calculate: +4 + 4 - 3",
-        questionType: "numberInput",
-        numbers: [4, 4, -3],
-        correctAnswer: 5,
-        options: [5, 6, 4, 3],
-        difficulty: "medium",
-        marks: 1,
-        operation: "+",
-        ruleHint: "4 + 4 (+5 - 1) = 8. Then 8 - 3 = 5.",
-        explanation: "4 + 4 - 3 = 5.",
-        order: 4,
-      },
-      {
-        _id: "67aa00000000000000004005",
-        question: "Calculate: +1 + 4 + 2 - 1",
-        questionType: "numberInput",
-        numbers: [1, 4, 2, -1],
-        correctAnswer: 6,
-        options: [5, 6, 7, 8],
-        difficulty: "medium",
-        marks: 1,
-        operation: "+",
-        ruleHint: "1 + 4 = 5. 5 + 2 = 7. 7 - 1 = 6.",
-        explanation: "1 + 4 + 2 - 1 = 6.",
-        order: 5,
-      },
-      {
-        _id: "67aa00000000000000004006",
-        question: "Calculate: +2 + 4 - 5 + 3",
-        questionType: "numberInput",
-        numbers: [2, 4, -5, 3],
-        correctAnswer: 4,
-        options: [3, 4, 5, 2],
-        difficulty: "hard",
-        marks: 1,
-        operation: "+",
-        ruleHint: "2 + 4 = 6. 6 - 5 = 1. 1 + 3 = 4.",
-        explanation: "2 + 4 - 5 + 3 = 4.",
-        order: 6,
-      },
-    ],
-  },
-
-  // =========================================================================
-  // HOMEWORK 5: Linked to Lesson 5 (Small Friend Addition +3, +2, +1)
-  // =========================================================================
-  {
-    _id: "67a900000000000000000005",
-    homeworkNumber: 5,
-    title: "Homework 05: Small Friends Addition (+3, +2, +1)",
-    description:
-      "Practice formulas (+3 = +5 - 2), (+2 = +5 - 3), and (+1 = +5 - 4) with multi-row arithmetic.",
-    levelOrder: 1,
-    levelId: "678900000000000000000001",
-    topicId: "678900000000000000010002",
-    lessonId: "678900000000000001000005",
-    lessonNumber: 5,
-    recommendedTime: 15,
-    dueDateDaysAhead: 7,
-    status: "pending",
-    questions: [
-      {
-        _id: "67aa00000000000000005001",
-        question: "Calculate: +2 + 3",
-        questionType: "numberInput",
-        numbers: [2, 3],
-        correctAnswer: 5,
-        options: [4, 5, 6, 7],
-        difficulty: "easy",
-        marks: 1,
-        operation: "+",
-        ruleHint: "+3 = +5 - 2.",
-        explanation: "2 + 3 = 5.",
-        order: 1,
-      },
-      {
-        _id: "67aa00000000000000005002",
-        question: "Calculate: +3 + 3",
-        questionType: "numberInput",
-        numbers: [3, 3],
-        correctAnswer: 6,
-        options: [5, 6, 7, 8],
-        difficulty: "easy",
-        marks: 1,
-        operation: "+",
-        ruleHint: "+3 = +5 - 2. 3 + 5 - 2 = 6.",
-        explanation: "3 + 3 = 6.",
-        order: 2,
-      },
-      {
-        _id: "67aa00000000000000005003",
-        question: "Calculate: +3 + 2",
-        questionType: "numberInput",
-        numbers: [3, 2],
-        correctAnswer: 5,
-        options: [4, 5, 6, 7],
-        difficulty: "easy",
-        marks: 1,
-        operation: "+",
-        ruleHint: "+2 = +5 - 3.",
-        explanation: "3 + 2 = 5.",
-        order: 3,
-      },
-      {
-        _id: "67aa00000000000000005004",
-        question: "Calculate: +4 + 2 - 1",
-        questionType: "numberInput",
-        numbers: [4, 2, -1],
-        correctAnswer: 5,
-        options: [5, 6, 4, 7],
-        difficulty: "medium",
-        marks: 1,
-        operation: "+",
-        ruleHint: "4 + 2 (+5 - 3) = 6. 6 - 1 = 5.",
-        explanation: "4 + 2 - 1 = 5.",
-        order: 4,
-      },
-      {
-        _id: "67aa00000000000000005005",
-        question: "Calculate: +4 + 1 + 2",
-        questionType: "numberInput",
-        numbers: [4, 1, 2],
-        correctAnswer: 7,
-        options: [6, 7, 8, 5],
-        difficulty: "medium",
-        marks: 1,
-        operation: "+",
-        ruleHint: "+1 = +5 - 4. 4 + 1 = 5. 5 + 2 = 7.",
-        explanation: "4 + 1 + 2 = 7.",
-        order: 5,
-      },
-      {
-        _id: "67aa00000000000000005006",
-        question: "Calculate: +3 + 3 + 2 - 5",
-        questionType: "numberInput",
-        numbers: [3, 3, 2, -5],
-        correctAnswer: 3,
-        options: [2, 3, 4, 5],
-        difficulty: "hard",
-        marks: 1,
-        operation: "+",
-        ruleHint: "3 + 3 = 6 (+5 - 2). 6 + 2 = 8. 8 - 5 = 3.",
-        explanation: "3 + 3 + 2 - 5 = 3.",
-        order: 6,
-      },
-    ],
-  },
-
-  // =========================================================================
-  // HOMEWORK 6: Linked to Lesson 6 (Small Friend Subtraction -4..-1)
-  // =========================================================================
-  {
-    _id: "67a900000000000000000006",
-    homeworkNumber: 6,
-    title: "Homework 06: Small Friends Subtraction (-4 to -1)",
-    description:
-      "Master subtracting from 5 using reverse friend formulas: -4 = -5 + 1, -3 = -5 + 2, -2 = -5 + 3, -1 = -5 + 4.",
-    levelOrder: 1,
-    levelId: "678900000000000000000001",
-    topicId: "678900000000000000010002",
-    lessonId: "678900000000000001000006",
-    lessonNumber: 6,
-    recommendedTime: 15,
-    dueDateDaysAhead: 7,
-    status: "pending",
-    questions: [
-      {
-        _id: "67aa00000000000000006001",
-        question: "Calculate: +5 - 4",
-        questionType: "numberInput",
-        numbers: [5, -4],
-        correctAnswer: 1,
-        options: [1, 2, 0, 3],
-        difficulty: "easy",
-        marks: 1,
-        operation: "-",
-        ruleHint: "-4 = -5 + 1 (Index finger pushes 5 up, thumb pushes 1 up).",
-        explanation: "5 - 4 = 1.",
-        order: 1,
-      },
-      {
-        _id: "67aa00000000000000006002",
-        question: "Calculate: +6 - 4",
-        questionType: "numberInput",
-        numbers: [6, -4],
-        correctAnswer: 2,
-        options: [1, 2, 3, 4],
-        difficulty: "easy",
-        marks: 1,
-        operation: "-",
-        ruleHint: "6 - 4: -5 + 1. 6 - 5 + 1 = 2.",
-        explanation: "6 - 4 = 2.",
-        order: 2,
-      },
-      {
-        _id: "67aa00000000000000006003",
-        question: "Calculate: +5 - 3",
-        questionType: "numberInput",
-        numbers: [5, -3],
-        correctAnswer: 2,
-        options: [1, 2, 3, 0],
-        difficulty: "easy",
-        marks: 1,
-        operation: "-",
-        ruleHint: "-3 = -5 + 2.",
-        explanation: "5 - 3 = 2.",
-        order: 3,
-      },
-      {
-        _id: "67aa00000000000000006004",
-        question: "Calculate: +7 - 3",
-        questionType: "numberInput",
-        numbers: [7, -3],
-        correctAnswer: 4,
-        options: [3, 4, 5, 2],
-        difficulty: "medium",
-        marks: 1,
-        operation: "-",
-        ruleHint: "7 - 3: -5 + 2. 7 - 5 + 2 = 4.",
-        explanation: "7 - 3 = 4.",
-        order: 4,
-      },
-      {
-        _id: "67aa00000000000000006005",
-        question: "Calculate: +5 - 2 + 1",
-        questionType: "numberInput",
-        numbers: [5, -2, 1],
-        correctAnswer: 4,
-        options: [3, 4, 5, 2],
-        difficulty: "medium",
-        marks: 1,
-        operation: "+",
-        ruleHint: "-2 = -5 + 3. 5 - 2 = 3. 3 + 1 = 4.",
-        explanation: "5 - 2 + 1 = 4.",
-        order: 5,
-      },
-      {
-        _id: "67aa00000000000000006006",
-        question: "Calculate: +5 - 1 + 3",
-        questionType: "numberInput",
-        numbers: [5, -1, 3],
-        correctAnswer: 7,
-        options: [6, 7, 8, 5],
-        difficulty: "hard",
-        marks: 1,
-        operation: "+",
-        ruleHint: "-1 = -5 + 4. 5 - 1 = 4. 4 + 3 = 7 (+5 - 2).",
-        explanation: "5 - 1 + 3 = 7.",
-        order: 6,
-      },
-    ],
-  },
-  // =========================================================================
-  // HOMEWORK 7: Small Friends Addition (+4 Rule)
-  // =========================================================================
-  {
-    _id: "67a900000000000000000007",
-    homeworkNumber: 7,
-    title: "Homework 07: Small Friends Addition (+4 Rule)",
-    description:
-      "Practice adding 4 using formula +4 = +5 - 1 when lower earth beads are unavailable.",
-    levelOrder: 1,
-    levelId: "678900000000000000000001",
-    topicId: "678900000000000000010002",
-    lessonId: "678900000000000001000003",
-    lessonNumber: 3,
-    recommendedTime: 12,
-    dueDateDaysAhead: -7,
-    status: "pending",
-    questions: [
-      {
-        _id: "67aa00000000000000007001",
-        question: "Calculate: 1 + 4",
-        questionType: "numberInput",
-        numbers: [1, 4],
-        correctAnswer: 5,
-        options: [5, 4, 6, 3],
-        difficulty: "easy",
-        marks: 1,
-        operation: "+",
-        ruleHint: "+4 = +5 - 1.",
-        explanation: "1 + 4 = 5.",
-        order: 1,
-      },
-      {
-        _id: "67aa00000000000000007002",
-        question: "Calculate: 2 + 4",
-        questionType: "numberInput",
-        numbers: [2, 4],
-        correctAnswer: 6,
-        options: [6, 5, 7, 8],
-        difficulty: "easy",
-        marks: 1,
-        operation: "+",
-        ruleHint: "+4 = +5 - 1.",
-        explanation: "2 + 4 = 6.",
-        order: 2,
-      },
-      {
-        _id: "67aa00000000000000007003",
-        question: "Calculate: 3 + 4",
-        questionType: "numberInput",
-        numbers: [3, 4],
-        correctAnswer: 7,
-        options: [7, 6, 8, 9],
-        difficulty: "easy",
-        marks: 1,
-        operation: "+",
-        ruleHint: "+4 = +5 - 1.",
-        explanation: "3 + 4 = 7.",
-        order: 3,
-      },
-      {
-        _id: "67aa00000000000000007004",
-        question: "Calculate: 4 + 4",
-        questionType: "numberInput",
-        numbers: [4, 4],
-        correctAnswer: 8,
-        options: [8, 7, 9, 6],
-        difficulty: "medium",
-        marks: 1,
-        operation: "+",
-        ruleHint: "+4 = +5 - 1.",
-        explanation: "4 + 4 = 8.",
-        order: 4,
-      },
-    ],
-  },
-  // =========================================================================
-  // HOMEWORK 8: Small Friends Subtraction (-4 to -1)
-  // =========================================================================
-  {
-    _id: "67a900000000000000000008",
-    homeworkNumber: 8,
-    title: "Homework 08: Small Friends Subtraction (-4 to -1)",
-    description:
-      "Apply reverse complement formulas: -4 = -5 + 1, -3 = -5 + 2, -2 = -5 + 3, -1 = -5 + 4.",
-    levelOrder: 1,
-    levelId: "678900000000000000000001",
-    topicId: "678900000000000000010002",
-    lessonId: "678900000000000001000004",
-    lessonNumber: 4,
-    recommendedTime: 14,
-    dueDateDaysAhead: -3,
-    status: "pending",
-    questions: [
-      {
-        _id: "67aa00000000000000008001",
-        question: "Calculate: 5 - 4",
-        questionType: "numberInput",
-        numbers: [5, -4],
-        correctAnswer: 1,
-        options: [1, 2, 0, 3],
-        difficulty: "easy",
-        marks: 1,
-        operation: "-",
-        ruleHint: "-4 = -5 + 1.",
-        explanation: "5 - 4 = 1.",
-        order: 1,
-      },
-      {
-        _id: "67aa00000000000000008002",
-        question: "Calculate: 6 - 3",
-        questionType: "numberInput",
-        numbers: [6, -3],
-        correctAnswer: 3,
-        options: [3, 2, 4, 5],
-        difficulty: "easy",
-        marks: 1,
-        operation: "-",
-        ruleHint: "-3 = -5 + 2.",
-        explanation: "6 - 3 = 3.",
-        order: 2,
-      },
-      {
-        _id: "67aa00000000000000008003",
-        question: "Calculate: 7 - 4",
-        questionType: "numberInput",
-        numbers: [7, -4],
-        correctAnswer: 3,
-        options: [3, 4, 2, 1],
-        difficulty: "medium",
-        marks: 1,
-        operation: "-",
-        ruleHint: "-4 = -5 + 1.",
-        explanation: "7 - 4 = 3.",
-        order: 3,
-      },
-      {
-        _id: "67aa00000000000000008004",
-        question: "Calculate: 8 - 4",
-        questionType: "numberInput",
-        numbers: [8, -4],
-        correctAnswer: 4,
-        options: [4, 5, 3, 2],
-        difficulty: "medium",
-        marks: 1,
-        operation: "-",
-        ruleHint: "-4 = -5 + 1.",
-        explanation: "8 - 4 = 4.",
-        order: 4,
-      },
-    ],
-  },
-  // =========================================================================
-  // HOMEWORK 9: Mixed Combination Formulas
-  // =========================================================================
-  {
-    _id: "67a900000000000000000009",
-    homeworkNumber: 9,
-    title: "Homework 09: Mixed Combination Formulas",
-    description:
-      "Master carrying and borrowing across 10 rod combinations with high accuracy.",
-    levelOrder: 2,
-    levelId: "678900000000000000000002",
-    topicId: "678900000000000000010003",
-    lessonId: "678900000000000001000005",
-    lessonNumber: 5,
-    recommendedTime: 15,
-    dueDateDaysAhead: 10,
-    status: "pending",
-    questions: [
-      {
-        _id: "67aa00000000000000009001",
-        question: "Calculate: 9 + 6",
-        questionType: "numberInput",
-        numbers: [9, 6],
-        correctAnswer: 15,
-        options: [15, 14, 16, 17],
-        difficulty: "medium",
-        marks: 1,
-        operation: "+",
-        ruleHint: "+6 = -4 + 10.",
-        explanation: "9 + 6 = 15.",
-        order: 1,
-      },
-      {
-        _id: "67aa00000000000000009002",
-        question: "Calculate: 14 + 7",
-        questionType: "numberInput",
-        numbers: [14, 7],
-        correctAnswer: 21,
-        options: [21, 20, 22, 19],
-        difficulty: "medium",
-        marks: 1,
-        operation: "+",
-        ruleHint: "+7 = -3 + 10.",
-        explanation: "14 + 7 = 21.",
-        order: 2,
-      },
-      {
-        _id: "67aa00000000000000009003",
-        question: "Calculate: 25 - 8",
-        questionType: "numberInput",
-        numbers: [25, -8],
-        correctAnswer: 17,
-        options: [17, 18, 16, 15],
-        difficulty: "hard",
-        marks: 1,
-        operation: "-",
-        ruleHint: "-8 = -10 + 2.",
-        explanation: "25 - 8 = 17.",
-        order: 3,
-      },
-    ],
-  },
-  // =========================================================================
-  // HOMEWORK 10: Mental Abacus Flash Visualization
-  // =========================================================================
-  {
-    _id: "67a900000000000000000010",
-    homeworkNumber: 10,
-    title: "Homework 10: Mental Abacus Flash Visualization",
-    description:
-      "Perform Anzan mental abacus calculations without touching a physical soroban.",
-    levelOrder: 2,
-    levelId: "678900000000000000000002",
-    topicId: "678900000000000000010003",
-    lessonId: "678900000000000001000007",
-    lessonNumber: 7,
-    recommendedTime: 10,
-    dueDateDaysAhead: 15,
-    status: "pending",
-    questions: [
-      {
-        _id: "67aa00000000000000010001",
-        question: "Mental Flash: 2 + 5 + 1",
-        questionType: "numberInput",
-        numbers: [2, 5, 1],
-        correctAnswer: 8,
-        options: [8, 7, 9, 6],
-        difficulty: "medium",
-        marks: 1,
-        operation: "+",
-        ruleHint: "Visualize upper bead 5 moving down, then lower bead 1 up.",
-        explanation: "2 + 5 + 1 = 8.",
-        order: 1,
-      },
-      {
-        _id: "67aa00000000000000010002",
-        question: "Mental Flash: 7 - 2 + 4",
-        questionType: "numberInput",
-        numbers: [7, -2, 4],
-        correctAnswer: 9,
-        options: [9, 8, 10, 7],
-        difficulty: "hard",
-        marks: 1,
-        operation: "+",
-        ruleHint: "7 - 2 = 5; 5 + 4 = 9.",
-        explanation: "7 - 2 + 4 = 9.",
-        order: 2,
-      },
-    ],
-  },
-];
+/**
+ * HOMEWORK_CATALOG derived directly from the official homework section list
+ */
+export const HOMEWORK_CATALOG: SeedHomeworkDef[] = INITIAL_HOMEWORK_LIST.map((task) => ({
+  _id: `67a900000000000000${task.homeworkNumber.toString().padStart(6, "0")}`,
+  homeworkNumber: task.homeworkNumber,
+  title: task.title,
+  description: task.instructions || task.title,
+  levelOrder: task.level || 1,
+  levelId: `67890000000000000000000${task.level || 1}`,
+  topicId: task.topicId || "678900000000000000010001",
+  lessonId: task.relatedLessonId || "678900000000000001000001",
+  lessonNumber: task.homeworkNumber,
+  recommendedTime: task.recommendedMinutes || 15,
+  dueDateDaysAhead: task.level === 1 ? -5 : 10 + task.homeworkNumber * 2,
+  status: task.level === 1 || task.homeworkNumber === 8 ? "evaluated" : "pending",
+  questions: (task.questions || []).map((q, idx) => ({
+    _id: `67aa00000000000000${task.homeworkNumber.toString().padStart(3, "0")}${(idx + 1).toString().padStart(3, "0")}`,
+    question: (q as any).prompt || (q as any).question || `Calculate on abacus: ${(q.numbers || []).join(" ")}`,
+    questionType: "numberInput",
+    numbers: q.numbers || [],
+    correctAnswer: (q as any).targetAnswer ?? (q as any).correctAnswer ?? 0,
+    options: (q as any).options || [(q as any).targetAnswer ?? (q as any).correctAnswer ?? 0],
+    difficulty: (q as any).difficulty || "medium",
+    marks: (q as any).marks || 1,
+    operation: (q as any).operation || "+",
+    ruleHint: q.ruleHint || "",
+    explanation: q.explanation || "",
+    order: idx + 1,
+  })),
+}));
 
 /**
- * Seeds Homework and HomeworkQuestion collections in MongoDB.
+ * Seeds Homework and HomeworkQuestion collections directly from the homework section (INITIAL_HOMEWORK_LIST).
  */
 export async function seedHomeworkData() {
   await connectToDatabase();
 
-  // Ensure levels and lessons exist in DB so we can bind accurate ObjectIds
+  // Ensure levels, lessons, topics exist in DB so we can bind accurate ObjectIds
   const dbLevels = await Level.find().lean();
   const dbLessons = await Lesson.find().lean();
   const dbTopics = await Topic.find().lean();
 
+  // Remove obsolete/stray homeworks like 'Daily Abacus Practice - Bead Additions'
+  await Homework.deleteMany({ title: { $regex: /Daily Abacus Practice/i } });
+
   let createdHomeworkCount = 0;
   let createdQuestionCount = 0;
 
-  for (const hwDef of HOMEWORK_CATALOG) {
-    // Match corresponding lesson in DB if possible, or fallback to the seed lessonId
-    const matchingLesson = dbLessons.find(
-      (l) => l.lessonNumber === hwDef.lessonNumber || l._id.toString() === hwDef.lessonId
-    );
-    const resolvedLessonId = matchingLesson
-      ? matchingLesson._id
-      : new mongoose.Types.ObjectId(hwDef.lessonId);
+  for (const hwTask of INITIAL_HOMEWORK_LIST) {
+    const levelOrder = hwTask.level || 1;
+    const targetLevelDoc = dbLevels.find((l) => l.order === levelOrder);
+    const resolvedLevelId = targetLevelDoc
+      ? targetLevelDoc._id
+      : new mongoose.Types.ObjectId(`67890000000000000000000${levelOrder}`);
 
-    const resolvedLevelId = matchingLesson
-      ? matchingLesson.levelId
-      : dbLevels[0]?._id || new mongoose.Types.ObjectId(hwDef.levelId);
+    // Match lesson in DB
+    const matchingLesson =
+      dbLessons.find((l) => l.lessonNumber === hwTask.homeworkNumber && l.levelId?.toString() === resolvedLevelId.toString()) ||
+      dbLessons.find((l) => l.levelId?.toString() === resolvedLevelId.toString());
 
-    const resolvedTopicId = matchingLesson
-      ? matchingLesson.topicId
-      : dbTopics[0]?._id || new mongoose.Types.ObjectId(hwDef.topicId);
+    const resolvedLessonId = matchingLesson ? matchingLesson._id : resolvedLevelId;
 
-    const homeworkId = new mongoose.Types.ObjectId(hwDef._id);
+    const matchingTopic = dbTopics.find((t) => t.levelId?.toString() === resolvedLevelId.toString());
+    const resolvedTopicId = matchingTopic ? matchingTopic._id : resolvedLevelId;
+
+    // Use consistent ObjectId based on homeworkNumber
+    const homeworkHexId = `67a900000000000000${hwTask.homeworkNumber.toString().padStart(6, "0")}`;
+    const homeworkObjectId = new mongoose.Types.ObjectId(homeworkHexId);
+
     const questionIds: mongoose.Types.ObjectId[] = [];
 
-    // Create questions first
-    for (const qDef of hwDef.questions) {
-      const questionId = new mongoose.Types.ObjectId(qDef._id);
+    // Create questions
+    const taskQuestions = hwTask.questions || [];
+    for (let qIdx = 0; qIdx < taskQuestions.length; qIdx++) {
+      const qDef = taskQuestions[qIdx];
+      const qOrder = qIdx + 1;
+      const qHexId = `67aa00000000000000${hwTask.homeworkNumber.toString().padStart(3, "0")}${qOrder.toString().padStart(3, "0")}`;
+      const questionId = new mongoose.Types.ObjectId(qHexId);
       questionIds.push(questionId);
+
+      const targetAns = (qDef as any).targetAnswer ?? (qDef as any).correctAnswer ?? 0;
+      const qText = (qDef as any).prompt || (qDef as any).question || `Calculate on abacus: ${(qDef.numbers || []).join(" ")}`;
 
       await HomeworkQuestion.findOneAndUpdate(
         { _id: questionId },
         {
           _id: questionId,
-          homeworkId,
-          question: qDef.question,
-          questionType: qDef.questionType,
-          options: qDef.options,
-          correctAnswer: qDef.correctAnswer,
-          numbers: qDef.numbers,
-          operation: qDef.operation,
-          difficulty: qDef.difficulty,
-          marks: qDef.marks,
+          homeworkId: homeworkObjectId,
+          question: qText,
+          questionType: "numberInput",
+          options: (qDef as any).options || [targetAns],
+          correctAnswer: targetAns,
+          numbers: qDef.numbers || [],
+          operation: (qDef as any).operation || "+",
+          difficulty: (qDef as any).difficulty || "medium",
+          marks: (qDef as any).marks || 1,
           ruleHint: qDef.ruleHint || "",
-          explanation: qDef.explanation,
-          order: qDef.order,
+          explanation: qDef.explanation || "",
+          order: qOrder,
         },
         { upsert: true, new: true }
       );
       createdQuestionCount++;
     }
 
-    // Determine due date: homework 1 to 8 have past due dates (expired); 9 & 10 have future due dates
+    // Determine due date: Level 1 completed in Sep/Oct; Level 2 active
     let dueDate: Date;
-    if (hwDef.homeworkNumber <= 8) {
-      // Expired due dates (September to early October)
-      dueDate = new Date(`2026-09-${(10 + hwDef.homeworkNumber * 2).toString().padStart(2, "0")}T23:59:59.000Z`);
+    let assignedDate: Date;
+    if (levelOrder === 1) {
+      assignedDate = new Date(`2026-09-${(10 + hwTask.homeworkNumber * 2).toString().padStart(2, "0")}T00:00:00.000Z`);
+      dueDate = new Date(`2026-10-${(1 + hwTask.homeworkNumber * 2).toString().padStart(2, "0")}T23:59:59.000Z`);
     } else {
-      // Future active due dates
-      dueDate = new Date(Date.now() + hwDef.dueDateDaysAhead * 24 * 60 * 60 * 1000);
+      assignedDate = new Date("2026-10-05T00:00:00.000Z");
+      dueDate = new Date(Date.now() + (hwTask.homeworkNumber * 2 + 5) * 24 * 60 * 60 * 1000);
     }
 
     await Homework.findOneAndUpdate(
-      { _id: homeworkId },
+      { homeworkNumber: hwTask.homeworkNumber },
       {
-        _id: homeworkId,
-        title: hwDef.title,
-        description: hwDef.description,
+        _id: homeworkObjectId,
+        title: hwTask.title,
+        description: hwTask.instructions || hwTask.title,
         levelId: resolvedLevelId,
+        levelOrder: levelOrder,
         topicId: resolvedTopicId,
         lessonId: resolvedLessonId,
         questionIds,
-        recommendedTime: hwDef.recommendedTime,
+        recommendedTime: hwTask.recommendedMinutes || 15,
         dueDate,
-        status: hwDef.homeworkNumber <= 2 ? "evaluated" : "pending",
-        homeworkNumber: hwDef.homeworkNumber,
-        order: hwDef.homeworkNumber,
+        assignedDate,
+        status: levelOrder === 1 || hwTask.homeworkNumber === 8 ? "evaluated" : "pending",
+        homeworkNumber: hwTask.homeworkNumber,
+        order: hwTask.homeworkNumber,
       },
       { upsert: true, new: true }
     );
     createdHomeworkCount++;
   }
 
-  // Ensure default student attempts for neehanaz226@gmail.com if not already created
+  // Delete any homework documents beyond catalog
+  await Homework.deleteMany({ homeworkNumber: { $gt: INITIAL_HOMEWORK_LIST.length } });
+
+  // Update student evaluated attempts for Neeha Nazer (neehanaz226@gmail.com)
   try {
     const student = await Student.findOne({ email: "neehanaz226@gmail.com" });
     if (student) {
-      const existingAttempts = await HomeworkAttempt.countDocuments({ studentId: student._id });
-      if (existingAttempts === 0) {
-        const hw1 = await Homework.findOne({ homeworkNumber: 1 });
-        const hw2 = await Homework.findOne({ homeworkNumber: 2 });
-        if (hw1) {
-          await HomeworkAttempt.create({
+      // Level 1 homeworks (1 to 7) are evaluated
+      const l1Homeworks = await Homework.find({ levelOrder: 1 });
+      for (const hw of l1Homeworks) {
+        await HomeworkAttempt.findOneAndUpdate(
+          { studentId: student._id, homeworkId: hw._id },
+          {
             studentId: student._id,
-            homeworkId: hw1._id,
+            homeworkId: hw._id,
+            answers: [],
+            attemptNumber: 1,
+            score: 10,
+            totalQuestions: 10,
+            accuracy: 100,
+            timeTaken: 300,
+            submittedAt: new Date("2026-10-04T10:00:00.000Z"),
+            status: "evaluated",
+          },
+          { upsert: true, new: true }
+        );
+      }
+
+      // Level 2 Homework 8 is evaluated
+      const hw8 = await Homework.findOne({ homeworkNumber: 8 });
+      if (hw8) {
+        await HomeworkAttempt.findOneAndUpdate(
+          { studentId: student._id, homeworkId: hw8._id },
+          {
+            studentId: student._id,
+            homeworkId: hw8._id,
             answers: [],
             attemptNumber: 1,
             score: 9,
             totalQuestions: 10,
             accuracy: 90,
             timeTaken: 360,
-            submittedAt: new Date("2026-09-09T10:30:00.000Z"),
+            submittedAt: new Date("2026-10-08T15:00:00.000Z"),
             status: "evaluated",
-          });
-        }
-        if (hw2) {
-          await HomeworkAttempt.create({
-            studentId: student._id,
-            homeworkId: hw2._id,
-            answers: [],
-            attemptNumber: 1,
-            score: 8,
-            totalQuestions: 10,
-            accuracy: 80,
-            timeTaken: 420,
-            submittedAt: new Date("2026-09-10T14:15:00.000Z"),
-            status: "evaluated",
-          });
-        }
+          },
+          { upsert: true, new: true }
+        );
       }
+
+      // Ensure student profile has completedLevels: [1], currentLevel: 2
+      await Student.findByIdAndUpdate(student._id, {
+        $addToSet: { completedLevels: 1 },
+        $set: {
+          currentLevel: 2,
+          selectedLevel: "Level 2: Two-Digit Operations & Big Friend Subtraction",
+          completedWorksheets: 8,
+        },
+      });
     }
   } catch (attErr) {
-    console.warn("Could not seed default student homework attempts:", attErr);
+    console.warn("Could not seed student homework attempts:", attErr);
   }
 
   return {
-    message: `Successfully seeded ${createdHomeworkCount} homework assignments and ${createdQuestionCount} questions.`,
+    message: `Successfully synced ${createdHomeworkCount} homework assignments and ${createdQuestionCount} questions from the homework section directly into database.`,
     homeworkCount: createdHomeworkCount,
     questionCount: createdQuestionCount,
   };
@@ -1190,31 +254,31 @@ export async function seedHomeworkData() {
  * Fallback helpers for memory/offline mode
  */
 export function getFallbackHomeworkList() {
-  return HOMEWORK_CATALOG.map((hw) => ({
-    _id: hw._id,
-    id: hw._id,
+  return INITIAL_HOMEWORK_LIST.map((hw) => ({
+    _id: `67a900000000000000${hw.homeworkNumber.toString().padStart(6, "0")}`,
+    id: hw.id,
     homeworkNumber: hw.homeworkNumber,
     title: hw.title,
-    description: hw.description,
+    description: hw.instructions || hw.title,
     levelId: {
-      _id: hw.levelId,
-      levelName: `Level ${hw.levelOrder}`,
-      order: hw.levelOrder,
+      _id: `67890000000000000000000${hw.level}`,
+      levelName: hw.levelName,
+      order: hw.level,
     },
     topicId: {
       _id: hw.topicId,
-      topicName: hw.title.split(": ")[1] || "Practice Topic",
+      topicName: hw.topic,
       order: 1,
     },
     lessonId: {
-      _id: hw.lessonId,
-      title: `Lesson ${hw.lessonNumber}`,
-      lessonNumber: hw.lessonNumber,
+      _id: hw.relatedLessonId,
+      title: hw.relatedLessonTitle,
+      lessonNumber: hw.homeworkNumber,
     },
-    questionIds: hw.questions.map((q) => q._id),
-    questionCount: hw.questions.length,
-    recommendedTime: hw.recommendedTime,
-    dueDate: new Date(Date.now() + hw.dueDateDaysAhead * 86400000).toISOString(),
+    questionIds: (hw.questions || []).map((q) => q.id),
+    questionCount: (hw.questions || []).length,
+    recommendedTime: hw.recommendedMinutes,
+    dueDate: hw.dueDate,
     status: hw.status,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
@@ -1222,40 +286,40 @@ export function getFallbackHomeworkList() {
 }
 
 export function getFallbackHomework(hwId: string) {
-  const hw = HOMEWORK_CATALOG.find(
+  const hw = INITIAL_HOMEWORK_LIST.find(
     (h) =>
-      h._id === hwId ||
+      h.id === hwId ||
       `hw-${h.homeworkNumber.toString().padStart(2, "0")}` === hwId ||
       h.homeworkNumber === Number(hwId)
   );
   if (!hw) return null;
 
   return {
-    _id: hw._id,
-    id: hw._id,
+    _id: `67a900000000000000${hw.homeworkNumber.toString().padStart(6, "0")}`,
+    id: hw.id,
     homeworkNumber: hw.homeworkNumber,
     title: hw.title,
-    description: hw.description,
+    description: hw.instructions || hw.title,
     levelId: {
-      _id: hw.levelId,
-      levelName: `Level ${hw.levelOrder}`,
-      order: hw.levelOrder,
+      _id: `67890000000000000000000${hw.level}`,
+      levelName: hw.levelName,
+      order: hw.level,
     },
     topicId: {
       _id: hw.topicId,
-      topicName: hw.title.split(": ")[1] || "Practice Topic",
+      topicName: hw.topic,
       order: 1,
     },
     lessonId: {
-      _id: hw.lessonId,
-      title: `Lesson ${hw.lessonNumber}`,
-      lessonNumber: hw.lessonNumber,
+      _id: hw.relatedLessonId,
+      title: hw.relatedLessonTitle,
+      lessonNumber: hw.homeworkNumber,
     },
-    questionIds: hw.questions.map((q) => q._id),
+    questionIds: (hw.questions || []).map((q) => q.id),
     questions: hw.questions,
-    questionCount: hw.questions.length,
-    recommendedTime: hw.recommendedTime,
-    dueDate: new Date(Date.now() + hw.dueDateDaysAhead * 86400000).toISOString(),
+    questionCount: (hw.questions || []).length,
+    recommendedTime: hw.recommendedMinutes,
+    dueDate: hw.dueDate,
     status: hw.status,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),

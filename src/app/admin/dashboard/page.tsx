@@ -7,17 +7,11 @@ import {
   UserPlus,
   UserCheck,
   BookOpen,
-  CheckCircle,
-  FileClock,
-  FileCheck2,
   GraduationCap,
-  CheckCircle2,
-  XCircle,
   Award,
   RefreshCw,
   ArrowRight,
   TrendingUp,
-  Layers,
   Sparkles,
 } from "lucide-react";
 
@@ -143,8 +137,8 @@ export default function AdminDashboardPage() {
         </div>
       )}
 
-      {/* Primary KPI Grid (11 Required Metrics) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      {/* Primary KPI Grid (4 Required Metrics: Total Students, New Students, Active Students, Certificates Issued / Certified Students) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* 1. Total Students */}
         <div className="p-5 rounded-xl bg-slate-900/70 border border-slate-800 hover:border-slate-700 transition relative overflow-hidden group">
           <div className="flex items-center justify-between">
@@ -208,154 +202,7 @@ export default function AdminDashboardPage() {
           </p>
         </div>
 
-        {/* 4. Students Currently Learning */}
-        <div className="p-5 rounded-xl bg-slate-900/70 border border-slate-800 hover:border-slate-700 transition relative overflow-hidden group">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-              Currently Learning
-            </span>
-            <div className="p-2 rounded-lg bg-cyan-500/10 text-cyan-400 group-hover:scale-110 transition-transform">
-              <BookOpen className="w-5 h-5" />
-            </div>
-          </div>
-          <div className="mt-3 flex items-baseline gap-2">
-            <span className="text-3xl font-extrabold text-cyan-400 tracking-tight">
-              {loading ? "..." : stats?.studentsCurrentlyLearning ?? 0}
-            </span>
-            <span className="text-xs text-slate-400">engaged</span>
-          </div>
-          <p className="text-[11px] text-slate-400 mt-2">
-            Active lesson &amp; video progress recorded
-          </p>
-        </div>
-
-        {/* 5. Completed Levels */}
-        <div className="p-5 rounded-xl bg-slate-900/70 border border-slate-800 hover:border-slate-700 transition relative overflow-hidden group">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-              Completed Levels
-            </span>
-            <div className="p-2 rounded-lg bg-teal-500/10 text-teal-400 group-hover:scale-110 transition-transform">
-              <CheckCircle className="w-5 h-5" />
-            </div>
-          </div>
-          <div className="mt-3 flex items-baseline gap-2">
-            <span className="text-3xl font-extrabold text-white tracking-tight">
-              {loading ? "..." : stats?.completedLevels ?? 0}
-            </span>
-            <span className="text-xs text-teal-400 font-medium">milestones</span>
-          </div>
-          <p className="text-[11px] text-slate-400 mt-2">
-            Total level completions by students
-          </p>
-        </div>
-
-        {/* 6. Pending Homework */}
-        <div className="p-5 rounded-xl bg-slate-900/70 border border-slate-800 hover:border-slate-700 transition relative overflow-hidden group">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-              Pending Homework
-            </span>
-            <div className="p-2 rounded-lg bg-amber-500/10 text-amber-400 group-hover:scale-110 transition-transform">
-              <FileClock className="w-5 h-5" />
-            </div>
-          </div>
-          <div className="mt-3 flex items-baseline gap-2">
-            <span className="text-3xl font-extrabold text-amber-400 tracking-tight">
-              {loading ? "..." : stats?.pendingHomework ?? 0}
-            </span>
-            <span className="text-xs text-slate-400">pending</span>
-          </div>
-          <p className="text-[11px] text-slate-400 mt-2">
-            Assigned tasks awaiting submission
-          </p>
-        </div>
-
-        {/* 7. Submitted Homework */}
-        <div className="p-5 rounded-xl bg-slate-900/70 border border-slate-800 hover:border-slate-700 transition relative overflow-hidden group">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-              Submitted Homework
-            </span>
-            <div className="p-2 rounded-lg bg-purple-500/10 text-purple-400 group-hover:scale-110 transition-transform">
-              <FileCheck2 className="w-5 h-5" />
-            </div>
-          </div>
-          <div className="mt-3 flex items-baseline gap-2">
-            <span className="text-3xl font-extrabold text-purple-300 tracking-tight">
-              {loading ? "..." : stats?.submittedHomework ?? 0}
-            </span>
-            <span className="text-xs text-slate-400">turned in</span>
-          </div>
-          <p className="text-[11px] text-slate-400 mt-2">
-            Completed homework attempts submitted
-          </p>
-        </div>
-
-        {/* 8. Total Exams */}
-        <div className="p-5 rounded-xl bg-slate-900/70 border border-slate-800 hover:border-slate-700 transition relative overflow-hidden group">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-              Total Exams
-            </span>
-            <div className="p-2 rounded-lg bg-indigo-500/10 text-indigo-400 group-hover:scale-110 transition-transform">
-              <GraduationCap className="w-5 h-5" />
-            </div>
-          </div>
-          <div className="mt-3 flex items-baseline gap-2">
-            <span className="text-3xl font-extrabold text-white tracking-tight">
-              {loading ? "..." : stats?.totalExamsConducted ?? 0}
-            </span>
-            <span className="text-xs text-slate-400">conducted</span>
-          </div>
-          <p className="text-[11px] text-slate-400 mt-2">
-            Total mock &amp; final exam sessions
-          </p>
-        </div>
-
-        {/* 9. Passed Exams */}
-        <div className="p-5 rounded-xl bg-slate-900/70 border border-slate-800 hover:border-slate-700 transition relative overflow-hidden group">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-              Passed Exams
-            </span>
-            <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400 group-hover:scale-110 transition-transform">
-              <CheckCircle2 className="w-5 h-5" />
-            </div>
-          </div>
-          <div className="mt-3 flex items-baseline gap-2">
-            <span className="text-3xl font-extrabold text-emerald-400 tracking-tight">
-              {loading ? "..." : stats?.passedExams ?? 0}
-            </span>
-            <span className="text-xs text-emerald-500 font-medium">cleared</span>
-          </div>
-          <p className="text-[11px] text-slate-400 mt-2">
-            Attempts meeting passing benchmark
-          </p>
-        </div>
-
-        {/* 10. Failed Exams */}
-        <div className="p-5 rounded-xl bg-slate-900/70 border border-slate-800 hover:border-slate-700 transition relative overflow-hidden group">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-              Failed Exams
-            </span>
-            <div className="p-2 rounded-lg bg-rose-500/10 text-rose-400 group-hover:scale-110 transition-transform">
-              <XCircle className="w-5 h-5" />
-            </div>
-          </div>
-          <div className="mt-3 flex items-baseline gap-2">
-            <span className="text-3xl font-extrabold text-rose-400 tracking-tight">
-              {loading ? "..." : stats?.failedExams ?? 0}
-            </span>
-            <span className="text-xs text-slate-400">attempts</span>
-          </div>
-          <p className="text-[11px] text-slate-400 mt-2">
-            Attempts eligible for re-examination
-          </p>
-        </div>
-
-        {/* 11. Certificates Issued */}
+        {/* 4. Certificates Issued (Count of Unique Certified Students) */}
         <div className="p-5 rounded-xl bg-slate-900/70 border border-slate-800 hover:border-slate-700 transition relative overflow-hidden group">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
@@ -369,31 +216,10 @@ export default function AdminDashboardPage() {
             <span className="text-3xl font-extrabold text-amber-400 tracking-tight">
               {loading ? "..." : stats?.certificatesIssued ?? 0}
             </span>
-            <span className="text-xs text-slate-400">credentials</span>
+            <span className="text-xs text-amber-300 font-medium">students certified</span>
           </div>
           <p className="text-[11px] text-slate-400 mt-2">
-            Verified cryptographic diplomas
-          </p>
-        </div>
-
-        {/* 12. Active Syllabus Levels */}
-        <div className="p-5 rounded-xl bg-slate-900/70 border border-slate-800 hover:border-slate-700 transition relative overflow-hidden group">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-              Total Levels
-            </span>
-            <div className="p-2 rounded-lg bg-slate-800 text-slate-300 group-hover:scale-110 transition-transform">
-              <Layers className="w-5 h-5" />
-            </div>
-          </div>
-          <div className="mt-3 flex items-baseline gap-2">
-            <span className="text-3xl font-extrabold text-white tracking-tight">
-              {loading ? "..." : stats?.totalLevels ?? 0}
-            </span>
-            <span className="text-xs text-slate-400">curricula</span>
-          </div>
-          <p className="text-[11px] text-slate-400 mt-2">
-            Active abacus syllabus grades
+            Unique students with issued certificates
           </p>
         </div>
       </div>

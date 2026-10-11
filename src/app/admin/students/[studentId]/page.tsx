@@ -24,6 +24,8 @@ import {
   AlertCircle,
   ShieldCheck,
   Sparkles,
+  X,
+  Save,
 } from "lucide-react";
 import ProctoringModal from "@/components/admin/ProctoringModal";
 
@@ -58,6 +60,17 @@ interface StudentDetailResponse {
       evaluated: number;
       pending: number;
     };
+    homeworkList?: {
+      id: string;
+      title: string;
+      homeworkNumber: number;
+      recommendedTime: number;
+      assignedDate: string;
+      dueDate: string;
+      status: string;
+      levelOrder?: number;
+      levelName?: string;
+    }[];
   };
   levelProgress: {
     levelId: string;
@@ -68,6 +81,7 @@ interface StudentDetailResponse {
     completionDate: string | null;
     totalLessons: number;
     completedLessons: number;
+    worksheetPractices?: number;
   }[];
   certificates?: {
     id: string;
@@ -125,44 +139,153 @@ export default function AdminStudentDetailPage() {
   const [isProctoringOpen, setIsProctoringOpen] = useState(false);
   const [examFilter, setExamFilter] = useState<"all" | "final" | "mock">("all");
 
-  useEffect(() => {
+  // Level & Homework date editing states
+  const [levelDateModal, setLevelDateModal] = useState<{
+    levelOrder: number;
+    levelName: string;
+    startDate: string;
+    completionDate: string;
+  } | null>(null);
+
+  const [hwDateModal, setHwDateModal] = useState<{
+    homeworkId: string;
+    title: string;
+    assignedDate: string;
+    dueDate: string;
+  } | null>(null);
+
+  const [isSavingDate, setIsSavingDate] = useState(false);
+  const [dateFeedback, setDateFeedback] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
+
+  // Homework level filter state (all, 1, 2, etc.)
+  const [hwLevelFilter, setHwLevelFilter] = useState<"all" | number>("all");
+
+  const fetchDetails = async () => {
     if (!studentId) return;
+    try {
+      const storedToken =
+        typeof window !== "undefined"
+          ? localStorage.getItem("abacus_admin_token")
+          : null;
+      const headers: Record<string, string> = {};
+      if (storedToken) headers["Authorization"] = `Bearer ${storedToken}`;
 
-    const fetchDetails = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const storedToken =
-          typeof window !== "undefined"
-            ? localStorage.getItem("abacus_admin_token")
-            : null;
-        const headers: Record<string, string> = {};
-        if (storedToken) headers["Authorization"] = `Bearer ${storedToken}`;
+      const res = await fetch(`/api/admin/students/${studentId}`, {
+        headers,
+        credentials: "include",
+      });
 
-        const res = await fetch(`/api/admin/students/${studentId}`, {
-          headers,
-          credentials: "include",
-        });
-
-        const data = await res.json();
-        if (data.success && data.student) {
-          setStudent(data.student);
-        } else {
-          setError(data.error || "Failed to load student details.");
-        }
-      } catch (err: any) {
-        setError(err.message || "Network error loading student details.");
-      } finally {
-        setLoading(false);
+      const data = await res.json();
+      if (data.success && data.student) {
+        setStudent(data.student);
+      } else {
+        setError(data.error || "Failed to load student details.");
       }
-    };
+    } catch (err: unknown) {
+      const errorMsg = err instanceof Error ? err.message : "Network error loading student details.";
+      setError(errorMsg);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchDetails();
   }, [studentId]);
 
   const handleOpenProctoring = (attemptId: string) => {
     setSelectedAttemptId(attemptId);
     setIsProctoringOpen(true);
+  };
+
+  const handleSaveLevelDates = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!levelDateModal) return;
+    setIsSavingDate(true);
+    setDateFeedback(null);
+
+    try {
+      const storedToken =
+        typeof window !== "undefined" ? localStorage.getItem("abacus_admin_token") : null;
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (storedToken) headers["Authorization"] = `Bearer ${storedToken}`;
+
+      const res = await fetch(`/api/admin/students/${studentId}`, {
+        method: "PUT",
+        headers,
+        body: JSON.stringify({
+          action: "update_level_dates",
+          levelOrder: levelDateModal.levelOrder,
+          startDate: levelDateModal.startDate,
+          completionDate: levelDateModal.completionDate || null,
+        }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        setDateFeedback({
+          type: "success",
+          text: `Level ${levelDateModal.levelOrder} dates saved! Next level start date automatically chained +1 day after completion.`,
+        });
+        await fetchDetails();
+        setTimeout(() => {
+          setLevelDateModal(null);
+          setDateFeedback(null);
+        }, 1500);
+      } else {
+        setDateFeedback({ type: "error", text: data.error || "Failed to update level dates." });
+      }
+    } catch (err: unknown) {
+      const errorMsg = err instanceof Error ? err.message : "Network error updating dates.";
+      setDateFeedback({ type: "error", text: errorMsg });
+    } finally {
+      setIsSavingDate(false);
+    }
+  };
+
+  const handleSaveHomeworkDates = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!hwDateModal) return;
+    setIsSavingDate(true);
+    setDateFeedback(null);
+
+    try {
+      const storedToken =
+        typeof window !== "undefined" ? localStorage.getItem("abacus_admin_token") : null;
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (storedToken) headers["Authorization"] = `Bearer ${storedToken}`;
+
+      const res = await fetch(`/api/admin/students/${studentId}`, {
+        method: "PUT",
+        headers,
+        body: JSON.stringify({
+          action: "update_homework_dates",
+          homeworkId: hwDateModal.homeworkId,
+          assignedDate: hwDateModal.assignedDate,
+          dueDate: hwDateModal.dueDate,
+        }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        setDateFeedback({ type: "success", text: "Homework dates updated successfully!" });
+        await fetchDetails();
+        setTimeout(() => {
+          setHwDateModal(null);
+          setDateFeedback(null);
+        }, 1200);
+      } else {
+        setDateFeedback({ type: "error", text: data.error || "Failed to update homework dates." });
+      }
+    } catch (err: unknown) {
+      const errorMsg = err instanceof Error ? err.message : "Network error updating homework dates.";
+      setDateFeedback({ type: "error", text: errorMsg });
+    } finally {
+      setIsSavingDate(false);
+    }
   };
 
   if (loading) {
@@ -381,6 +504,152 @@ export default function AdminStudentDetailPage() {
                 </span>
               </div>
             </div>
+
+            {/* Individual Student Homework Assignments Table with Date Changing */}
+            {learningInformation.homeworkList && learningInformation.homeworkList.length > 0 && (() => {
+              const allHwList = learningInformation.homeworkList || [];
+              const availableHwLevels = Array.from(
+                new Set(allHwList.map((h) => h.levelOrder || 1))
+              ).sort((a, b) => a - b);
+              const displayHwList = allHwList.filter((h) => {
+                if (hwLevelFilter === "all") return true;
+                return (h.levelOrder || 1) === hwLevelFilter;
+              });
+
+              return (
+                <div className="pt-3 border-t border-slate-800/80 space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <Calendar className="w-3.5 h-3.5 text-purple-400" />
+                      <span className="text-xs font-semibold text-slate-200">
+                        Manage Student Homework Schedule &amp; Dates
+                      </span>
+                    </div>
+                    <span className="text-[10px] text-slate-400">
+                      Click Change Dates to reschedule
+                    </span>
+                  </div>
+
+                  {/* Level Tabs / Filter Bar */}
+                  <div className="flex flex-wrap items-center gap-1.5 pb-0.5">
+                    <button
+                      type="button"
+                      onClick={() => setHwLevelFilter("all")}
+                      className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition ${
+                        hwLevelFilter === "all"
+                          ? "bg-purple-600 text-white shadow-sm"
+                          : "bg-slate-900 text-slate-400 hover:text-slate-200 border border-slate-800"
+                      }`}
+                    >
+                      All Levels ({allHwList.length})
+                    </button>
+                    {availableHwLevels.map((lvl) => {
+                      const count = allHwList.filter((h) => (h.levelOrder || 1) === lvl).length;
+                      const isCurrent =
+                        (learningInformation.currentLevel || "").toLowerCase().includes(`level ${lvl}`);
+                      return (
+                        <button
+                          key={lvl}
+                          type="button"
+                          onClick={() => setHwLevelFilter(lvl)}
+                          className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition flex items-center gap-1.5 ${
+                            hwLevelFilter === lvl
+                              ? "bg-purple-600 text-white shadow-sm"
+                              : "bg-slate-900 text-slate-400 hover:text-slate-200 border border-slate-800"
+                          }`}
+                        >
+                          <span>Level {lvl} ({count})</span>
+                          {isCurrent && (
+                            <span className="px-1 py-0.2 text-[9px] rounded bg-purple-400/20 text-purple-200 border border-purple-400/30">
+                              Current
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <div className="overflow-x-auto max-h-56 overflow-y-auto rounded-lg border border-slate-800/80">
+                    <table className="w-full text-left text-xs text-slate-300">
+                      <thead className="bg-slate-900/90 text-slate-400 uppercase text-[10px] sticky top-0">
+                        <tr>
+                          <th className="py-2 px-3">Homework</th>
+                          <th className="py-2 px-3">Assigned Date</th>
+                          <th className="py-2 px-3">Due Date</th>
+                          <th className="py-2 px-3">Status</th>
+                          <th className="py-2 px-3 text-right">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-800/60">
+                        {displayHwList.map((hw) => {
+                          const isEvaluated = hw.status?.toLowerCase() === "evaluated";
+                          return (
+                            <tr key={hw.id} className="hover:bg-slate-900/50 transition">
+                              <td className="py-2 px-3 font-medium text-white whitespace-nowrap">
+                                <div className="flex items-center gap-2">
+                                  <span>HW {hw.homeworkNumber}: {hw.title}</span>
+                                  <span
+                                    className={`px-1.5 py-0.2 rounded text-[9px] font-bold ${
+                                      (hw.levelOrder || 1) === 1
+                                        ? "bg-blue-950/70 text-blue-300 border border-blue-800/40"
+                                        : "bg-purple-950/70 text-purple-300 border border-purple-800/40"
+                                    }`}
+                                  >
+                                    Level {hw.levelOrder || 1}
+                                  </span>
+                                </div>
+                              </td>
+                              <td className="py-2 px-3 font-mono text-purple-300 whitespace-nowrap">
+                                {hw.assignedDate}
+                              </td>
+                              <td className="py-2 px-3 font-mono text-amber-300 whitespace-nowrap">
+                                {hw.dueDate}
+                              </td>
+                              <td className="py-2 px-3">
+                                <span
+                                  className={`px-1.5 py-0.5 rounded text-[10px] uppercase font-bold ${
+                                    isEvaluated
+                                      ? "bg-emerald-950/80 text-emerald-400 border border-emerald-800/60"
+                                      : hw.status?.toLowerCase() === "submitted"
+                                      ? "bg-purple-950/80 text-purple-300 border border-purple-800/60"
+                                      : "bg-slate-800 text-slate-300"
+                                  }`}
+                                >
+                                  {hw.status}
+                                </span>
+                              </td>
+                              <td className="py-2 px-3 text-right whitespace-nowrap">
+                                {isEvaluated ? (
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold text-emerald-400 bg-emerald-950/40 border border-emerald-800/40">
+                                    <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                                    Evaluated
+                                  </span>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      setHwDateModal({
+                                        homeworkId: hw.id,
+                                        title: `HW ${hw.homeworkNumber}: ${hw.title}`,
+                                        assignedDate: hw.assignedDate,
+                                        dueDate: hw.dueDate,
+                                      })
+                                    }
+                                    className="px-2 py-0.5 rounded bg-indigo-600/30 hover:bg-indigo-600 text-indigo-300 hover:text-white border border-indigo-500/40 text-[11px] font-semibold transition"
+                                  >
+                                    Change Dates
+                                  </button>
+                                )}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         </div>
       </div>
@@ -443,31 +712,59 @@ export default function AdminStudentDetailPage() {
                     )}
                   </div>
 
-                  <div className="space-y-1.5 text-xs text-slate-400 mt-3">
-                    <div className="flex justify-between">
-                      <span>Lessons Completed:</span>
-                      <span className="text-slate-200 font-medium">
-                        {lvl.completedLessons} / {lvl.totalLessons}
+                  <div className="space-y-2 text-xs text-slate-400 mt-3">
+                    <div className="flex justify-between items-center">
+                      <span>Videos Completed:</span>
+                      <span className="text-slate-100 font-bold bg-slate-800/80 px-2 py-0.5 rounded border border-slate-700/60">
+                        {lvl.completedLessons} / {lvl.totalLessons} videos
                       </span>
                     </div>
 
-                    {lvl.startedDate && (
-                      <div className="flex justify-between">
-                        <span>Started Date:</span>
-                        <span className="text-slate-300 font-mono text-[11px]">
-                          {new Date(lvl.startedDate).toLocaleDateString()}
-                        </span>
-                      </div>
-                    )}
+                    <div className="flex justify-between items-center">
+                      <span>Worksheets Practiced:</span>
+                      <span className="text-amber-300 font-semibold flex items-center gap-1 bg-amber-950/40 px-2 py-0.5 rounded border border-amber-800/50">
+                        <ListOrdered className="w-3 h-3 text-amber-400" />
+                        {lvl.worksheetPractices || 0} times
+                      </span>
+                    </div>
 
-                    {lvl.completionDate && (
-                      <div className="flex justify-between">
-                        <span>Completion Date:</span>
-                        <span className="text-emerald-400 font-mono text-[11px] font-semibold">
-                          {new Date(lvl.completionDate).toLocaleDateString()}
-                        </span>
-                      </div>
-                    )}
+                    <div className="flex justify-between">
+                      <span>Start Date:</span>
+                      <span className="text-slate-300 font-mono text-[11px]">
+                        {lvl.startedDate
+                          ? new Date(lvl.startedDate).toLocaleDateString()
+                          : "Not scheduled"}
+                      </span>
+                    </div>
+
+                    <div className="flex justify-between">
+                      <span>Completion Date:</span>
+                      <span className="text-emerald-400 font-mono text-[11px] font-semibold">
+                        {lvl.completionDate
+                          ? new Date(lvl.completionDate).toLocaleDateString()
+                          : "In progress / Ongoing"}
+                      </span>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setLevelDateModal({
+                          levelOrder: lvl.order,
+                          levelName: lvl.levelName,
+                          startDate: lvl.startedDate
+                            ? lvl.startedDate.split("T")[0]
+                            : "2026-10-05",
+                          completionDate: lvl.completionDate
+                            ? lvl.completionDate.split("T")[0]
+                            : "",
+                        })
+                      }
+                      className="mt-2 w-full py-1 px-2.5 rounded-lg bg-indigo-600/20 hover:bg-indigo-600 text-indigo-300 hover:text-white border border-indigo-500/30 text-[11px] font-semibold flex items-center justify-center gap-1.5 transition"
+                    >
+                      <Calendar className="w-3 h-3" />
+                      <span>Edit Enrollment Dates</span>
+                    </button>
                   </div>
                 </div>
               </div>
@@ -694,6 +991,198 @@ export default function AdminStudentDetailPage() {
           </div>
         );
       })()}
+
+      {/* Level Enrollment Dates Modal */}
+      {levelDateModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="w-full max-w-md rounded-2xl bg-slate-900 border border-slate-800 p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+              <div className="flex items-center gap-2">
+                <Calendar className="w-4 h-4 text-indigo-400" />
+                <h3 className="font-semibold text-sm text-white">
+                  Edit Level {levelDateModal.levelOrder} Enrollment Dates
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setLevelDateModal(null)}
+                className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-400">
+              Customize the start date and completion date for{" "}
+              <strong className="text-slate-200">{levelDateModal.levelName}</strong>.
+            </p>
+
+            {dateFeedback && (
+              <div
+                className={`p-3 rounded-xl text-xs font-medium border flex items-center gap-2 ${
+                  dateFeedback.type === "success"
+                    ? "bg-emerald-950/60 border-emerald-800 text-emerald-300"
+                    : "bg-rose-950/60 border-rose-800 text-rose-300"
+                }`}
+              >
+                {dateFeedback.type === "success" ? (
+                  <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
+                ) : (
+                  <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
+                )}
+                <span>{dateFeedback.text}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleSaveLevelDates} className="space-y-4">
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-slate-300 block">
+                  Level Start Date
+                </label>
+                <input
+                  type="date"
+                  required
+                  value={levelDateModal.startDate}
+                  onChange={(e) =>
+                    setLevelDateModal({ ...levelDateModal, startDate: e.target.value })
+                  }
+                  className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-slate-200 text-xs focus:outline-none focus:border-indigo-500 font-mono"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-slate-300 block">
+                  Level Completion Date (optional)
+                </label>
+                <input
+                  type="date"
+                  value={levelDateModal.completionDate}
+                  onChange={(e) =>
+                    setLevelDateModal({ ...levelDateModal, completionDate: e.target.value })
+                  }
+                  className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-slate-200 text-xs focus:outline-none focus:border-indigo-500 font-mono"
+                />
+                <span className="text-[10px] text-indigo-300 block pt-1">
+                  💡 When a completion date is entered, the next level (Level {levelDateModal.levelOrder + 1}) will automatically begin 1 day after.
+                </span>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setLevelDateModal(null)}
+                  className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSavingDate}
+                  className="px-4 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold flex items-center gap-1.5 transition disabled:opacity-50"
+                >
+                  <Save className="w-3.5 h-3.5" />
+                  <span>{isSavingDate ? "Saving..." : "Save Dates"}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Homework Dates Reschedule Modal */}
+      {hwDateModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="w-full max-w-md rounded-2xl bg-slate-900 border border-slate-800 p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+              <div className="flex items-center gap-2">
+                <Calendar className="w-4 h-4 text-purple-400" />
+                <h3 className="font-semibold text-sm text-white">
+                  Reschedule Homework Dates
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setHwDateModal(null)}
+                className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-400">
+              Change assigned date and due date for:{" "}
+              <strong className="text-slate-200">{hwDateModal.title}</strong>
+            </p>
+
+            {dateFeedback && (
+              <div
+                className={`p-3 rounded-xl text-xs font-medium border flex items-center gap-2 ${
+                  dateFeedback.type === "success"
+                    ? "bg-emerald-950/60 border-emerald-800 text-emerald-300"
+                    : "bg-rose-950/60 border-rose-800 text-rose-300"
+                }`}
+              >
+                {dateFeedback.type === "success" ? (
+                  <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
+                ) : (
+                  <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
+                )}
+                <span>{dateFeedback.text}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleSaveHomeworkDates} className="space-y-4">
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-slate-300 block">
+                  Assigned Date
+                </label>
+                <input
+                  type="date"
+                  required
+                  value={hwDateModal.assignedDate}
+                  onChange={(e) =>
+                    setHwDateModal({ ...hwDateModal, assignedDate: e.target.value })
+                  }
+                  className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-slate-200 text-xs focus:outline-none focus:border-indigo-500 font-mono"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-slate-300 block">
+                  Due Date
+                </label>
+                <input
+                  type="date"
+                  required
+                  value={hwDateModal.dueDate}
+                  onChange={(e) =>
+                    setHwDateModal({ ...hwDateModal, dueDate: e.target.value })
+                  }
+                  className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-slate-200 text-xs focus:outline-none focus:border-indigo-500 font-mono"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setHwDateModal(null)}
+                  className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSavingDate}
+                  className="px-4 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold flex items-center gap-1.5 transition disabled:opacity-50"
+                >
+                  <Save className="w-3.5 h-3.5" />
+                  <span>{isSavingDate ? "Saving..." : "Save Homework Dates"}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Proctoring Events Modal */}
       <ProctoringModal

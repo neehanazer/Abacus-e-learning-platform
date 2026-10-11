@@ -12,6 +12,10 @@ import {
   seedHomeworkData,
   getFallbackHomeworkList,
 } from "@/lib/homeworkSeedData";
+import {
+  calculateHomeworkSchedule,
+  isDueDateOver,
+} from "@/data/homeworkData";
 
 export const dynamic = "force-dynamic";
 
@@ -136,17 +140,47 @@ export async function GET(req: NextRequest) {
           .lean();
       }
 
+      const studentJoinDate = (student as any)?.createdAt || "2026-10-10";
+
       // Format response with lesson availability & attempt metrics
-      let result = homeworkDocs.map((hw: any) => {
+      let result = homeworkDocs.map((hw: any, idx: number) => {
         const hwIdStr = hw._id.toString();
         const linkedLessonId = hw.lessonId?._id?.toString() || hw.lessonId?.toString() || "";
-        const lessonNum = hw.lessonId?.lessonNumber || hw.homeworkNumber || 1;
+        const lessonNum = hw.lessonId?.lessonNumber || hw.homeworkNumber || (idx + 1);
 
         // Lesson is considered completed if recorded in progress
         const isLessonCompleted = linkedLessonId ? completedLessonSet.has(linkedLessonId) : false;
 
-        // Introductory Lesson 1 homework is always unlocked so new students can begin immediately
-        const isAvailable = isLessonCompleted || lessonNum === 1 || hw.homeworkNumber === 1;
+        // Dynamic schedule calculation: HW k is assigned joinDate + (2 * k) days, due + 5 days
+        const rankInLevel = typeof hw.order === "number" && hw.order >= 1 ? hw.order : idx + 1;
+        const joinDt = new Date(studentJoinDate);
+        const assignedDt = new Date(joinDt);
+        assignedDt.setDate(assignedDt.getDate() + 2 * rankInLevel);
+        const dueDt = new Date(assignedDt);
+        dueDt.setDate(dueDt.getDate() + 5);
+
+        const now = new Date();
+        let finalAssignedDate = assignedDt.toISOString().split("T")[0];
+        let finalDueDate = dueDt.toISOString().split("T")[0];
+        let finalIsUpcoming = assignedDt > now;
+        let finalIsOverdue = dueDt < now;
+
+        // Check if admin customized dates for this homework assignment
+        const customSchedule = Array.isArray((student as any)?.customHomeworkSchedules)
+          ? (student as any).customHomeworkSchedules.find(
+              (cs: any) => cs.homeworkId === hwIdStr || cs.homeworkId === String(rankInLevel)
+            )
+          : null;
+
+        if (customSchedule) {
+          finalAssignedDate = customSchedule.assignedDate;
+          finalDueDate = customSchedule.dueDate;
+          finalIsUpcoming = new Date(finalAssignedDate) > now;
+          finalIsOverdue = new Date(finalDueDate) < now;
+        }
+
+        // Available when assigned date has arrived and lesson is accessible
+        const isAvailable = (isLessonCompleted || lessonNum === 1 || hw.homeworkNumber === 1) && !finalIsUpcoming;
 
         // Compute student's attempts for this homework
         const attemptsForHw = studentAttempts.filter(
@@ -175,8 +209,12 @@ export async function GET(req: NextRequest) {
         return {
           ...hw,
           id: hwIdStr,
+          assignedDate: finalAssignedDate,
+          dueDate: finalDueDate,
           status: student ? studentStatus : hw.status,
           isAvailable,
+          isUpcoming: finalIsUpcoming,
+          isOverdue: finalIsOverdue,
           lessonCompleted: isLessonCompleted,
           attemptsCount: attemptsForHw.length,
           bestScore,

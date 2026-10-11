@@ -16,6 +16,7 @@ export interface IHomework extends Document {
   assignedStudentIds?: mongoose.Types.ObjectId[];
   status: HomeworkStatus;
   homeworkNumber?: number;
+  levelOrder?: number;
   order?: number;
   createdAt: Date;
   updatedAt: Date;
@@ -92,6 +93,11 @@ const HomeworkSchema = new Schema<IHomework>(
     homeworkNumber: {
       type: Number,
       default: 1,
+    },
+    levelOrder: {
+      type: Number,
+      default: 1,
+      index: true,
     },
     order: {
       type: Number,

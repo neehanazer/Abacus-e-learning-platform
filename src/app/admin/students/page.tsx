@@ -15,6 +15,8 @@ import {
   ChevronLeft,
   ChevronRight,
   UserCheck,
+  UserPlus,
+  Award,
 } from "lucide-react";
 
 interface StudentItem {
@@ -37,6 +39,12 @@ export default function AdminStudentsPage() {
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [summary, setSummary] = useState<{
+    totalStudents: number;
+    newStudents: number;
+    activeStudents: number;
+    certifiedStudents: number;
+  } | null>(null);
 
   // Filters & Search
   const [search, setSearch] = useState("");
@@ -96,6 +104,9 @@ export default function AdminStudentsPage() {
         setStudents(data.students || []);
         setTotal(data.total || 0);
         setTotalPages(data.totalPages || 1);
+        if (data.summary) {
+          setSummary(data.summary);
+        }
       }
     } catch {
       setStudents([]);
@@ -178,6 +189,73 @@ export default function AdminStudentsPage() {
           <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin text-indigo-400" : ""}`} />
           <span>Refresh List</span>
         </button>
+      </div>
+
+      {/* 4 Primary KPI Summary Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* 1. Total Students */}
+        <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 flex items-center justify-between">
+          <div>
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 block mb-1">
+              Total Students
+            </span>
+            <span className="text-2xl font-extrabold text-white">
+              {summary ? summary.totalStudents : total}
+            </span>
+            <span className="text-[11px] text-slate-400 block mt-0.5">Enrolled learners</span>
+          </div>
+          <div className="p-2.5 rounded-lg bg-blue-500/10 text-blue-400">
+            <Users className="w-5 h-5" />
+          </div>
+        </div>
+
+        {/* 2. New Students */}
+        <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 flex items-center justify-between">
+          <div>
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 block mb-1">
+              New Students (30d)
+            </span>
+            <span className="text-2xl font-extrabold text-emerald-400">
+              {summary?.newStudents ?? 0}
+            </span>
+            <span className="text-[11px] text-emerald-500 block mt-0.5">Recent registrations</span>
+          </div>
+          <div className="p-2.5 rounded-lg bg-emerald-500/10 text-emerald-400">
+            <UserPlus className="w-5 h-5" />
+          </div>
+        </div>
+
+        {/* 3. Active Students */}
+        <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 flex items-center justify-between">
+          <div>
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 block mb-1">
+              Active Students
+            </span>
+            <span className="text-2xl font-extrabold text-white">
+              {summary?.activeStudents ?? 0}
+            </span>
+            <span className="text-[11px] text-indigo-400 block mt-0.5">Active standing</span>
+          </div>
+          <div className="p-2.5 rounded-lg bg-indigo-500/10 text-indigo-400">
+            <UserCheck className="w-5 h-5" />
+          </div>
+        </div>
+
+        {/* 4. Certificates Issued (Count of Unique Certified Students) */}
+        <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 flex items-center justify-between">
+          <div>
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 block mb-1">
+              Certificates Issued
+            </span>
+            <span className="text-2xl font-extrabold text-amber-400">
+              {summary?.certifiedStudents ?? 0}
+            </span>
+            <span className="text-[11px] text-amber-300 block mt-0.5">Unique students certified</span>
+          </div>
+          <div className="p-2.5 rounded-lg bg-amber-500/10 text-amber-400">
+            <Award className="w-5 h-5" />
+          </div>
+        </div>
       </div>
 
       {/* Filter and Search Bar */}

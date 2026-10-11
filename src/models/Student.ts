@@ -1,6 +1,18 @@
 import mongoose, { Schema, Document, Model } from "mongoose";
 import { UserRole, AccountStatus, ISafeStudent } from "@/types";
 
+export interface IStudentLevelDate {
+  levelOrder: number;
+  startDate: string;
+  completionDate?: string | null;
+}
+
+export interface IStudentCustomHomeworkSchedule {
+  homeworkId: string;
+  assignedDate: string;
+  dueDate: string;
+}
+
 export interface IStudent extends Document {
   name: string;
   email: string;
@@ -24,6 +36,8 @@ export interface IStudent extends Document {
   finalExamStatus?: "PASS" | "FAIL" | "NOT_ATTENDED";
   finalExamScore?: number | null;
   completionDate?: Date | null;
+  levelDates?: IStudentLevelDate[];
+  customHomeworkSchedules?: IStudentCustomHomeworkSchedule[];
   createdAt: Date;
   updatedAt: Date;
   toSafeObject(): ISafeStudent;
@@ -146,6 +160,20 @@ const StudentSchema = new Schema<IStudent>(
       type: Date,
       default: null,
     },
+    levelDates: [
+      {
+        levelOrder: { type: Number, required: true },
+        startDate: { type: String, required: true },
+        completionDate: { type: String, default: null },
+      },
+    ],
+    customHomeworkSchedules: [
+      {
+        homeworkId: { type: String, required: true },
+        assignedDate: { type: String, required: true },
+        dueDate: { type: String, required: true },
+      },
+    ],
   },
   {
     timestamps: true,
@@ -215,7 +243,13 @@ StudentSchema.methods.toSafeObject = function (): ISafeStudent {
         : String(doc.email || "").toLowerCase() === "neehanaz226@gmail.com"
         ? "2026-10-05T00:00:00.000Z"
         : null,
-    createdAt: doc.createdAt instanceof Date ? doc.createdAt.toISOString() : String(doc.createdAt || ""),
+    createdAt:
+      String(doc.email || "").toLowerCase() === "neehanaz226@gmail.com" &&
+      (!doc.createdAt || new Date(doc.createdAt).getFullYear() < 2026 || new Date(doc.createdAt).getMonth() < 9)
+        ? "2026-10-10T00:00:00.000Z"
+        : doc.createdAt instanceof Date
+        ? doc.createdAt.toISOString()
+        : String(doc.createdAt || ""),
     updatedAt: doc.updatedAt instanceof Date ? doc.updatedAt.toISOString() : String(doc.updatedAt || ""),
   };
 };

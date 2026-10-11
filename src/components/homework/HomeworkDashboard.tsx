@@ -3,7 +3,13 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useHomework } from "@/context/HomeworkContext";
-import { HomeworkTask, isDueDateToday } from "@/data/homeworkData";
+import {
+  HomeworkTask,
+  isDueDateToday,
+  isDueDateOver,
+  isTaskUpcoming,
+  formatAbacusDate,
+} from "@/data/homeworkData";
 import {
   BookOpen,
   CheckCircle2,
@@ -18,36 +24,13 @@ import {
   TrendingUp,
   Filter,
   AlertCircle,
+  Lock,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { HomeworkIntroModal } from "./HomeworkIntroModal";
 import { HomeworkPlayer } from "./HomeworkPlayer";
 import { HomeworkSubmitModal } from "./HomeworkSubmitModal";
 import { HomeworkResultView } from "./HomeworkResultView";
-
-export function isDueDateOver(dueDateStr?: string): boolean {
-  if (!dueDateStr) return false;
-  const now = new Date();
-
-  // Try direct parse
-  let parsed = new Date(dueDateStr);
-  if (!isNaN(parsed.getTime())) {
-    if (!dueDateStr.includes("T") && !dueDateStr.includes(":")) {
-      parsed.setHours(23, 59, 59, 999);
-    }
-    return now.getTime() > parsed.getTime();
-  }
-
-  // Handle format like "18 September" or "18 September 2026"
-  const currentYear = now.getFullYear();
-  parsed = new Date(`${dueDateStr} ${currentYear}`);
-  if (!isNaN(parsed.getTime())) {
-    parsed.setHours(23, 59, 59, 999);
-    return now.getTime() > parsed.getTime();
-  }
-
-  return false;
-}
 
 const HOMEWORK_LEVELS = [
   { level: 1, name: "Foundations", icon: "🌱" },
@@ -88,6 +71,7 @@ export const HomeworkDashboard: React.FC = () => {
     startHomework,
     retryHomework,
     attemptHistory,
+    studentJoinDate,
   } = useHomework();
 
   // If in active player, intro, or result mode, render those views
@@ -114,8 +98,10 @@ export const HomeworkDashboard: React.FC = () => {
   // Homework Access Rule: Show ONLY currentLevel homework!
   const displayedTasks = pendingTasks.filter((t) => t.level === studentLevel);
 
-  // Pending tasks due today for the student's level
-  const dueTodayTasks = displayedTasks.filter((t) => isDueDateToday(t.dueDate));
+  // Pending tasks due today for the student's level (excluding not-yet-assigned upcoming ones)
+  const dueTodayTasks = displayedTasks.filter(
+    (t) => isDueDateToday(t.dueDate) && !isTaskUpcoming(t.assignedDate)
+  );
 
   // Calculate high-level stats for student's current level
   const activeLevelPending = displayedTasks.length;
@@ -266,25 +252,32 @@ export const HomeworkDashboard: React.FC = () => {
       </div>
 
       {/* ============================================================ */}
-      {/* 2. ENROLLED LEVEL BANNER (NO OTHER LEVELS CAN BE SELECTED) */}
+      {/* 2. ENROLLED LEVEL & AUTOMATIC CADENCE BANNER */}
       {/* ============================================================ */}
-      <div className="bg-white rounded-3xl p-4 sm:p-5 border-2 border-amber-200/90 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+      <div className="bg-white rounded-3xl p-4 sm:p-5 border-2 border-amber-200/90 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-amber-100 flex items-center justify-center text-xl shadow-inner">
+          <div className="w-11 h-11 rounded-2xl bg-amber-100 flex items-center justify-center text-xl shadow-inner flex-shrink-0">
             📚
           </div>
           <div>
             <div className="text-xs font-black uppercase tracking-wider text-slate-500">
-              Assigned Homework Level:
+              Assigned Homework Schedule:
             </div>
-            <div className="text-base font-extrabold text-[#1D3557]">
-              Level {studentLevel} Assignments Only
+            <div className="text-base font-extrabold text-[#1D3557] flex items-center gap-2 flex-wrap">
+              <span>Level {studentLevel} Assignments Only</span>
+              <span className="text-xs font-bold text-amber-800 bg-amber-100 px-2.5 py-0.5 rounded-full border border-amber-200">
+                Joined: {formatAbacusDate(studentJoinDate)}
+              </span>
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-bold text-amber-900 bg-amber-100 px-3 py-1 rounded-full border border-amber-300">
-            🔒 Level Access Locked to Enrolled Level {studentLevel}
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-xs font-bold text-indigo-900 bg-indigo-50 px-3 py-1.5 rounded-full border border-indigo-200 flex items-center gap-1.5">
+            <Calendar className="w-3.5 h-3.5 text-indigo-600" />
+            Every 2 days interval • 5-day due date window
+          </span>
+          <span className="text-xs font-bold text-amber-900 bg-amber-100 px-3 py-1.5 rounded-full border border-amber-300">
+            🔒 Level {studentLevel}
           </span>
         </div>
       </div>
@@ -409,6 +402,8 @@ export const HomeworkDashboard: React.FC = () => {
           {displayedTasks.map((task) => {
             const isInProgress = task.status === "in-progress";
             const isOverdue = isDueDateOver(task.dueDate);
+            const isUpcoming = isTaskUpcoming(task.assignedDate);
+            const isDueToday = isDueDateToday(task.dueDate) && !isUpcoming && !isOverdue;
 
             return (
               <motion.div
@@ -418,6 +413,8 @@ export const HomeworkDashboard: React.FC = () => {
                 className={`bg-white rounded-3xl border-3 p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between relative overflow-hidden ${
                   isOverdue
                     ? "border-rose-200 bg-rose-50/20"
+                    : isUpcoming
+                    ? "border-indigo-200/80 bg-indigo-50/15"
                     : isInProgress
                     ? "border-blue-300"
                     : "border-amber-200"
@@ -435,6 +432,15 @@ export const HomeworkDashboard: React.FC = () => {
                         <AlertCircle className="w-3.5 h-3.5 text-rose-600" />
                         Expired
                       </span>
+                    ) : isUpcoming ? (
+                      <span className="text-xs font-black px-3 py-1 rounded-full bg-indigo-100 text-indigo-900 border border-indigo-300 flex items-center gap-1 shadow-sm">
+                        <Clock className="w-3.5 h-3.5 text-indigo-600" />
+                        Unlocks {task.assignedDate}
+                      </span>
+                    ) : isDueToday ? (
+                      <span className="text-xs font-black px-3 py-1 rounded-full bg-rose-100 text-rose-900 border border-rose-300 flex items-center gap-1 shadow-sm animate-pulse">
+                        ⚠️ Due Today
+                      </span>
                     ) : isInProgress ? (
                       <span className="text-xs font-black px-3 py-1 rounded-full bg-blue-100 text-blue-900 border border-blue-300 flex items-center gap-1 shadow-sm">
                         <Clock className="w-3.5 h-3.5 text-blue-600" />
@@ -442,7 +448,7 @@ export const HomeworkDashboard: React.FC = () => {
                       </span>
                     ) : (
                       <span className="text-xs font-black px-3 py-1 rounded-full bg-amber-100 text-amber-900 border border-amber-300 flex items-center gap-1 shadow-sm">
-                        🟡 Pending
+                        🟡 Active
                       </span>
                     )}
                   </div>
@@ -464,25 +470,44 @@ export const HomeworkDashboard: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Due Date & Questions Badge */}
+                  {/* Scheduled Dates (Assigned & Due Dates) */}
                   <div
-                    className={`flex items-center justify-between text-xs font-bold p-2.5 rounded-xl border mb-4 ${
+                    className={`flex flex-col gap-1.5 text-xs font-bold p-3 rounded-2xl border mb-4 ${
                       isOverdue
                         ? "bg-rose-50 border-rose-200 text-rose-700"
-                        : "bg-stone-50 border-stone-200 text-stone-500"
+                        : isUpcoming
+                        ? "bg-indigo-50/70 border-indigo-200 text-indigo-900"
+                        : "bg-amber-50/60 border-amber-200/80 text-amber-900"
                     }`}
                   >
-                    <span className="flex items-center gap-1.5">
-                      <Calendar className={`w-3.5 h-3.5 ${isOverdue ? "text-rose-500" : "text-stone-400"}`} />
-                      Due: {task.dueDate}
-                    </span>
-                    {isOverdue ? (
-                      <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-rose-200 text-rose-900 border border-rose-300">
-                        Overdue
+                    <div className="flex items-center justify-between">
+                      <span className="flex items-center gap-1 text-[11px] text-stone-500 font-semibold">
+                        <Calendar className="w-3 h-3 text-stone-400" />
+                        Assigned: <strong className="text-stone-700 font-bold">{task.assignedDate}</strong>
                       </span>
-                    ) : (
-                      <span>10 Questions</span>
-                    )}
+                      {isOverdue ? (
+                        <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-rose-200 text-rose-900 border border-rose-300">
+                          Overdue
+                        </span>
+                      ) : isUpcoming ? (
+                        <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-indigo-200 text-indigo-900 border border-indigo-300">
+                          Upcoming
+                        </span>
+                      ) : (
+                        <span className="text-[10px] font-bold text-stone-500">10 Questions</span>
+                      )}
+                    </div>
+                    <div className="flex items-center justify-between pt-1 border-t border-stone-200/70">
+                      <span className="flex items-center gap-1 font-bold">
+                        <Clock className={`w-3.5 h-3.5 ${isOverdue ? "text-rose-600" : isUpcoming ? "text-indigo-600" : "text-amber-600"}`} />
+                        Due: {task.dueDate}
+                      </span>
+                      {isDueToday && (
+                        <span className="text-[10px] font-black text-rose-600 uppercase">
+                          Submit Today!
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -492,6 +517,11 @@ export const HomeworkDashboard: React.FC = () => {
                     <div className="w-full py-3 px-3 bg-rose-50 border-2 border-rose-200 text-rose-700 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm text-center leading-tight select-none">
                       <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0" />
                       <span>will not be able to attend because due dates are over</span>
+                    </div>
+                  ) : isUpcoming ? (
+                    <div className="w-full py-3 px-3 bg-indigo-50 border-2 border-indigo-200 text-indigo-800 rounded-xl font-bold text-xs flex items-center justify-center gap-2 shadow-sm text-center leading-tight select-none">
+                      <Lock className="w-4 h-4 text-indigo-600 flex-shrink-0" />
+                      <span>Unlocks on {task.assignedDate}</span>
                     </div>
                   ) : (
                     <motion.button

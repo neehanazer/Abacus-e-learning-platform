@@ -19,21 +19,25 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const email = (body.email || "").toLowerCase().trim();
+    const identifier = (body.email || body.username || "").toLowerCase().trim();
     const password = body.password || "";
 
-    if (!email || !password) {
+    if (!identifier || !password) {
       return NextResponse.json(
         {
           success: false,
-          error: "Email and password are required.",
+          error: "Username/email and password are required.",
         },
         { status: 400 }
       );
     }
 
-    // Direct verified student account
-    if (email === "neehanaz226@gmail.com") {
+    // Direct verified student account (Neeha Nazer)
+    if (
+      identifier === "neehanaz226@gmail.com" ||
+      identifier === "neeha nazer" ||
+      identifier === "neeha"
+    ) {
       if (password !== "neeha123") {
         return NextResponse.json(
           {
@@ -59,7 +63,7 @@ export async function POST(req: NextRequest) {
         completedLevels: [1],
         finalExamStatus: "PASS",
         finalExamScore: 86,
-        completionDate: "2026-10-05T00:00:00.000Z",
+        completionDate: "2026-10-04T00:00:00.000Z",
         age: 10,
         dateOfBirth: "2016-04-12",
         parentName: "Nazer",
@@ -70,7 +74,7 @@ export async function POST(req: NextRequest) {
         totalPracticeMinutes: 120,
         completedWorksheets: 18,
         earnedBadges: ["Bead Master", "Speed Starter", "BrainGym Champ", "Level 1 Certified"],
-        createdAt: "2026-02-15",
+        createdAt: "2026-10-10",
       };
 
       const token = signToken({
@@ -84,6 +88,70 @@ export async function POST(req: NextRequest) {
           success: true,
           message: "Login successful",
           user: neehaUser,
+          token,
+        },
+        { status: 200 }
+      );
+
+      setAuthCookie(response, token);
+      return response;
+    }
+
+    // Direct verified student account (Alex Parker)
+    if (
+      identifier === "student@abacus.com" ||
+      identifier === "alex parker" ||
+      identifier === "alex"
+    ) {
+      if (password !== "password123") {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Incorrect password. Please try again.",
+          },
+          { status: 401 }
+        );
+      }
+
+      const alexUser = {
+        id: "std_demo_101",
+        name: "Alex Parker",
+        fullName: "Alex Parker",
+        email: "student@abacus.com",
+        phone: "+1 (555) 234-5678",
+        role: "student",
+        accountStatus: "active",
+        avatar: "🧙‍♂️",
+        selectedLevel: "Level 2 - Small Friends",
+        abacusLevel: "Level 2 - Small Friends",
+        currentLevel: 2,
+        completedLevels: [1],
+        finalExamStatus: "PASS",
+        finalExamScore: 88,
+        age: 8,
+        dateOfBirth: "2018-05-14",
+        parentName: "Emma Parker",
+        parentEmail: "emma.parker@example.com",
+        parentPhone: "+1 (555) 234-5678",
+        progress: 42,
+        streakDays: 5,
+        totalPracticeMinutes: 180,
+        completedWorksheets: 24,
+        earnedBadges: ["Bead Master", "Speed Starter", "Level 1 Certified"],
+        createdAt: "2026-10-10",
+      };
+
+      const token = signToken({
+        userId: alexUser.id,
+        email: alexUser.email,
+        role: "student",
+      });
+
+      const response = NextResponse.json(
+        {
+          success: true,
+          message: "Login successful",
+          user: alexUser,
           token,
         },
         { status: 200 }
@@ -107,8 +175,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Query student including passwordHash field which has select: false
-    const student = await Student.findOne({ email }).select("+passwordHash");
+    // Query student by email OR name OR fullName
+    const student = await Student.findOne({
+      $or: [
+        { email: identifier },
+        { name: new RegExp(`^${identifier.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i") },
+        { fullName: new RegExp(`^${identifier.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i") },
+      ],
+    }).select("+passwordHash");
 
     if (!student) {
       return NextResponse.json(

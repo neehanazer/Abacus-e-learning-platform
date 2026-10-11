@@ -14,9 +14,9 @@ export default function AuthGuard({ children }: AuthGuardProps) {
 
   useEffect(() => {
     // If auth checking is finished and user is not registered or authenticated,
-    // immediately replace route to /register so they never access the dashboard page.
+    // immediately replace route to /login so they never access the dashboard page.
     if (!isLoading && (!isAuthenticated || !user)) {
-      router.replace("/register");
+      router.replace("/login");
     }
   }, [isLoading, isAuthenticated, user, router]);
 

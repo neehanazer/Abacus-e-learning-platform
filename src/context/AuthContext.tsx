@@ -81,8 +81,8 @@ const PRE_REGISTERED_STUDENTS: (StudentUser & { password?: string })[] = [
     completedLevels: [1],
     finalExamStatus: "PASS",
     finalExamScore: 86,
-    completionDate: "2026-10-05T00:00:00.000Z",
-    createdAt: "2026-02-15",
+    completionDate: "2026-10-04T00:00:00.000Z",
+    createdAt: "2026-10-05",
   },
   {
     id: "std_demo_101",
@@ -228,9 +228,14 @@ export const sanitizeUser = (
       typeof raw.completionDate === "string"
         ? raw.completionDate
         : isLevel1Certified
-        ? "2026-10-05T00:00:00.000Z"
+        ? "2026-10-04T00:00:00.000Z"
         : null,
-    createdAt: typeof raw.createdAt === "string" ? raw.createdAt : new Date().toISOString().split("T")[0],
+    createdAt:
+      emailLower === "neehanaz226@gmail.com" && (raw.createdAt === "2026-02-15" || !raw.createdAt || raw.createdAt === "2026-10-10")
+        ? "2026-10-05"
+        : typeof raw.createdAt === "string"
+        ? raw.createdAt
+        : new Date().toISOString().split("T")[0],
   };
 };
 
@@ -241,84 +246,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<StudentUser | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  // Hydrate auth state on mount and verify in background without blocking navigation
+  // Start unauthenticated on page refresh/mount so the user always sees the Login option
   useEffect(() => {
-    let isMounted = true;
-
-    // 1. Immediately hydrate from localStorage on mount (0ms latency, no network wait)
+    // Clear persistent active session on page refresh so user is not automatically logged in
     try {
-      const storedStr = localStorage.getItem("abacus_active_student");
-      if (storedStr) {
-        const parsed = JSON.parse(storedStr);
-        if (parsed && (parsed.id === "std_demo_101" || parsed.email === "student@abacus.com")) {
-          const explicitlyLoggedIn = localStorage.getItem("abacus_demo_explicitly_logged_in");
-          if (!explicitlyLoggedIn) {
-            localStorage.removeItem("abacus_active_student");
-            setUser(null);
-            setIsLoading(false);
-            return;
-          }
-        }
-        if (parsed && (parsed.id || parsed.email)) {
-          const sanitized = sanitizeUser(parsed);
-          if (sanitized && isMounted) {
-            setUser(sanitized);
-            setIsLoading(false);
-          }
-        } else if (isMounted) {
-          setIsLoading(false);
-        }
-      } else if (isMounted) {
-        setIsLoading(false);
-      }
+      localStorage.removeItem("abacus_active_student");
+      localStorage.removeItem("abacus_demo_explicitly_logged_in");
     } catch {
-      if (isMounted) setIsLoading(false);
+      // Ignore
     }
-
-    // 2. Fetch from backend in background with a fast 2-second timeout to avoid network hanging
-    async function checkAuth() {
-      try {
-        let queryParams = "";
-        try {
-          const storedStr = localStorage.getItem("abacus_active_student");
-          if (storedStr) {
-            const parsed = JSON.parse(storedStr);
-            if (parsed.email) {
-              queryParams = `?email=${encodeURIComponent(parsed.email)}`;
-            }
-          }
-        } catch {}
-
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 2000);
-
-        const res = await fetch(`/api/auth/me${queryParams}`, {
-          method: "GET",
-          headers: { "Content-Type": "application/json" },
-          signal: controller.signal,
-        });
-        clearTimeout(timeoutId);
-
-        if (res.ok) {
-          const data = await res.json();
-          if (data.success && data.user && isMounted) {
-            const sanitized = sanitizeUser(data.user);
-            if (sanitized) {
-              setUser(sanitized);
-              localStorage.setItem("abacus_active_student", JSON.stringify(sanitized));
-            }
-          }
-        }
-      } catch {
-        // Silently keep local user state on network timeout or offline
-      }
-    }
-
-    checkAuth();
-
-    return () => {
-      isMounted = false;
-    };
+    setUser(null);
+    setIsLoading(false);
   }, []);
 
   const login = async (
@@ -359,9 +297,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Network failure, fallback to localStorage check
     }
 
-    // Check pre-registered accounts (e.g. neehanaz226@gmail.com)
+    // Check pre-registered accounts (e.g. neehanaz226@gmail.com, "Neeha Nazer", "Alex Parker")
+    const idLower = (email || "").trim().toLowerCase();
     const preRegistered = PRE_REGISTERED_STUDENTS.find(
-      (u) => u.email.toLowerCase() === email.toLowerCase()
+      (u) =>
+        u.email.toLowerCase() === idLower ||
+        u.fullName.toLowerCase() === idLower ||
+        (u.name && u.name.toLowerCase() === idLower) ||
+        idLower.includes(u.fullName.toLowerCase())
     );
 
     if (preRegistered) {
@@ -389,7 +332,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     const foundUser = registeredPool.find(
-      (u) => u.email.toLowerCase() === email.toLowerCase()
+      (u) =>
+        u.email.toLowerCase() === idLower ||
+        (u.fullName && u.fullName.toLowerCase() === idLower) ||
+        (u.name && u.name.toLowerCase() === idLower)
     );
 
     if (foundUser) {

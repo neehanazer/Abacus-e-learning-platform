@@ -53,7 +53,8 @@ export async function GET(req: NextRequest) {
       totalExamsConducted,
       passedExams,
       failedExams,
-      certificatesIssued,
+      distinctCertStudents,
+      studentsWithCompletedLevels,
     ] = await Promise.all([
       // Total students
       Student.countDocuments(),
@@ -93,9 +94,19 @@ export async function GET(req: NextRequest) {
       // Failed exams
       ExamAttempt.countDocuments({ isPassed: false, status: { $in: ["submitted", "evaluated"] } }),
 
-      // Certificates issued
-      Certificate.countDocuments(),
+      // Unique students with certificates issued (count distinct students, 1 per student)
+      Certificate.distinct("studentId", { status: { $ne: "revoked" } }),
+
+      // Unique students with completed levels in profile
+      Student.find({ completedLevels: { $exists: true, $not: { $size: 0 } } }).distinct("_id"),
     ]);
+
+    // Unique student count across certificates and completed levels
+    const certifiedStudentIdSet = new Set([
+      ...distinctCertStudents.map((id) => String(id)),
+      ...studentsWithCompletedLevels.map((id) => String(id)),
+    ]);
+    const certifiedStudentsCount = certifiedStudentIdSet.size;
 
     // Calculate homework pending vs submitted
     const submittedHomework = allHomeworkAttempts.filter(
@@ -117,6 +128,8 @@ export async function GET(req: NextRequest) {
           days: Math.round((newStudentsEndDate.getTime() - newStudentsStartDate.getTime()) / (1000 * 3600 * 24)),
         },
         activeStudents,
+        certifiedStudents: certifiedStudentsCount,
+        certificatesIssued: certifiedStudentsCount,
         totalLevels,
         studentsCurrentlyLearning: distinctLearningStudents.length,
         completedLevels: completedLevelsCount,
@@ -125,7 +138,6 @@ export async function GET(req: NextRequest) {
         totalExamsConducted,
         passedExams,
         failedExams,
-        certificatesIssued,
       },
       summary: {
         studentMetrics: {
@@ -137,7 +149,7 @@ export async function GET(req: NextRequest) {
         academicMetrics: {
           totalLevels,
           completedLevels: completedLevelsCount,
-          certificatesIssued,
+          certificatesIssued: certifiedStudentsCount,
         },
         homeworkMetrics: {
           totalHomeworks: allHomeworks,

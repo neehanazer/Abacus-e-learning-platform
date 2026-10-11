@@ -248,17 +248,26 @@ export default function LearningNavbar() {
                 </span>
               </div>
 
-              {/* Student Avatar */}
-              <Link
-                href="/profile"
-                className="flex items-center gap-2 bg-white px-2.5 sm:px-3 py-1 rounded-full border border-yellow-200 hover:border-yellow-400 hover:bg-yellow-50/60 shadow-sm shrink-0 whitespace-nowrap transition-all duration-200 group cursor-pointer"
-                title="View My Profile"
-              >
-                <span className="text-lg group-hover:scale-110 transition-transform">{userAvatar}</span>
-                <span className="inline text-xs font-bold text-[#1D3557] group-hover:text-amber-800 whitespace-nowrap">
-                  {studentName}
-                </span>
-              </Link>
+              {/* Student Avatar or Log In */}
+              {user ? (
+                <Link
+                  href="/profile"
+                  className="flex items-center gap-2 bg-white px-2.5 sm:px-3 py-1 rounded-full border border-yellow-200 hover:border-yellow-400 hover:bg-yellow-50/60 shadow-sm shrink-0 whitespace-nowrap transition-all duration-200 group cursor-pointer"
+                  title="View My Profile"
+                >
+                  <span className="text-lg group-hover:scale-110 transition-transform">{userAvatar}</span>
+                  <span className="inline text-xs font-bold text-[#1D3557] group-hover:text-amber-800 whitespace-nowrap">
+                    {studentName}
+                  </span>
+                </Link>
+              ) : (
+                <Link
+                  href="/login"
+                  className="flex items-center gap-1.5 bg-[#F4A261] hover:bg-[#E76F51] text-white px-3 sm:px-4 py-1.5 rounded-full text-xs font-extrabold shadow-sm transition shrink-0"
+                >
+                  <span>Log In</span>
+                </Link>
+              )}
             </div>
           </div>
 

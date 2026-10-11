@@ -99,6 +99,26 @@ export async function GET(req: NextRequest) {
       })
     );
 
+    // Calculate 4 primary student metrics
+    const [totalStudentsCount, newStudentsCount, activeStudentsCount, rawDistinctCertStudents, studentsWithCompletedLevels] =
+      await Promise.all([
+        Student.countDocuments(),
+        Student.countDocuments({
+          createdAt: { $gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) },
+        }),
+        Student.countDocuments({ accountStatus: "active" }),
+        (await import("@/models/Certificate")).default.distinct("studentId", {
+          status: { $ne: "revoked" },
+        }),
+        Student.find({ completedLevels: { $exists: true, $not: { $size: 0 } } }).distinct("_id"),
+      ]);
+
+    const certifiedStudentIdSet = new Set([
+      ...rawDistinctCertStudents.map((id) => String(id)),
+      ...studentsWithCompletedLevels.map((id) => String(id)),
+    ]);
+    const certifiedStudentsCount = certifiedStudentIdSet.size;
+
     return NextResponse.json({
       success: true,
       total,
@@ -106,6 +126,12 @@ export async function GET(req: NextRequest) {
       limit,
       totalPages: Math.ceil(total / limit),
       students: studentList,
+      summary: {
+        totalStudents: totalStudentsCount,
+        newStudents: newStudentsCount,
+        activeStudents: activeStudentsCount,
+        certifiedStudents: certifiedStudentsCount,
+      },
     });
   } catch (error: unknown) {
     console.error("[Admin Students Error]:", error);

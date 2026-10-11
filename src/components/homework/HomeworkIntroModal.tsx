@@ -14,6 +14,7 @@ import {
   Video,
   Award,
   Layers,
+  Calendar,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -50,8 +51,12 @@ export const HomeworkIntroModal: React.FC = () => {
           <span className="px-3.5 py-1 bg-blue-100 text-blue-900 border-2 border-blue-300 rounded-full text-xs font-black">
             Level {activeHomework.level}
           </span>
-          <span className="px-3.5 py-1 bg-emerald-100 text-emerald-900 border-2 border-emerald-300 rounded-full text-xs font-black flex items-center gap-1">
-            <Clock className="w-3.5 h-3.5" />
+          <span className="px-3.5 py-1 bg-amber-100 text-amber-900 border-2 border-amber-300 rounded-full text-xs font-black flex items-center gap-1 shadow-sm">
+            <Calendar className="w-3.5 h-3.5 text-amber-600" />
+            Assigned: {activeHomework.assignedDate}
+          </span>
+          <span className="px-3.5 py-1 bg-emerald-100 text-emerald-900 border-2 border-emerald-300 rounded-full text-xs font-black flex items-center gap-1 shadow-sm">
+            <Clock className="w-3.5 h-3.5 text-emerald-600" />
             Due: {activeHomework.dueDate}
           </span>
         </div>

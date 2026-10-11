@@ -217,7 +217,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
         studentId: student._id.toString(),
         homeworkId: fallbackHw._id,
         answers: fallbackHw.questions.map((q) => ({
-          questionId: q._id,
+          questionId: (q as any)._id || q.id,
           studentAnswer: null,
           userAnswer: null,
           isCorrect: false,

@@ -64,26 +64,130 @@ export function generateQuestionsForHomework(
   return questions;
 }
 
+// Format date to "DD Month YYYY" (e.g. "12 October 2026")
+export function formatAbacusDate(date: Date): string {
+  const day = String(date.getDate()).padStart(2, "0");
+  const months = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+  ];
+  const month = months[date.getMonth()];
+  const year = date.getFullYear();
+  return `${day} ${month} ${year}`;
+}
+
+// Parse date string (supports ISO, "12 October 2026", "10/12/2026", etc.)
+export function parseAbacusDate(dateInput?: string | Date | null): Date {
+  if (!dateInput) return new Date();
+  if (dateInput instanceof Date) return new Date(dateInput);
+
+  const parsed = new Date(dateInput);
+  if (!isNaN(parsed.getTime())) return parsed;
+
+  const currentYear = new Date().getFullYear();
+  const withYear = new Date(`${dateInput} ${currentYear}`);
+  if (!isNaN(withYear.getTime())) return withYear;
+
+  return new Date();
+}
+
+/**
+ * AUTOMATIC HOMEWORK SCHEDULE CALCULATION BASED ON STUDENT JOINING DATE:
+ * - Cadence: Homework is assigned every 2 days starting 2 days after joining date.
+ * - Due Date: Due date is always 5 days after the assigned date.
+ *
+ * Formula for homework #k (1-indexed):
+ * - Assigned Date: joinDate + (2 * k) days
+ * - Due Date:      joinDate + (2 * k + 5) days
+ *
+ * Examples (Join Date = 10 October 2026):
+ * - Homework 1 (k=1): Assigned 12 Oct 2026, Due 17 Oct 2026
+ * - Homework 2 (k=2): Assigned 14 Oct 2026, Due 19 Oct 2026
+ * - Homework 3 (k=3): Assigned 16 Oct 2026, Due 21 Oct 2026
+ * - Homework 4 (k=4): Assigned 18 Oct 2026, Due 23 Oct 2026
+ * - Homework 5 (k=5): Assigned 20 Oct 2026, Due 25 Oct 2026
+ */
+export function calculateHomeworkSchedule(
+  joinDateInput?: string | Date | null,
+  homeworkIndex: number = 1
+): {
+  assignedDate: Date;
+  dueDate: Date;
+  assignedDateFormatted: string;
+  dueDateFormatted: string;
+  isUpcoming: boolean;
+  isActive: boolean;
+  isOverdue: boolean;
+  daysUntilAvailable: number;
+  daysUntilDue: number;
+} {
+  const base = parseAbacusDate(joinDateInput);
+  // Normalize base to midnight local
+  const joinMidnight = new Date(base.getFullYear(), base.getMonth(), base.getDate(), 0, 0, 0, 0);
+
+  // Homework k assigned at (2 * k) days after joinDate
+  const assigned = new Date(joinMidnight);
+  assigned.setDate(assigned.getDate() + 2 * Math.max(1, homeworkIndex));
+  assigned.setHours(0, 0, 0, 0);
+
+  // Due date is assignedDate + 5 days
+  const due = new Date(assigned);
+  due.setDate(due.getDate() + 5);
+  due.setHours(23, 59, 59, 999);
+
+  const now = new Date();
+  const nowMs = now.getTime();
+  const assignedMs = assigned.getTime();
+  const dueMs = due.getTime();
+
+  const isUpcoming = nowMs < assignedMs;
+  const isOverdue = nowMs > dueMs;
+  const isActive = !isUpcoming && !isOverdue;
+
+  const msPerDay = 1000 * 60 * 60 * 24;
+  const daysUntilAvailable = Math.max(0, Math.ceil((assignedMs - nowMs) / msPerDay));
+  const daysUntilDue = Math.max(0, Math.ceil((dueMs - nowMs) / msPerDay));
+
+  return {
+    assignedDate: assigned,
+    dueDate: due,
+    assignedDateFormatted: formatAbacusDate(assigned),
+    dueDateFormatted: formatAbacusDate(due),
+    isUpcoming,
+    isActive,
+    isOverdue,
+    daysUntilAvailable,
+    daysUntilDue,
+  };
+}
+
+// Check if a task is upcoming (not yet reached assigned date)
+export function isTaskUpcoming(assignedDateStr?: string | Date): boolean {
+  if (!assignedDateStr) return false;
+  const parsed = parseAbacusDate(assignedDateStr);
+  const startOfDay = new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate(), 0, 0, 0, 0);
+  return new Date().getTime() < startOfDay.getTime();
+}
+
 // Check if due date is passed
-export function isDueDateOver(dueDateStr?: string): boolean {
+export function isDueDateOver(dueDateStr?: string | Date): boolean {
   if (!dueDateStr) return false;
   const now = new Date();
 
-  // 1. Direct ISO or standard date parse
-  let parsed = new Date(dueDateStr);
+  let parsed = parseAbacusDate(dueDateStr);
   if (!isNaN(parsed.getTime())) {
-    if (!dueDateStr.includes("T") && !dueDateStr.includes(":")) {
-      parsed.setHours(23, 59, 59, 999);
-    }
-    return now.getTime() > parsed.getTime();
-  }
-
-  // 2. Parse format like "18 September" or "18 September 2026"
-  const currentYear = now.getFullYear();
-  parsed = new Date(`${dueDateStr} ${currentYear}`);
-  if (!isNaN(parsed.getTime())) {
-    parsed.setHours(23, 59, 59, 999);
-    return now.getTime() > parsed.getTime();
+    const endOfDay = new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate(), 23, 59, 59, 999);
+    return now.getTime() > endOfDay.getTime();
   }
 
   return false;
@@ -96,16 +200,7 @@ export function isDueDateToday(dueDateStr?: string | Date): boolean {
   const lower = typeof dueDateStr === "string" ? dueDateStr.toLowerCase().trim() : "";
   if (lower === "today") return true;
 
-  let parsed: Date;
-  if (dueDateStr instanceof Date) {
-    parsed = dueDateStr;
-  } else {
-    parsed = new Date(dueDateStr);
-    if (isNaN(parsed.getTime())) {
-      parsed = new Date(`${dueDateStr} ${now.getFullYear()}`);
-    }
-  }
-
+  const parsed = parseAbacusDate(dueDateStr);
   if (isNaN(parsed.getTime())) return false;
 
   return (
@@ -113,6 +208,31 @@ export function isDueDateToday(dueDateStr?: string | Date): boolean {
     now.getMonth() === parsed.getMonth() &&
     now.getDate() === parsed.getDate()
   );
+}
+
+/**
+ * Automatically adjusts all homework tasks for a student based on their joining date.
+ */
+export function applyStudentScheduleToHomeworkList(
+  tasks: HomeworkTask[],
+  joinDate?: string | Date | null
+): HomeworkTask[] {
+  const baseJoin = parseAbacusDate(joinDate || "2026-10-10");
+  const levelCounters: Record<number, number> = {};
+
+  return tasks.map((task) => {
+    const lvl = task.level || 1;
+    levelCounters[lvl] = (levelCounters[lvl] || 0) + 1;
+    const rankInLevel = levelCounters[lvl];
+
+    const schedule = calculateHomeworkSchedule(baseJoin, rankInLevel);
+
+    return {
+      ...task,
+      assignedDate: schedule.assignedDateFormatted,
+      dueDate: schedule.dueDateFormatted,
+    };
+  });
 }
 
 const findCategory = (id: string): PracticeCategoryOption =>
@@ -124,7 +244,7 @@ const findCategory = (id: string): PracticeCategoryOption =>
 // Level 2: Active, pending with future due dates for immediate attendance
 // Levels 3-8: Upgraded syllabus homework tasks
 // =========================================================================
-export const INITIAL_HOMEWORK_LIST: HomeworkTask[] = [
+export const INITIAL_HOMEWORK_LIST: HomeworkTask[] = applyStudentScheduleToHomeworkList([
   // ------------------------------------------------------------
   // LEVEL 1 (Foundations — Pending for new students)
   // ------------------------------------------------------------
@@ -751,7 +871,7 @@ export const INITIAL_HOMEWORK_LIST: HomeworkTask[] = [
     questions: generateQuestionsForHomework(findCategory("l8-competition-speed"), 10),
     attemptsCount: 0,
   },
-];
+]);
 
 // Helper to create new custom homework from practice syllabus
 export function createHomeworkFromPractice(

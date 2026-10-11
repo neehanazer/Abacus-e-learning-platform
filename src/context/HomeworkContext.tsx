@@ -7,6 +7,10 @@ import {
   INITIAL_HOMEWORK_LIST,
   createHomeworkFromPractice,
   isDueDateOver,
+  calculateHomeworkSchedule,
+  isTaskUpcoming,
+  formatAbacusDate,
+  applyStudentScheduleToHomeworkList,
 } from "@/data/homeworkData";
 import { PracticeCategoryOption } from "@/data/practiceData";
 import confetti from "canvas-confetti";
@@ -26,6 +30,7 @@ interface HomeworkContextType {
   attemptHistory: HomeworkAttempt[];
   latestAttempt: HomeworkAttempt | null;
   assignModalOpen: boolean;
+  studentJoinDate: Date;
 
   // Setters & Actions
   setActiveTab: (tab: "all" | "pending" | "completed" | "attempts") => void;
@@ -68,10 +73,22 @@ export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return m ? parseInt(m[1], 10) : 1;
   }, [user]);
 
+  // Resolve student joining date (defaults to 10 October 2026 if guest)
+  const studentJoinDate = React.useMemo(() => {
+    const raw = (user as any)?.joinDate || (user as any)?.joiningDate || user?.createdAt;
+    if (raw) {
+      const d = new Date(raw);
+      if (!isNaN(d.getTime())) return d;
+    }
+    return new Date("2026-10-10T00:00:00");
+  }, [user]);
+
   const userTasksKey = `abacus_homework_state_v3_${studentKey}`;
   const userAttemptsKey = `abacus_homework_attempts_v3_${studentKey}`;
 
-  const [homeworkList, setHomeworkList] = useState<HomeworkTask[]>(INITIAL_HOMEWORK_LIST);
+  const [homeworkList, setHomeworkList] = useState<HomeworkTask[]>(() =>
+    applyStudentScheduleToHomeworkList(INITIAL_HOMEWORK_LIST, studentJoinDate)
+  );
   const [activeHomework, setActiveHomework] = useState<HomeworkTask | null>(null);
   const [activeQuestionIndex, setActiveQuestionIndex] = useState<number>(0);
   const [userAnswers, setUserAnswers] = useState<Record<string, number | null>>({});
@@ -125,34 +142,44 @@ export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         tasksToSet = INITIAL_HOMEWORK_LIST;
       }
 
-      // 3. Reconcile and sanitize task statuses:
-      // For any task at the student's current level, if it was marked evaluated
-      // but has 0 attempts and no record in loadedAttempts, it MUST be 'pending' for a new student!
-      const sanitizedTasks = tasksToSet.map((t) => {
+      // 3. Reconcile statuses and calculate dynamic schedule from student's joining date:
+      // Homework #k is assigned at joinDate + (2 * k) days, and due at assignedDate + 5 days
+      const levelCounters: Record<number, number> = {};
+      const scheduledTasks = tasksToSet.map((t) => {
+        const lvl = t.level || 1;
+        levelCounters[lvl] = (levelCounters[lvl] || 0) + 1;
+        const rankInLevel = levelCounters[lvl];
+
+        const schedule = calculateHomeworkSchedule(studentJoinDate, rankInLevel);
+
         const hasActualAttempt = completedTaskIds.has(t.id);
         const isCurrentLevel = t.level === studentLevel;
 
+        let status = t.status;
         if (isCurrentLevel && !hasActualAttempt && (t.status === "evaluated" || t.status === "submitted")) {
-          return {
-            ...t,
-            status: "pending" as const,
-            score: undefined,
-            accuracy: undefined,
-            evaluatedFeedback: undefined,
-            evaluatedStars: undefined,
-            attemptsCount: 0,
-            lastAttemptDate: undefined,
-          };
+          status = "pending" as const;
         }
-        return t;
+
+        return {
+          ...t,
+          assignedDate: schedule.assignedDateFormatted,
+          dueDate: schedule.dueDateFormatted,
+          status,
+          score: hasActualAttempt ? t.score : undefined,
+          accuracy: hasActualAttempt ? t.accuracy : undefined,
+          evaluatedFeedback: hasActualAttempt ? t.evaluatedFeedback : undefined,
+          evaluatedStars: hasActualAttempt ? t.evaluatedStars : undefined,
+          attemptsCount: hasActualAttempt ? t.attemptsCount : 0,
+          lastAttemptDate: hasActualAttempt ? t.lastAttemptDate : undefined,
+        };
       });
 
-      setHomeworkList(sanitizedTasks);
-      localStorage.setItem(userTasksKey, JSON.stringify(sanitizedTasks));
+      setHomeworkList(scheduledTasks);
+      localStorage.setItem(userTasksKey, JSON.stringify(scheduledTasks));
     } catch {
-      setHomeworkList(INITIAL_HOMEWORK_LIST);
+      setHomeworkList(applyStudentScheduleToHomeworkList(INITIAL_HOMEWORK_LIST, studentJoinDate));
     }
-  }, [studentKey, studentLevel, userTasksKey, userAttemptsKey]);
+  }, [studentKey, studentLevel, studentJoinDate, userTasksKey, userAttemptsKey]);
 
   // Save tasks to localStorage scoped to current student
   const saveTasks = (tasks: HomeworkTask[]) => {
@@ -189,7 +216,7 @@ export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     };
   }, [isTimerRunning, viewMode]);
 
-  // Open Intro Screen (only for pending or in-progress homework and not overdue)
+  // Open Intro Screen (only for pending or in-progress homework and not overdue or upcoming)
   const openHomeworkIntro = (hw: HomeworkTask) => {
     if (hw.status === "evaluated" || hw.status === "submitted") {
       return; // Once it is done then done
@@ -197,17 +224,23 @@ export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     if (isDueDateOver(hw.dueDate)) {
       return; // Overdue homework cannot be attended
     }
+    if (isTaskUpcoming(hw.assignedDate)) {
+      return; // Upcoming homework cannot be attended until assigned date
+    }
     setActiveHomework(hw);
     setViewMode("intro");
   };
 
-  // Start Homework Player (only for non-completed and non-overdue homework)
+  // Start Homework Player (only for non-completed, non-overdue, and non-upcoming homework)
   const startHomework = (hw: HomeworkTask) => {
     if (hw.status === "evaluated" || hw.status === "submitted") {
       return; // Once it is done then done
     }
     if (isDueDateOver(hw.dueDate)) {
       return; // Overdue homework cannot be attended
+    }
+    if (isTaskUpcoming(hw.assignedDate)) {
+      return; // Upcoming homework cannot be attended until assigned date
     }
     setActiveHomework(hw);
     setActiveQuestionIndex(0);
@@ -429,6 +462,7 @@ export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         attemptHistory,
         latestAttempt,
         assignModalOpen,
+        studentJoinDate,
         setActiveTab,
         setAssignModalOpen,
         openHomeworkIntro,

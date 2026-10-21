@@ -26,13 +26,41 @@ export default function LoginPage() {
     "Neeha Nazer",
     "Alex Parker",
   ]);
-  const [selectedUsername, setSelectedUsername] = useState<string>("Neeha Nazer");
+  const [selectedUsername, setSelectedUsername] = useState<string>("");
   const [customUsername, setCustomUsername] = useState<string>("");
-  const [password, setPassword] = useState<string>("neeha123");
+  const [password, setPassword] = useState<string>("");
+  const [rememberMe, setRememberMe] = useState<boolean>(false);
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string>("");
 
   useEffect(() => {
+    // Prefetch dashboard so login redirect is instant
+    router.prefetch("/dashboard");
+
+    // Check if this device has "Remember Me" enabled
+    try {
+      const isRemembered = localStorage.getItem("abacus_remember_me") === "true";
+      if (isRemembered) {
+        const savedUser = localStorage.getItem("abacus_remembered_username") || "";
+        const savedPass = localStorage.getItem("abacus_remembered_password") || "";
+        if (savedUser) {
+          setRememberMe(true);
+          setSelectedUsername(savedUser);
+          if (savedPass) {
+            setPassword(savedPass);
+          }
+        }
+      } else {
+        // Other devices or not remembered: start completely clean
+        setRememberMe(false);
+        setSelectedUsername("");
+        setCustomUsername("");
+        setPassword("");
+      }
+    } catch {
+      // Ignore
+    }
+
     async function loadUsernames() {
       const names: string[] = ["Neeha Nazer", "Alex Parker"];
 
@@ -74,18 +102,26 @@ export default function LoginPage() {
     }
 
     loadUsernames();
-  }, []);
+  }, [router]);
 
   const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const val = e.target.value;
     setSelectedUsername(val);
     setErrorMsg("");
 
-    if (val === "Neeha Nazer") {
-      setPassword("neeha123");
-    } else if (val === "Alex Parker") {
-      setPassword("password123");
-    } else if (val === "__custom__") {
+    // Only auto-populate password if Remember Me was previously saved on THIS device
+    try {
+      const isRemembered = localStorage.getItem("abacus_remember_me") === "true";
+      const savedUser = localStorage.getItem("abacus_remembered_username") || "";
+      const savedPass = localStorage.getItem("abacus_remembered_password") || "";
+      if (isRemembered && savedUser.toLowerCase() === val.toLowerCase() && savedPass) {
+        setPassword(savedPass);
+        setRememberMe(true);
+      } else {
+        // On other devices or without Remember Me, password must be manually entered
+        setPassword("");
+      }
+    } catch {
       setPassword("");
     }
   };
@@ -111,7 +147,7 @@ export default function LoginPage() {
       return;
     }
 
-    const res = await login(targetUser, cleanPassword);
+    const res = await login(targetUser, cleanPassword, rememberMe);
     if (res.success) {
       router.push("/dashboard");
     } else {
@@ -261,6 +297,24 @@ export default function LoginPage() {
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
+          </div>
+
+          {/* Remember Me Checkbox */}
+          <div className="flex items-center justify-between text-xs pt-0.5">
+            <label className="flex items-center gap-2.5 cursor-pointer select-none text-slate-600 font-medium hover:text-slate-900 group">
+              <input
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                className="w-4 h-4 rounded border-slate-300 text-purple-600 focus:ring-purple-500 cursor-pointer transition-all"
+              />
+              <span className="group-hover:text-purple-700 transition-colors">
+                Remember me on this device
+              </span>
+            </label>
+            <span className="text-[11px] text-slate-400 font-medium">
+              Device preference
+            </span>
           </div>
 
           <Button

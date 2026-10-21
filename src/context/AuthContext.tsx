@@ -37,7 +37,11 @@ interface AuthContextType {
   user: StudentUser | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (email: string, pass: string) => Promise<{ success: boolean; error?: string; notRegistered?: boolean }>;
+  login: (
+    email: string,
+    pass: string,
+    rememberMe?: boolean
+  ) => Promise<{ success: boolean; error?: string; notRegistered?: boolean }>;
   register: (
     data: Omit<
       StudentUser,
@@ -261,17 +265,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = async (
     email: string,
-    pass: string
+    pass: string,
+    rememberMe: boolean = false
   ): Promise<{ success: boolean; error?: string; notRegistered?: boolean }> => {
     setIsLoading(true);
 
+    const handleRemember = () => {
+      try {
+        if (rememberMe) {
+          localStorage.setItem("abacus_remember_me", "true");
+          localStorage.setItem("abacus_remembered_username", email);
+          localStorage.setItem("abacus_remembered_password", pass);
+        } else {
+          localStorage.removeItem("abacus_remember_me");
+          localStorage.removeItem("abacus_remembered_username");
+          localStorage.removeItem("abacus_remembered_password");
+        }
+      } catch {
+        // ignore
+      }
+    };
+
     try {
-      // 1. Attempt Next.js MongoDB backend authentication
+      // 1. Attempt Next.js MongoDB backend authentication with fast 4s abort timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 4000);
+
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password: pass }),
+        signal: controller.signal,
       });
+      clearTimeout(timeoutId);
 
       const data = await res.json().catch(() => null);
 
@@ -280,6 +306,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (sanitized) {
           setUser(sanitized);
           localStorage.setItem("abacus_active_student", JSON.stringify(sanitized));
+          handleRemember();
           setIsLoading(false);
           return { success: true };
         }
@@ -294,7 +321,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         };
       }
     } catch {
-      // Network failure, fallback to localStorage check
+      // Network failure or timeout, fallback to pre-registered / localStorage check immediately
     }
 
     // Check pre-registered accounts (e.g. neehanaz226@gmail.com, "Neeha Nazer", "Alex Parker")
@@ -318,6 +345,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(preRegistered);
       localStorage.setItem("abacus_active_student", JSON.stringify(preRegistered));
       localStorage.setItem("abacus_demo_explicitly_logged_in", "true");
+      handleRemember();
       setIsLoading(false);
       return { success: true };
     }

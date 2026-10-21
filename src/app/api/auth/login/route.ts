@@ -182,7 +182,7 @@ export async function POST(req: NextRequest) {
         { name: new RegExp(`^${identifier.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i") },
         { fullName: new RegExp(`^${identifier.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i") },
       ],
-    }).select("+passwordHash");
+    }).select("+passwordHash").maxTimeMS(3000);
 
     if (!student) {
       return NextResponse.json(

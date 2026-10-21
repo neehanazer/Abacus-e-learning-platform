@@ -20,11 +20,18 @@ export async function GET() {
     ];
 
     try {
-      await connectToDatabase();
+      await Promise.race([
+        connectToDatabase(),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error("DB connection timeout")), 2000)
+        ),
+      ]);
       const dbStudents = await Student.find(
         {},
         "name fullName email avatar"
-      ).lean();
+      )
+        .lean()
+        .maxTimeMS(2000);
 
       for (const s of dbStudents) {
         const username = (s as any).fullName || s.name || s.email;
@@ -42,7 +49,7 @@ export async function GET() {
         }
       }
     } catch {
-      // If DB is offline, continue with default list
+      // If DB is slow or offline, continue immediately with default list
     }
 
     return NextResponse.json({ success: true, students: list });

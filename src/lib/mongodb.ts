@@ -1,11 +1,13 @@
 import mongoose from "mongoose";
 import dns from "dns";
 
-// Ensure DNS resolvers can resolve MongoDB SRV records on Windows
-try {
-  dns.setServers(["8.8.8.8", "1.1.1.1"]);
-} catch {
-  // Ignore in environments where setting DNS servers is restricted
+// Ensure DNS resolvers can resolve MongoDB SRV records on Windows only
+if (process.platform === "win32") {
+  try {
+    dns.setServers(["8.8.8.8", "1.1.1.1"]);
+  } catch {
+    // Ignore in environments where setting DNS servers is restricted
+  }
 }
 
 /**
@@ -73,11 +75,13 @@ export async function connectToDatabase(): Promise<typeof mongoose> {
     );
   }
 
-  // Ensure DNS resolvers are set
-  try {
-    dns.setServers(["8.8.8.8", "1.1.1.1"]);
-  } catch {
-    // ignore
+  // Ensure DNS resolvers are set on Windows only
+  if (process.platform === "win32") {
+    try {
+      dns.setServers(["8.8.8.8", "1.1.1.1"]);
+    } catch {
+      // ignore
+    }
   }
 
   // Return existing connection if ready
@@ -85,11 +89,20 @@ export async function connectToDatabase(): Promise<typeof mongoose> {
     return cached.conn;
   }
 
+  // Reset dead connection/promise
+  if (mongoose.connection.readyState !== 1) {
+    cached.conn = null;
+    cached.promise = null;
+  }
+
   // If a connection promise is already in flight, wait for it
   if (!cached.promise) {
     const opts: mongoose.ConnectOptions = {
       bufferCommands: false,
-      serverSelectionTimeoutMS: 5000,
+      serverSelectionTimeoutMS: 4000,
+      connectTimeoutMS: 4000,
+      socketTimeoutMS: 15000,
+      maxPoolSize: 10,
       dbName: "abacus",
     };
 
@@ -99,6 +112,7 @@ export async function connectToDatabase(): Promise<typeof mongoose> {
         return await mongoose.connect(targetUri, opts);
       } catch (err: any) {
         if (
+          process.platform === "win32" &&
           targetUri.startsWith("mongodb+srv://") &&
           (err?.message?.includes("querySrv") || err?.message?.includes("ECONNREFUSED"))
         ) {

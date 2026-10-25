@@ -141,10 +141,13 @@ export default function ProductTour() {
         onClick={() => { setIsComplete(false); setIsWelcomeOpen(true); }}
         whileHover={{ scale: 1.06, y: -2 }}
         whileTap={{ scale: 0.96 }}
-        className="fixed bottom-5 right-5 z-[90] flex items-center gap-2 rounded-full border border-white/80 bg-gradient-to-r from-[#F4A261] via-[#E76F51] to-[#9B5DE5] px-4 py-3 font-bold text-white shadow-xl shadow-orange-900/20 focus:outline-none focus-visible:ring-4 focus-visible:ring-orange-200"
+        style={{
+          bottom: "max(1.25rem, calc(env(safe-area-inset-bottom, 0px) + 0.75rem))",
+        }}
+        className="fixed right-4 sm:right-6 z-[90] flex items-center gap-2 rounded-full border-2 border-white/90 bg-gradient-to-r from-[#F4A261] via-[#E76F51] to-[#9B5DE5] px-4 py-2.5 sm:px-4 sm:py-3 font-extrabold text-white shadow-2xl shadow-orange-950/30 touch-manipulation focus:outline-none focus-visible:ring-4 focus-visible:ring-orange-300"
       >
-        <Compass className="h-5 w-5" />
-        <span className="text-sm">Tour</span>
+        <Compass className="h-5 w-5 animate-spin-slow" />
+        <span className="text-xs sm:text-sm tracking-wide">Tour</span>
       </motion.button>
 
       <AnimatePresence>

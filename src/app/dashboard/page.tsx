@@ -33,29 +33,60 @@ export default function AbacusWorldDashboard() {
         user?.id || user?.email
           ? String(user.id || user.email).replace(/[^a-zA-Z0-9_-]/g, "_")
           : "guest";
-      const savedTasks = localStorage.getItem(`abacus_homework_state_v3_${studentKey}`);
+      const userTasksKey = `abacus_homework_state_v3_${studentKey}`;
+      const savedTasks = localStorage.getItem(userTasksKey);
+
+      // Resolve student join date
+      const rawJoin = (user as any)?.joinDate || (user as any)?.joiningDate || user?.createdAt;
+      const joinDate = rawJoin ? new Date(rawJoin) : new Date();
+
       let tasks: any[] = [];
       if (savedTasks) {
-        const parsed = JSON.parse(savedTasks);
-        if (Array.isArray(parsed) && parsed.length > 0) tasks = parsed;
+        try {
+          const parsed = JSON.parse(savedTasks);
+          if (Array.isArray(parsed) && parsed.length > 0) tasks = parsed;
+        } catch {}
       }
+
+      // If user has no saved tasks, compute schedule matching this specific student's joining date
       if (tasks.length === 0) {
-        const { INITIAL_HOMEWORK_LIST } = require("@/data/homeworkData");
-        tasks = INITIAL_HOMEWORK_LIST;
+        const { INITIAL_HOMEWORK_LIST, applyStudentScheduleToHomeworkList } = require("@/data/homeworkData");
+        tasks = applyStudentScheduleToHomeworkList(INITIAL_HOMEWORK_LIST, joinDate);
+        try {
+          localStorage.setItem(userTasksKey, JSON.stringify(tasks));
+        } catch {}
       }
 
       const raw = user?.selectedLevel || user?.abacusLevel || (user as any)?.currentLevel || "";
       const m = String(raw).match(/Level\s*(\d+)/i) || String(raw).match(/^(\d+)$/);
       const studentLvl = m ? parseInt(m[1], 10) : 1;
 
-      const pendingCurrentLevel = tasks.filter(
-        (t: any) =>
-          t.level === studentLvl &&
-          t.status !== "completed" &&
-          t.status !== "submitted" &&
-          t.status !== "evaluated" &&
-          isDueDateToday(t.dueDate)
-      );
+      // Check if student joined recently (less than 2 full days ago). New students have no homework due yet.
+      const now = new Date();
+      const daysSinceJoined = Math.max(0, (now.getTime() - joinDate.getTime()) / (1000 * 60 * 60 * 24));
+      const isNewStudent = daysSinceJoined < 2;
+
+      const { isTaskUpcoming, isDueDateOver, isDueDateToday } = require("@/data/homeworkData");
+
+      // Strictly only alarm if:
+      // 1. Not a brand new student who just joined
+      // 2. The task is at student's current level
+      // 3. Task is not yet finished/submitted/evaluated
+      // 4. Task is currently assigned (NOT upcoming)
+      // 5. Task due date is NOT already over
+      // 6. Task due date is TODAY
+      const pendingCurrentLevel = isNewStudent
+        ? []
+        : tasks.filter(
+            (t: any) =>
+              t.level === studentLvl &&
+              t.status !== "completed" &&
+              t.status !== "submitted" &&
+              t.status !== "evaluated" &&
+              !isTaskUpcoming(t.assignedDate) &&
+              !isDueDateOver(t.dueDate) &&
+              isDueDateToday(t.dueDate)
+          );
 
       setDueTodayHomework(pendingCurrentLevel.map((t: any) => ({ id: t.id, title: t.title })));
     } catch {}

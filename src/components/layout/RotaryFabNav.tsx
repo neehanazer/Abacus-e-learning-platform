@@ -133,55 +133,71 @@ export default function RotaryFabNav() {
         ]),
   ];
 
-  // Distribute items onto 2 Concentric Orbital Arcs (Bottom-Right quadrant: 90° to 180° / 180° to 270°)
+  // Distribute items onto 2 Concentric Orbital Arcs (Top-Right quadrant: sweep down-left from 180° to 90°)
   const tier1Items = items.slice(0, 4);
   const tier2Items = items.slice(4);
 
   const getCoordinates = (index: number, total: number, radius: number) => {
-    // Quadrant: bottom-right (sweep from 180° to 270°)
-    const startAngle = Math.PI; // 180 deg (left)
-    const endAngle = (3 * Math.PI) / 2; // 270 deg (top)
-    const angle = startAngle + (index / Math.max(1, total - 1)) * (endAngle - startAngle);
+    // Quadrant: top-right (sweep from 180° / left to 90° / down)
+    const startAngle = Math.PI; // 180 deg (leftwards: x = -radius, y = 0)
+    const endAngle = Math.PI / 2; // 90 deg (downwards: x = 0, y = radius)
+    const angle = startAngle - (index / Math.max(1, total - 1)) * (startAngle - endAngle);
     const x = Math.cos(angle) * radius;
     const y = Math.sin(angle) * radius;
     return { x, y, angleDeg: (angle * 180) / Math.PI };
   };
 
-  // Dial drag scrubbing logic
+  // Dial drag scrubbing logic (for top-right)
   const handleDialPointer = (e: React.PointerEvent<HTMLDivElement>) => {
     if (!dialRef.current) return;
     const rect = dialRef.current.getBoundingClientRect();
-    const centerX = rect.left + rect.width;
-    const centerY = rect.top + rect.height;
+    const centerX = rect.right;
+    const centerY = rect.top;
     const deltaX = e.clientX - centerX;
     const deltaY = e.clientY - centerY;
     const angleRad = Math.atan2(deltaY, deltaX);
-    // Map angle from -PI (left) to -PI/2 (top) into 0 to 100%
-    const normalized = Math.min(100, Math.max(0, Math.round(((angleRad + Math.PI) / (Math.PI / 2)) * 100)));
+    // Map angle from PI (left) to PI/2 (down) into 0 to 100%
+    const normalized = Math.min(100, Math.max(0, Math.round(((Math.PI - angleRad) / (Math.PI / 2)) * 100)));
     setDialValue(normalized);
   };
 
   return (
     <>
+      {/* Dimmed backdrop when Rotary FAB is open */}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => {
+              setIsOpen(false);
+              setDialMode(false);
+            }}
+            className="md:hidden fixed inset-0 bg-slate-950/65 backdrop-blur-xs z-45"
+          />
+        )}
+      </AnimatePresence>
+
       {/* Top Floating Minimalist Brand Bar (Phone view only) */}
-      <div className="md:hidden fixed top-5 left-6 z-40">
-        <Link href="/" className="flex items-center gap-3 group bg-white/90 backdrop-blur-xl px-4 py-2 rounded-full border border-purple-100/80 shadow-lg shadow-purple-900/5 hover:scale-105 transition-all">
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-purple-600 via-indigo-500 to-amber-400 p-0.5 shadow-md">
-            <div className="w-full h-full bg-white rounded-[10px] flex items-center justify-center text-purple-600">
-              <Calculator className="w-4 h-4 stroke-[2.5]" />
+      <div className="md:hidden fixed top-3.5 left-4 z-40">
+        <Link href="/" className="flex items-center gap-2.5 group bg-white/95 backdrop-blur-xl px-3.5 py-1.5 rounded-full border border-purple-100 shadow-md shadow-purple-900/5 hover:scale-105 transition-all">
+          <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-purple-600 via-indigo-500 to-amber-400 p-0.5 shadow-xs">
+            <div className="w-full h-full bg-white rounded-[7px] flex items-center justify-center text-purple-600">
+              <Calculator className="w-3.5 h-3.5 stroke-[2.5]" />
             </div>
           </div>
-          <div className="flex items-center gap-1.5 font-heading font-extrabold text-lg tracking-tight text-slate-800">
+          <div className="flex items-center gap-1 font-heading font-extrabold text-base tracking-tight text-slate-800">
             <span>Mind<span className="text-purple-600">Beads</span></span>
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-bold border border-amber-200">
+            <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-amber-100 text-amber-800 font-bold border border-amber-200">
               AI
             </span>
           </div>
         </Link>
       </div>
 
-      {/* Main Luxury Concentric Rotary FAB (Phone view only - Bottom-Right) */}
-      <div className="md:hidden fixed bottom-7 right-7 z-50 select-none">
+      {/* Main Luxury Concentric Rotary FAB (Phone view only - Upper-Right) */}
+      <div className="md:hidden fixed top-3.5 right-4 z-50 select-none">
         {/* Ambient Backlight Glow */}
         <div
           className={`absolute -inset-10 rounded-full blur-3xl pointer-events-none transition-opacity duration-700 ${
@@ -191,27 +207,27 @@ export default function RotaryFabNav() {
 
         {/* Rotary FAB Menu Container */}
         <div className="relative">
-          {/* Orbital Guide Arc Lines */}
+          {/* Orbital Guide Arc Lines (Top-Right sweeping down-left) */}
           {isOpen && !dialMode && (
             <svg
-              className="absolute bottom-0 right-0 pointer-events-none overflow-visible"
+              className="absolute top-0 right-0 pointer-events-none overflow-visible"
               width="260"
               height="260"
               style={{ transform: "translate(24px, 24px)" }}
             >
               {/* Inner Orbit Line (Tier 1) */}
               <path
-                d="M -105 0 A 105 105 0 0 1 0 -105"
+                d="M -110 0 A 110 110 0 0 0 0 110"
                 fill="none"
-                stroke="rgba(108, 92, 231, 0.25)"
+                stroke="rgba(108, 92, 231, 0.35)"
                 strokeWidth="1.5"
                 strokeDasharray="4 4"
               />
               {/* Outer Orbit Line (Tier 2) */}
               <path
-                d="M -175 0 A 175 175 0 0 1 0 -175"
+                d="M -180 0 A 180 180 0 0 0 0 180"
                 fill="none"
-                stroke="rgba(255, 159, 67, 0.25)"
+                stroke="rgba(255, 159, 67, 0.35)"
                 strokeWidth="1.5"
                 strokeDasharray="4 4"
               />
@@ -234,10 +250,10 @@ export default function RotaryFabNav() {
                   if (isDraggingDial) handleDialPointer(e);
                 }}
                 onPointerUp={() => setIsDraggingDial(false)}
-                className="absolute bottom-0 right-0 w-64 h-64 pointer-events-auto cursor-grab active:cursor-grabbing"
+                className="absolute top-0 right-0 w-64 h-64 pointer-events-auto cursor-grab active:cursor-grabbing"
               >
                 {/* Dial Center Chrono Badge */}
-                <div className="absolute top-12 left-12 bg-slate-900/95 text-white p-3 rounded-2xl border-2 border-yellow-400/80 shadow-2xl backdrop-blur-xl text-center z-10">
+                <div className="absolute bottom-12 left-12 bg-slate-900/95 text-white p-3 rounded-2xl border-2 border-yellow-400/80 shadow-2xl backdrop-blur-xl text-center z-10">
                   <span className="text-[10px] font-black text-yellow-400 uppercase tracking-widest block">
                     Sound Level
                   </span>
@@ -255,7 +271,7 @@ export default function RotaryFabNav() {
                   </defs>
                   {/* Outer Bezel Track */}
                   <path
-                    d="M 64 256 A 192 192 0 0 1 256 64"
+                    d="M 32 224 A 192 192 0 0 0 224 32"
                     fill="none"
                     stroke="#1E293B"
                     strokeWidth="20"
@@ -263,7 +279,7 @@ export default function RotaryFabNav() {
                   />
                   {/* Value Fill Arc */}
                   <path
-                    d="M 64 256 A 192 192 0 0 1 256 64"
+                    d="M 32 224 A 192 192 0 0 0 224 32"
                     fill="none"
                     stroke="url(#dialGrad)"
                     strokeWidth="16"
@@ -282,7 +298,7 @@ export default function RotaryFabNav() {
               !dialMode &&
               [...tier1Items, ...tier2Items].map((item, idx) => {
                 const isTier1 = idx < tier1Items.length;
-                const radius = isTier1 ? 105 : 175;
+                const radius = isTier1 ? 110 : 180;
                 const indexInTier = isTier1 ? idx : idx - tier1Items.length;
                 const totalInTier = isTier1 ? tier1Items.length : tier2Items.length;
                 const { x, y } = getCoordinates(indexInTier, totalInTier, radius);
@@ -293,25 +309,37 @@ export default function RotaryFabNav() {
                     initial={{ opacity: 0, x: 0, y: 0, scale: 0 }}
                     animate={{
                       opacity: 1,
-                      x: x + 8,
-                      y: y + 8,
+                      x: x + 6,
+                      y: y + 6,
                       scale: 1,
                     }}
                     exit={{ opacity: 0, x: 0, y: 0, scale: 0 }}
                     transition={{
                       type: "spring",
                       stiffness: 350,
-                      damping: 22,
-                      delay: idx * 0.04,
+                      damping: 24,
+                      delay: idx * 0.03,
                     }}
-                    className="absolute bottom-0 right-0 group/item"
+                    className="absolute top-0 right-0 group/item flex items-center z-50 pointer-events-auto"
                   >
+                    {/* Always-visible Title Badge for Phone Touchscreens */}
+                    <div
+                      onClick={() => {
+                        if (item.onClick) item.onClick();
+                        if (item.id !== "dial") setIsOpen(false);
+                      }}
+                      className="absolute right-13 bg-slate-900/95 text-white text-[11px] font-bold px-2.5 py-1 rounded-xl border border-slate-700/80 shadow-2xl whitespace-nowrap cursor-pointer hover:bg-slate-800 transition-all flex items-center gap-1 active:scale-95"
+                    >
+                      <span>{item.title}</span>
+                    </div>
+
                     {/* Action Button */}
                     <button
                       onClick={() => {
                         if (item.onClick) item.onClick();
+                        if (item.id !== "dial") setIsOpen(false);
                       }}
-                      className={`relative w-12 h-12 rounded-full flex items-center justify-center shadow-xl backdrop-blur-xl border-2 transition-all duration-200 hover:scale-115 active:scale-95 cursor-pointer ${
+                      className={`relative w-11 h-11 rounded-full flex items-center justify-center shadow-xl backdrop-blur-xl border-2 transition-all duration-200 hover:scale-110 active:scale-95 cursor-pointer ${
                         item.active
                           ? "bg-purple-600 text-white border-white shadow-purple-500/50"
                           : item.danger
@@ -333,20 +361,15 @@ export default function RotaryFabNav() {
                         </span>
                       )}
                     </button>
-
-                    {/* Accessible Horology Tooltip */}
-                    <div className="absolute right-14 top-1/2 -translate-y-1/2 opacity-0 pointer-events-none group-hover/item:opacity-100 transition-opacity duration-200 bg-slate-900/95 text-white text-xs font-bold px-3 py-1.5 rounded-xl border border-slate-700 shadow-2xl whitespace-nowrap">
-                      {item.title}
-                    </div>
                   </motion.div>
                 );
               })}
           </AnimatePresence>
 
-          {/* Central Luxury Watchmaker Core FAB Button */}
+          {/* Central Luxury Watchmaker Core FAB Button (Top-Right) */}
           <motion.button
-            whileHover={{ scale: 1.08 }}
-            whileTap={{ scale: 0.92 }}
+            whileHover={{ scale: 1.06 }}
+            whileTap={{ scale: 0.94 }}
             onClick={() => {
               if (dialMode) {
                 setDialMode(false);
@@ -354,7 +377,7 @@ export default function RotaryFabNav() {
                 setIsOpen((prev) => !prev);
               }
             }}
-            className="relative w-16 h-16 rounded-full bg-gradient-to-tr from-slate-900 via-indigo-950 to-slate-900 text-white p-1 shadow-2xl border-2 border-amber-400/80 hover:border-amber-300 transition-all duration-300 flex items-center justify-center cursor-pointer overflow-hidden z-20 group"
+            className="relative w-13 h-13 rounded-full bg-gradient-to-tr from-slate-900 via-indigo-950 to-slate-900 text-white p-1 shadow-2xl border-2 border-amber-400/80 hover:border-amber-300 transition-all duration-300 flex items-center justify-center cursor-pointer overflow-hidden z-20 group"
           >
             {/* Inner Rotating Bezel Ring */}
             <div className="absolute inset-1 rounded-full border border-dashed border-white/25 animate-spin pointer-events-none" style={{ animationDuration: "20s" }} />
@@ -362,11 +385,11 @@ export default function RotaryFabNav() {
             {/* Core Icon State */}
             <div className="relative z-10">
               {dialMode ? (
-                <Sliders className="w-7 h-7 text-yellow-400 animate-pulse" />
+                <Sliders className="w-6 h-6 text-yellow-400 animate-pulse" />
               ) : isOpen ? (
-                <X className="w-7 h-7 text-rose-400 transition-transform rotate-0 group-hover:rotate-90" />
+                <X className="w-6 h-6 text-rose-400 transition-transform rotate-0 group-hover:rotate-90" />
               ) : (
-                <Compass className="w-7 h-7 text-amber-400 transition-transform group-hover:rotate-45" />
+                <Compass className="w-6 h-6 text-amber-400 transition-transform group-hover:rotate-45" />
               )}
             </div>
           </motion.button>

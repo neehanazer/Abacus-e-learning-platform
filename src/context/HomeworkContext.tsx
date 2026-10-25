@@ -73,14 +73,14 @@ export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return m ? parseInt(m[1], 10) : 1;
   }, [user]);
 
-  // Resolve student joining date (defaults to 10 October 2026 if guest)
+  // Resolve student joining date (defaults to current date for new users)
   const studentJoinDate = React.useMemo(() => {
     const raw = (user as any)?.joinDate || (user as any)?.joiningDate || user?.createdAt;
     if (raw) {
       const d = new Date(raw);
       if (!isNaN(d.getTime())) return d;
     }
-    return new Date("2026-10-10T00:00:00");
+    return new Date();
   }, [user]);
 
   const userTasksKey = `abacus_homework_state_v3_${studentKey}`;

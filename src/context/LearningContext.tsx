@@ -66,22 +66,8 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({
   // Website Tour State
   const [isTourOpen, setIsTourOpen] = useState(false);
 
-  // Auto-trigger tour for newly arriving students
-  useEffect(() => {
-    try {
-      // The product-wide walkthrough already introduces this area in context.
-      if (window.location.search.includes("product-tour=1")) return;
-      const hasSeenTour = localStorage.getItem("has_seen_learning_hub_tour_v1");
-      if (!hasSeenTour) {
-        const timer = setTimeout(() => {
-          setIsTourOpen(true);
-        }, 750);
-        return () => clearTimeout(timer);
-      }
-    } catch {
-      // Fallback
-    }
-  }, []);
+  // Manual-only tour trigger (auto-popup on join removed as requested)
+  // Students can launch the tour anytime using the bottom Tour button
 
   const openTour = () => setIsTourOpen(true);
   const closeTour = () => {

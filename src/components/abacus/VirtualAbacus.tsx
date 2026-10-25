@@ -7,6 +7,24 @@ export default function VirtualAbacus() {
   const containerRef = useRef<HTMLDivElement>(null);
   const appInstanceRef = useRef<any>(null);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [isMobilePortrait, setIsMobilePortrait] = useState(false);
+  const [dismissedRotatePrompt, setDismissedRotatePrompt] = useState(false);
+
+  useEffect(() => {
+    const handleOrientation = () => {
+      const isMobile = window.innerWidth < 850;
+      const isPortrait = window.innerHeight > window.innerWidth;
+      setIsMobilePortrait(isMobile && isPortrait);
+    };
+
+    handleOrientation();
+    window.addEventListener("resize", handleOrientation);
+    window.addEventListener("orientationchange", handleOrientation);
+    return () => {
+      window.removeEventListener("resize", handleOrientation);
+      window.removeEventListener("orientationchange", handleOrientation);
+    };
+  }, []);
 
   useEffect(() => {
     let mounted = true;
@@ -49,6 +67,50 @@ export default function VirtualAbacus() {
   return (
     <div data-tour="virtual-abacus-center" className="w-full min-h-screen bg-gradient-to-b from-[#FAFAFE] via-[#F3F0FF]/40 to-[#F0F4FF] py-4 px-2 sm:px-6">
       <div className="max-w-7xl mx-auto">
+        {/* Rotate Phone Prompt Banner for Mobile Portrait View */}
+        {isMobilePortrait && !dismissedRotatePrompt && (
+          <div className="mb-4 bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 text-white rounded-3xl p-4 sm:p-5 shadow-2xl border-2 border-amber-300 relative overflow-hidden animate-in fade-in slide-in-from-top-4">
+            <div className="flex items-start gap-3.5">
+              <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center flex-shrink-0 text-2xl shadow-lg">
+                <span className="inline-block animate-pulse">🔄</span>
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-[10px] font-black uppercase tracking-wider bg-white text-orange-700 px-2.5 py-0.5 rounded-full font-sans shadow-sm">
+                    Recommended View
+                  </span>
+                  <span className="text-xs font-bold text-amber-100">
+                    Phone View
+                  </span>
+                </div>
+                <h3 className="text-base font-black font-heading leading-tight">
+                  Please rotate your phone to Landscape mode!
+                </h3>
+                <p className="text-xs text-amber-50 mt-1 leading-relaxed">
+                  Turn your phone sideways (horizontally) to get the correct, full 17-rod Soroban with spacious beads that are not congested!
+                </p>
+                <div className="mt-3 flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setDismissedRotatePrompt(true)}
+                    className="px-3.5 py-1.5 bg-white text-orange-700 font-extrabold text-xs rounded-xl shadow-md hover:bg-amber-50 transition active:scale-95 cursor-pointer"
+                  >
+                    Got It / Scroll Horizontally
+                  </button>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setDismissedRotatePrompt(true)}
+                className="text-white/80 hover:text-white p-1 rounded-lg text-sm cursor-pointer"
+                aria-label="Dismiss rotation prompt"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Virtual Abacus Main Host Container */}
         <div ref={containerRef} className="virtual-abacus-app" data-theme="light-classic">
           <div className="app-container">

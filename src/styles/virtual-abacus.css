@@ -1266,6 +1266,33 @@ body.theme-dark-cyber {
     padding: 24px 60px 40px 60px;
 }
 
+@media (max-width: 768px) {
+    .abacus-render-target {
+        padding: 12px 6px 30px 6px;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        justify-content: flex-start;
+    }
+
+    .soroban-frame {
+        min-width: 560px;
+        margin: 0 auto;
+    }
+}
+
+@media (max-width: 950px) and (orientation: landscape) {
+    .abacus-render-target {
+        padding: 8px 12px 20px 12px;
+        justify-content: center;
+    }
+
+    .soroban-frame {
+        min-width: unset;
+        width: 100%;
+        max-width: 100%;
+    }
+}
+
 /* Outer Soroban Frame */
 .soroban-frame {
     background: var(--frame-bg);

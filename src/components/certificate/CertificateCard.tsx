@@ -57,20 +57,22 @@ export default function CertificateCard({
     }
   );
 
-  // Anti-Screenshot & Screen-Capture / Camera DRM Protection for Sample Preview
+  // Anti-Screenshot & Screen-Capture / Camera DRM Protection (Active for all certificates)
   useEffect(() => {
-    if (!isSample) return;
-
     const triggerScreenshotDenial = () => {
       try {
         if (navigator.clipboard && navigator.clipboard.writeText) {
           navigator.clipboard.writeText(
-            "SCREENSHOT DENIED: Specimen preview is security-protected against capture, copying, or camera recording."
+            "SCREENSHOT DENIED: MindBeads AI Certified Document is Protected Against Digital Capture."
           );
         }
       } catch {}
       setScreenshotBlocked(true);
-      setTimeout(() => setScreenshotBlocked(false), 3500);
+      setIsShieldActive(true);
+      setTimeout(() => {
+        setScreenshotBlocked(false);
+        setIsShieldActive(false);
+      }, 3500);
     };
 
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -105,6 +107,16 @@ export default function CertificateCard({
         triggerScreenshotDenial();
         return false;
       }
+      // 5. Inspect / DevTools shortcut (Ctrl + Shift + I / F12)
+      if (
+        e.key === "F12" ||
+        ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === "I" || e.key === "i" || e.key === "C" || e.key === "c"))
+      ) {
+        e.preventDefault();
+        e.stopPropagation();
+        triggerScreenshotDenial();
+        return false;
+      }
     };
 
     const handleKeyUp = (e: KeyboardEvent) => {
@@ -115,18 +127,24 @@ export default function CertificateCard({
       }
     };
 
-    // Prevent screen recorder, snip tool, camera app, or unfocused window from capturing
+    // When phone screenshot gesture (Power+VolDown or 3-finger swipe) or Snipping tool activates,
+    // window immediately loses focus (blur/hidden). Mask the certificate display with DRM blackout shield!
     const handleBlur = () => {
       setIsShieldActive(true);
     };
     const handleFocus = () => {
-      setIsShieldActive(false);
+      // Keep masked for 1.2s to prevent capturing buffered transition frame
+      setTimeout(() => {
+        setIsShieldActive(false);
+      }, 1200);
     };
     const handleVisibilityChange = () => {
       if (document.hidden) {
         setIsShieldActive(true);
       } else {
-        setIsShieldActive(false);
+        setTimeout(() => {
+          setIsShieldActive(false);
+        }, 1200);
       }
     };
 
@@ -143,7 +161,7 @@ export default function CertificateCard({
       window.removeEventListener("focus", handleFocus);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
-  }, [isSample]);
+  }, []);
 
   const handlePrint = () => {
     if (isSample) return;
@@ -178,18 +196,34 @@ export default function CertificateCard({
 
   return (
     <div
-      className={`w-full max-w-4xl mx-auto space-y-4 ${
-        isSample ? "select-none" : ""
-      }`}
+      className="w-full max-w-4xl mx-auto space-y-4 select-none"
+      style={{
+        WebkitTouchCallout: "none",
+        WebkitUserSelect: "none",
+        userSelect: "none",
+      }}
       onContextMenu={(e) => {
-        if (isSample) e.preventDefault();
+        e.preventDefault();
+        setScreenshotBlocked(true);
+        setTimeout(() => setScreenshotBlocked(false), 3000);
       }}
       onDragStart={(e) => {
-        if (isSample) e.preventDefault();
+        e.preventDefault();
+      }}
+      onTouchStart={(e) => {
+        // Multi-touch 3-finger screenshot gesture on Android phones
+        if (e.touches && e.touches.length >= 3) {
+          setIsShieldActive(true);
+          setScreenshotBlocked(true);
+          setTimeout(() => {
+            setIsShieldActive(false);
+            setScreenshotBlocked(false);
+          }, 3500);
+        }
       }}
     >
       {/* Floating Screenshot Denied Notification */}
-      {isSample && screenshotBlocked && (
+      {screenshotBlocked && (
         <div className="fixed top-8 right-8 z-[99999] bg-gradient-to-r from-rose-600 to-red-700 text-white p-4 sm:p-5 rounded-2xl shadow-2xl border-2 border-white flex items-center gap-3 animate-bounce max-w-md">
           <ShieldAlert className="w-8 h-8 text-yellow-300 shrink-0" />
           <div>
@@ -197,7 +231,7 @@ export default function CertificateCard({
               Screenshot Denied 🚫
             </div>
             <div className="text-xs text-rose-100 font-medium mt-0.5">
-              Specimen certificates are protected against screenshots, recording, and digital capture.
+              Certificates are encrypted and protected against unauthorized screenshot capture, snip tools, camera recording, and screen sharing.
             </div>
           </div>
         </div>
@@ -275,17 +309,17 @@ export default function CertificateCard({
           boxShadow: "0 25px 50px -12px rgba(212, 175, 55, 0.25)",
         }}
       >
-        {/* Anti-Camera & External Capture Blackout Shield (When window loses focus or screen recording tool opens) */}
-        {isSample && isShieldActive && (
+        {/* Anti-Camera & External Capture Blackout Shield (When window loses focus or screenshot tool opens) */}
+        {isShieldActive && (
           <div className="absolute inset-0 z-50 bg-slate-950/98 backdrop-blur-xl flex flex-col items-center justify-center p-6 sm:p-10 text-center text-white select-none">
             <div className="w-16 h-16 rounded-2xl bg-rose-500/20 border-2 border-rose-500 flex items-center justify-center text-3xl mb-3 animate-pulse">
               🛡️
             </div>
             <h3 className="text-xl sm:text-2xl font-black text-rose-400 font-heading tracking-wide">
-              ANTI-CAMERA & CAPTURE SHIELD ACTIVE
+              SCREENSHOT & SCREEN CAPTURE DENIED
             </h3>
             <p className="text-xs sm:text-sm text-slate-300 max-w-md mt-2 leading-relaxed">
-              Certificate display is securely masked while external capture tools, screen recorders, camera overlays, or inactive windows are detected. Click back into this active window to view.
+              Official certificates are encrypted and protected against unauthorized screenshot capture, snip tools, screen recorders, and camera capture. Click or tap back into this active screen to resume.
             </p>
           </div>
         )}

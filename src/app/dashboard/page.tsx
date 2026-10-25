@@ -164,8 +164,8 @@ export default function AbacusWorldDashboard() {
         </Link>
         </div>
 
-        {/* Right Side */}
-        <div className="flex items-center gap-4 relative">
+        {/* Right Side (Leaves clearance on mobile for Rotary FAB Nav) */}
+        <div className="flex items-center gap-2 sm:gap-4 relative pr-24 md:pr-0">
           {/* Points */}
           <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-full shadow-sm border border-yellow-100">
             <Star className="w-5 h-5 text-yellow-400 fill-yellow-400" />

@@ -237,8 +237,8 @@ export default function LearningNavbar() {
               })}
             </nav>
 
-            {/* Right Side Stats & Profile */}
-            <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
+            {/* Right Side Stats & Profile (Leaves clearance on mobile for Rotary FAB Nav) */}
+            <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0 pr-24 lg:pr-0">
 
               {/* Star Points Badge */}
               <div className="flex items-center gap-1.5 bg-yellow-100/90 border border-yellow-300 px-2.5 sm:px-3 py-1.5 rounded-full shadow-sm shrink-0 whitespace-nowrap">

@@ -4,7 +4,6 @@ import { LearningProvider } from "@/context/LearningContext";
 import { PracticeProvider } from "@/context/PracticeContext";
 import LearningNavbar from "@/components/learning/LearningNavbar";
 import CelebrationModal from "@/components/learning/CelebrationModal";
-import LearningHubTourModal from "@/components/learning/LearningHubTourModal";
 
 import AuthGuard from "@/components/auth/AuthGuard";
 
@@ -32,9 +31,6 @@ export default function LearningLayout({
 
             {/* Global Celebration Popup */}
             <CelebrationModal />
-
-            {/* Interactive Website Tour Modal for New & Returning Users */}
-            <LearningHubTourModal />
           </div>
         </PracticeProvider>
       </LearningProvider>
